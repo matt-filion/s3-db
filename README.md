@@ -44,10 +44,6 @@ Logically these are the same operations. There is no previously known state befo
  
 # Examples
 
-## Create a new Table/Collection/Bucket
-
-	const users = s3db.create('users');
-
 ## List the current Tables/Collections/Buckets and list its contents.
 Generally you aren't going to go through the list method to find a bucket you need. 
 
@@ -64,18 +60,15 @@ __*IMPORTANT: CURRENTLY, a list of records is not the actual records, but pointe
     		console.log("records",records);
     	});
 
-## Create a record in a created bucket
-When your record saves, and it does not currently have an id attribute, one will be added to it. 
-
-	const users = s3db.bucketOf('users');
-	const user = {name : 'Richard Cranium'} 
-	users.save(user);
-
-## Load a record, change it, save it, delete it.
+## Create a record, load it, change it, save it, delete it.
 Clearly a very logical operation, but it demonstrates everything I want to communicate at the moment.
 
 	const users = s3db.bucketOf('users');
-	users.load('1234')
+	const user = {name : 'Richard Cranium'} 
+	users.save(user)
+		.then(function(user){
+			return users.load(user.id)
+		})
 		.then(function(user){
 			user.size = 1234;
 			user.sex = 'male';
@@ -102,9 +95,6 @@ The API attempts to be as simple to understand as possible.
   - **delete** : Erases a specific document.
   - **save** : Create or overwrite a specific record. The id attribute determines the underlying file name.
 
-#### Deleting a bucket.
-To avoid accidental loss of data the default configuration does not allow buckets to be deleted. If you do want this behavior, scroll down below to the configuration section and look for the allowDrop section.
-
 #### __meta
 Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. In the case of a document it will contain the file attributes or Metadata attached to that doc within AWS s3, in addition to basic attributes like eTag or file size. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. 
 
@@ -116,14 +106,12 @@ _If you provide a property of your own with __meta on a record you are saving, i
 | ------ | ------------------------------- | -------------------------------- |
 | appname | Used in naming to keep your application unique. The default needs to be overridden. | { appname : 'app' } |
 | environment | Used in naming to keep your application unique. The default needs to be overridden. | { environment : 'dev' } |
-
-### AWS Credentials
-If you are not running this in an environment where AWS picks up your credentials automatically then you can set your access id and secret access key on the s3 object of the configuration.
-
+| AWS credentials |  If you are not running this in an environment where AWS picks up your credentials automatically then you can set your access id and secret access key on the s3 object of the configuration. | 
 	{
 	  accessKeyId : 'YOUR ACCES ID',
 	  secretAccessKey : 'YOUR ACCESS KEY'
-	}
+	} |
+
 
 ### Region
 The default region is looked up in the environment at process.env.AWS\_REGION and then process.env.AWS\_DEFAULT_REGION (default in AWS Lambda). This can be overridden in the configuration within s3 via the region attribute.
@@ -142,7 +130,7 @@ Determines how many results will be returned, by default, for each list request 
 	}
 
 ### allowDrop
-To enable dropping of buckets through the API.
+To avoid accidental loss of data the default configuration does not allow buckets to be deleted. To enable dropping of buckets through the API.
 
 	{
 	  s3 : {
