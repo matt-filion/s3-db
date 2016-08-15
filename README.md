@@ -86,7 +86,8 @@ The API attempts to be as simple to understand as possible.
 
 - **s3db** 
 
-   >  const s3db = require('s3-db')(s3dbConfiguration)
+      const s3db = require('s3-db')(s3dbConfiguration)
+  
     - **list**
 	  List of the visible buckets, for the current configuration. Within the list you can use get() to return a bucket for that specific item.
     - **create**
@@ -96,7 +97,8 @@ The API attempts to be as simple to understand as possible.
 
 - **bucket** 
 
-  > s3db.bucketOf('bucketName')
+      s3db.bucketOf('bucketName')
+
     - **list** 
 	  List of references pointing to the records within the bucket. Within a list, you can use next() to get the next back of records. You can also use get() to return a specific record in the list.
     - **load**
