@@ -22,11 +22,15 @@ Logically these are the same operations. There is no previously known state befo
 
 # Getting Started
 
-1\. Add the dependency.
+1\. Install the AWS SDK. By default it is setup as a dev dependency so that for Lambda deployments, where it is natively available, you dont have the extra bloat on your deployment which slows down your container startup time.
+
+    npm install aws-sdk
+
+2\. Add the dependency.
 
 	npm install s3-db
  
-2\. Set the configuration
+3\. Set the configuration
  
 	const s3dbConfiguration = {
 	  appname: 'app',
@@ -36,11 +40,11 @@ Logically these are the same operations. There is no previously known state befo
 	  secretAccessKey: 'YOUR_AWS_SCRET_ACCESS_KEY' //Omit if in Lambda
 	}
 
-3\. Add the requirement in your code
+4\. Add the requirement in your code
 
     const s3db = require('s3-db')(s3dbConfiguration);
     
-4\. Use it! Look at the examples for common scenarios.
+5\. Use it! Look at the examples for common scenarios.
  
 # Examples
 

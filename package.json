@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Quick and simple data storage solution, where you are willing to fall back on other AWS solutions to do reporting an analytics on your data. Has most CRUD operations but does't not attempt to overcome the natural limitations of S3 like querying or insert collisions.",
   "main": "src/index.js",
   "homepage": "https://bitbucket.org/sexycastle/s3-db/src",
@@ -36,5 +36,5 @@
            "url": "http://github.com/jeremyosborne/packagejsonexample/blob/master/LICENSE.txt"
        }
   ],
-  "keywords": ["database","s3","db","datastore","simple","s3 db","s3 database","s3 datastore"]
+  "keywords": ["database","s3","sds","db","datastore","s3 database","s3 db","s3 datastore"]
 }
