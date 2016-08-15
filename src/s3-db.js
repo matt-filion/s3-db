@@ -34,7 +34,7 @@ module.exports = function(configuration){
     },
     drop: function(name){
       if(configuration.s3.allowDrop){
-        
+        //TODO Fill in these guts!
       } else {
         throw "Configuration does not allow buckets to be dropped.";
       }
