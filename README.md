@@ -85,15 +85,15 @@ Clearly a very logical operation, but it demonstrates everything I want to commu
 The API attempts to be as simple to understand as possible.
 
 - **s3db** : const s3db = require('s3-db')(s3dbConfiguration)
--- **list** : List of the visible buckets, for the current configuration. Within the list you can use get() to return a bucket for that specific item.
--- **create** : Creates a new bucket, that will be visible to this configuration.
--- **bucketOf** : Returns a specific bucket to interact with.
+   - **list** : List of the visible buckets, for the current configuration. Within the list you can use get() to return a bucket for that specific item.
+   - **create** : Creates a new bucket, that will be visible to this configuration.
+   - **bucketOf** : Returns a specific bucket to interact with.
 
 - **bucket** : s3db.bucketOf('bucketName')
- - **list** : List of references pointing to the records within the bucket. Within a list, you can use next() to get the next back of records. You can also use get() to return a specific record in the list.
- - **load** : A specific record, with __meta further describing the file of the records origin.
- - **delete** : Erases a specific document.
- - **save** : Create or overwrite a specific record. The id attribute determines the underlying file name.
+    - **list** : List of references pointing to the records within the bucket. Within a list, you can use next() to get the next back of records. You can also use get() to return a specific record in the list.
+    - **load** : A specific record, with __meta further describing the file of the records origin.
+    - **delete** : Erases a specific document.
+    - **save** : Create or overwrite a specific record. The id attribute determines the underlying file name.
 
 ### __meta
 Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. In the case of a document it will contain the file attributes or Metadata attached to that doc within AWS s3, in addition to basic attributes like eTag or file size. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. _If you provide a property of your own with __meta on a record you are saving, it will be deleted or overwritten._
