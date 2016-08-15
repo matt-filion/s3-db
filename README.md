@@ -90,51 +90,29 @@ The API attempts to be as simple to understand as possible.
 -- **bucketOf** : Returns a specific bucket to interact with.
 
 - **bucket** : s3db.bucketOf('bucketName')
-  -- **list** : List of references pointing to the records within the bucket. Within a list, you can use next() to get the next back of records. You can also use get() to return a specific record in the list.
-  -- **load** : A specific record, with __meta further describing the file of the records origin.
-  -- **delete** : Erases a specific document.
-  -- **save** : Create or overwrite a specific record. The id attribute determines the underlying file name.
+ - **list** : List of references pointing to the records within the bucket. Within a list, you can use next() to get the next back of records. You can also use get() to return a specific record in the list.
+ - **load** : A specific record, with __meta further describing the file of the records origin.
+ - **delete** : Erases a specific document.
+ - **save** : Create or overwrite a specific record. The id attribute determines the underlying file name.
 
-#### __meta
+### __meta
 Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. In the case of a document it will contain the file attributes or Metadata attached to that doc within AWS s3, in addition to basic attributes like eTag or file size. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. _If you provide a property of your own with __meta on a record you are saving, it will be deleted or overwritten._
 
 # Configurations
 
-|| Name || Description || Example ||
+| Name | Description | Example |
 | ------ | ------------------------------- | -------------------------------- |
 | appname | Used in naming to keep your application unique. The default needs to be overridden. | { appname : 'app' } |
 | environment | Used in naming to keep your application unique. The default needs to be overridden. | { environment : 'dev' } |
 | AWS credentials |  If you are not running this in an environment where AWS picks up your credentials automatically then you can set your access id and secret access key on the s3 object of the configuration. | { accessKeyId : 'YOUR ACCES ID', <br\>  secretAccessKey : 'YOUR ACCESS KEY' } |
+| region |  The default region is looked up in the environment at process.env.AWS\_REGION and then process.env.AWS\_DEFAULT_REGION (default in AWS Lambda). This can be overridden in the configuration within s3 via the region attribute. | {region : 'us-west2'} |
+| s3.pageSize | Determines how many results will be returned, by default, for each list request on a bucket of records. The default value is 100. A value larger than 1000 will be ignored and likely result in a cap of 1000, since AWS imposes that limit. | { s3 : { pageSize : 100 } } |
+| s3.allowDrop |  **To avoid accidental loss of data the default configuration does not allow buckets to be deleted.** To enable dropping of buckets through the API. | { s3 : { allowDrop: true } } |
+| s3.file.spacer | By default each file is saved unformatted. If you want to add formatting (done via JSON.stringify) you need to pass in a spacing pattern. The below example will format each new indentation with a single tab. | { s3 : { file : { spacer: '\t' } } } |
 
+## ID's (advanced)
 
-### Region
-The default region is looked up in the environment at process.env.AWS\_REGION and then process.env.AWS\_DEFAULT_REGION (default in AWS Lambda). This can be overridden in the configuration within s3 via the region attribute.
-
-	{
-      region : 'us-west2'
-	}
-
-### pageSize
-Determines how many results will be returned, by default, for each list request on a bucket of records. The default value is 100. A value larger than 1000 will be ignored and likely result in a cap of 1000, since AWS imposes that limit.
-
-	{
-	  s3 : {
-	    pageSize : 100
-	  }
-	}
-
-### allowDrop
-To avoid accidental loss of data the default configuration does not allow buckets to be deleted. To enable dropping of buckets through the API.
-
-	{
-	  s3 : {
-	    allowDrop: true
-	  }
-	}
-	
-### ID's (advanced)
-
-#### Attirbute name.
+### Attirbute name.
 You can change then name of the id attribute from the default of 'id' by setting the name attribute of the id configuration. The name must be JavaScript attribute friendly. The below changes the default to _id from id.
 
 	{
@@ -143,7 +121,7 @@ You can change then name of the id attribute from the default of 'id' by setting
 	  }
 	}
 
-#### Generation
+### Generation
 By default we use https://www.npmjs.com/browse/keyword/uuid to create a unique ID that has a low chance of collision. You can change this to another function within the configuration.
 
 	{
@@ -152,7 +130,7 @@ By default we use https://www.npmjs.com/browse/keyword/uuid to create a unique I
 	  }
 	}
 
-### Bucket Names (advanced)
+## Bucket Names (advanced)
 To keep bucket names unique, the name for each bucket created will have the appname environment and s3-db all prefixed to it. The default configuration creates a string using the following. 
 
 	's3-db.' + appname + '.' + environment + '-'
@@ -190,17 +168,6 @@ If you need a more complex name than the above or have pre-existing names you wa
 	          return fqn;
 	        }
 	      }
-	    }
-	  }
-	}
-
-### Formatting saved files (advanced)
-By default each file is saved unformatted. If you want to add formatting (done via JSON.stringify) you need to pass in a spacing pattern. The below example will format each new indentation with a single tab.
-
-	{
-	  s3 : {
-	    file : {
-	      spacer: '\t'
 	    }
 	  }
 	}
