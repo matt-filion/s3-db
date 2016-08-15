@@ -15,7 +15,7 @@ module.exports = function(_configuration){
     db : 's3-db',
     appname: 'app',
     environment: 'dev',
-    region: 'us-west-2'
+    region: 'us-west-2',
 
     s3:{
       bucket: {
