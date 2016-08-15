@@ -1,7 +1,0 @@
-{
-  "name": "s3-db",
-  "ignore": [
-    "package.json", "README.md", ".*"
-  ],
-  "main": "dist/s3-db.js"
-}

@@ -1,4 +1,4 @@
-# S3 DB, a simple DB
+# A simple DB Solution
 This is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key) and transactional integrity will be handled externally, if its needed. 
 
 The implementation does favor AWS Lambda runtime a bit. Not entirely purposeful but that is one of the places this makes the most sense. Its a fast, easy to setup solution, for an application that needs to get running quickly, then require little to no maintenance. Keep in mind, that while all of this is true, S3 does offer some pretty compelling performance and availability. Some of the available behavior like versioning and cross region replication further extends the availability and its general competition against other hosted solutions.

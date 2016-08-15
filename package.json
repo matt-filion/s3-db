@@ -1,20 +1,40 @@
 {
   "name": "s3-db",
   "version": "1.0.0",
-  "description": "Quick and simple data storage solution, where you are willing to fall back on other AWS solutions to do reporting an anlytics on your data.",
+  "description": "Quick and simple data storage solution, where you are willing to fall back on other AWS solutions to do reporting an analytics on your data. Has most CRUD operations but does't not attempt to overcome the natural limitations of S3 like querying or insert collisions.",
   "main": "src/index.js",
+  "homepage": "https://bitbucket.org/sexycastle/s3-db/src",
   "dependencies": {
-    "aws-sdk": "^2.5.0",
     "q": "^1.4.1",
     "uuid": "^2.0.2"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "aws-sdk": "^2.5.0"
+  },
+  "maintainers": [
+    {
+      "name": "Matt Filion",
+      "email": "matt.filion@gmail.com"
+    }
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "mercurial",
+    "url": "https://bitbucket.org/sexycastle/s3-db/src"
   },
   "author": {
     "name": "Matt Filion",
     "email": "matt.filion@gmail.com"
   },
-  "license": "ISC"
+  "private": false,
+  "readme": "README.md",
+  "licenses": [
+       {
+           "type": "MIT",
+           "url": "http://github.com/jeremyosborne/packagejsonexample/blob/master/LICENSE.txt"
+       }
+   ],
+  "keywords": ["aws","s3","db","database","datastore","simple","promise","aws-s3","s3-db"]
 }
