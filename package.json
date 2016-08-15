@@ -35,6 +35,6 @@
            "type": "MIT",
            "url": "http://github.com/jeremyosborne/packagejsonexample/blob/master/LICENSE.txt"
        }
-   ],
-  "keywords": ["aws","s3","db","database","datastore","simple","promise","aws-s3","s3-db"]
+  ],
+  "keywords": ["database","s3","db","datastore","simple","s3 db","s3 database","s3 datastore"]
 }
