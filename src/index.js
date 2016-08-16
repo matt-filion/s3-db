@@ -10,7 +10,7 @@ module.exports = function(_configuration){
    *  still test for its existence without having to worry about 
    *  undefined exceptions.
    */
-  const defaults = {
+  const configuration = {
 
     db : 's3-db',
     appname: 'app',
@@ -46,10 +46,20 @@ module.exports = function(_configuration){
       generator: require('uuid').v4
     }
   };
-  
-  //TODO overwrite defaults with the _configuration provdied.
 
-  const configuration = _configuration || defaults;
+  function updateAttributes(configuration,_configuration){
+    for(var name in _configuration) {
+      if(typeof configuration[name] === 'object') {
+        updateAttributes(configuration[name],_configuration[name]);
+      } else {
+        configuration[name] = _configuration[name];
+      }
+    }
+  }
+
+  updateAttributes(configuration,_configuration);
+
   return require('./s3-db')(configuration);
-
 }
+
+
