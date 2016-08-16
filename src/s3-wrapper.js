@@ -75,6 +75,19 @@ module.exports = function(configuration){
       });
       return defer.promise;
     },
+    
+    dropBucket: function(bucket){
+      var defer  = Q.defer();
+      var params = {
+        Bucket: configuration.s3.bucket.name(bucket)
+      };
+      s3.deleteBucket(params, function(err, data) {
+        if(instance._hasNoerror(defer,error,data)){
+          defer.resolve(data);
+        }
+      });
+      return defer.promise;
+    },
 
     /**
      * 
@@ -191,6 +204,7 @@ module.exports = function(configuration){
     listBuckets: instance.listBuckets,
     createBucket: instance.createBucket,
     putBucketTagging: instance.putBucketTagging,
+    dropBucket: instance.dropBucket,
     
     getObject: instance.getObject,
     deleteObject: instance.deleteObject,

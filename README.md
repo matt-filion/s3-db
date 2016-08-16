@@ -1,24 +1,13 @@
-# A simple DB Solution
-Quick and simple data storage solution, where you are willing to fall back on other AWS solutions to do reporting an analytics on your data. Has most CRUD operations but does't not attempt to overcome the natural limitations of S3 like querying or insert collisions.
+# Feedback Please
+If you have any general feedback, issues or feature requests, please open a ticket in bitbucket, [here](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open).
+
+Quick and simple data storage solution. Has most CRUD operations but does't not attempt to overcome the natural limitations of S3 like querying or insert collisions.
 
 _This is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._ 
 
-The implementation does favor AWS Lambda runtime a bit. Not entirely purposeful but that is one of the places this makes the most sense. 
+The implementation does favor AWS Lambda runtime a bit. Not entirely purposeful but that is one of the places this makes the most sense. The exposed API makes use of promises instead of callbacks. 
 
-## Why S3?
-Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of scalability and the ability to replicate a bucket across regions for increase resiliency. In addition, versioning on a bucket can give you a pretty robust roll-back capability, though this does not YET take advantage of either versioning or cross region replication. Generally, this makes for a very compelling solution to a simple scenario where performance does matter.
-
-## Promises
-Everything has been promisized, this is so far, the best way to handle the asynchronous behavior. I'll look into adding synchronous type API's later if there is a demand for it.
-
-## I'm from SQL
-Welcome! Most everything is straight forward, think of this more as folders and files rather than tables and records. 
-
-When documentation says bucket or collection, associate it to a table.
-When documentation says record or document, associate that to a row in a table.
-
-## Create and Update
-Logically these are the same operations. There is no previously known state before the action is taken. This means that if you specify an ID that already exists, the document will be blindly overwritten with your new record. So you have to have a good naming convention for your id's or you need to ensure you maintain a good reference. For example, if your application has an authentication service, you would store a detailed profile record in an ID that was stored on that external authentication service. This way there is nothing to figure out, just a retrieval of known data.
+----------
 
 # Getting Started
 
@@ -45,7 +34,53 @@ Logically these are the same operations. There is no previously known state befo
     const s3db = require('s3-db')(s3dbConfiguration);
     
 5\. Use it! Look at the examples for common scenarios.
- 
+
+----------
+
+## Why S3?
+Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. This does not YET take advantage of either versioning or cross region replication. Generally, this makes for a very compelling solution to a simple scenario where performance does matter.
+
+## I'm from SQL
+Welcome! Most everything is straight forward, think of this more as folders and files rather than tables and records. 
+
+When documentation says bucket or collection, associate it to a table.
+When documentation says record or document, associate that to a row in a table.
+
+## Create and Update
+_Logically these are the same operations._ This does not make any attempt to know the state before the action is taken. If you specify an ID that already exists, the document will be blindly overwritten with your new record. Have to have a good naming convention for your id's or ensure you maintain a good reference. For example, if your application has an authentication service, you would store a detailed profile record in an ID that was stored on that external authentication service. This way there is nothing to figure out, just a retrieval of known data.
+
+----------
+
+# API
+The API attempts to be as simple to understand as possible.
+
+- **s3db** 
+
+      const s3db = require('s3-db')(s3dbConfiguration)
+
+    - **list**
+	  List of the visible buckets, for the current configuration. Within the list you can use get() to return a bucket for that specific item.
+    - **create**
+	  Creates a new bucket, that will be visible to this configuration.
+    - **bucketOf**
+	  Returns a specific bucket to interact with.
+
+- **bucket** 
+
+      s3db.bucketOf('bucketName')
+
+    - **list** 
+	  List of references pointing to the records within the bucket. Within a list, you can use next() to get the next back of records. You can also use get() to return a specific record in the list.
+    - **load**
+	  A specific record, with __meta further describing the file of the records origin.
+    - **delete**
+	  Erases a specific document.
+    - **save**
+	  Create or overwrite a specific record. The id attribute determines the underlying file name.
+
+### __meta
+Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. In the case of a document it will contain the file attributes or Metadata attached to that doc within AWS s3, in addition to basic attributes like eTag or file size. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. _If you provide a property of your own with __meta on a record you are saving, it will be deleted or overwritten._
+
 # Examples
 
 ## List the current Tables/Collections/Buckets and list its contents.
@@ -85,35 +120,7 @@ Clearly a very logical operation, but it demonstrates everything I want to commu
 		    console.error(error.stack);
 		})
 
-# API
-The API attempts to be as simple to understand as possible.
-
-- **s3db** 
-
-      const s3db = require('s3-db')(s3dbConfiguration)
-  
-    - **list**
-	  List of the visible buckets, for the current configuration. Within the list you can use get() to return a bucket for that specific item.
-    - **create**
-	  Creates a new bucket, that will be visible to this configuration.
-    - **bucketOf**
-	  Returns a specific bucket to interact with.
-
-- **bucket** 
-
-      s3db.bucketOf('bucketName')
-
-    - **list** 
-	  List of references pointing to the records within the bucket. Within a list, you can use next() to get the next back of records. You can also use get() to return a specific record in the list.
-    - **load**
-	  A specific record, with __meta further describing the file of the records origin.
-    - **delete**
-	  Erases a specific document.
-    - **save**
-	  Create or overwrite a specific record. The id attribute determines the underlying file name.
-
-### __meta
-Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. In the case of a document it will contain the file attributes or Metadata attached to that doc within AWS s3, in addition to basic attributes like eTag or file size. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. _If you provide a property of your own with __meta on a record you are saving, it will be deleted or overwritten._
+----------
 
 # Configurations
 

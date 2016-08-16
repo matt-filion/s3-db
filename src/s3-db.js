@@ -34,10 +34,12 @@ module.exports = function(configuration){
     },
     drop: function(name){
       if(configuration.s3.allowDrop){
-        //TODO Fill in these guts!
+        return S3.dropBucket(name);
+
       } else {
         throw "Configuration does not allow buckets to be dropped.";
       }
+
     },
     create : function(name,tags){
       configuration.s3.bucket.prefix();
