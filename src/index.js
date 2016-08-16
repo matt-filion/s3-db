@@ -20,7 +20,7 @@ module.exports = function(_configuration){
     s3:{
       bucket: {
         prefix: function(){
-          return 's3-db.' + defaults.appname + '.' + defaults.environment + '-';
+          return 's3-db.' + configuration.appname + '.' + configuration.environment + '-';
         },
         name: function(name){
           return this.prefix() + name;
