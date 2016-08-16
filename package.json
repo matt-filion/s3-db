@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Quick and simple data storage solution. Has most CRUD operations but does't not attempt to overcome the natural limitations of S3 like querying or insert collisions.",
   "main": "dist/index.min.js",
   "homepage": "https://bitbucket.org/sexycastle/s3-db/src",
@@ -19,8 +19,7 @@
     }
   ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build" : "minify --output ./dist/index.min.js ./src/index.js ./src/s3-db.js ./src/s3-db-bucket.js ./src/s3-wrapper.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "mercurial",
