@@ -32,7 +32,8 @@ Add the requirement with your configuration.
 	  secretAccessKey: 'YOUR_AWS_SCRET_ACCESS_KEY' //Omit if in Lambda
 	});
 ```
-# <a name=api></a> API
+<a name=api></a>
+# API
 The API attempts to be as simple to understand as possible. If a function returns a promise, it is indicated with a rocket pointoing to a Q.
 
 - **s3db.** 
@@ -68,7 +69,8 @@ _Logically these are the same operations._ This does not make any attempt to kno
 ### __meta
 Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. In the case of a document it will contain the file attributes or Metadata attached to that doc within AWS s3, in addition to basic attributes like eTag or file size. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. _If you provide a property of your own with __meta on a record you are saving, it will be deleted or overwritten._
 
-# <a name=examples></a> Examples
+<a name=examples></a>
+# Examples
 
 __*IMPORTANT: CURRENTLY, a list of records is not the actual records, but pointers to the records. You will need to call get() on the specific record after you've identified the one you want from the list. Will likely be the next item to fix. Haven't decided to solve it with a proxy, or optimistic loading ([feedback](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
 ).*__
@@ -87,8 +89,7 @@ List the current buckets, choose one, and list its contents.
     	});
 ```
 
-## Create a record, load it, change it, save it, delete it.
-Clearly a very logical operation, but it demonstrates everything I want to communicate at the moment.
+Create a record, load it, change it, save it, delete it. Clearly not a very logical operation, but it demonstrates everything I want to communicate at the moment.
 
 ```javascript
 	const users = s3db.bucketOf('users');
@@ -109,8 +110,8 @@ Clearly a very logical operation, but it demonstrates everything I want to commu
 		    console.error(error.stack);
 		})
 ```
-
-# <a name=configurations></a> Configurations
+<a name=configurations></a>
+# Configurations
 
 | Name | Description | Example |
 | ------ | ------------------------------- | -------------------------------- |
