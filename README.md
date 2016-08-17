@@ -3,7 +3,7 @@ s3-db
 
 #### [Feedback Appreciated and Needed](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
 
-[API](#api) | [Examples](#examples) | [Configurations](#configurations)
+[API](#markdown-header-api) | [Examples](#markdown-header-examples) | [Configurations](#markdown-header-configurations)
 
 Quick and simple data storage solution. Has most CRUD operations but does't not attempt to overcome the natural limitations of S3 like querying or insert collisions.
 
