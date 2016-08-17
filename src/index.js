@@ -13,9 +13,9 @@ module.exports = function(_configuration){
   const configuration = {
 
     db : 's3-db',
-    appname: 'app',
-    environment: 'dev',
-    region: 'us-west-2',
+    appname: process.env.SERVERLESS_PROJECT || 'app',
+    environment: process.env.SERVERLESS_STAGE || 'dev',
+    region: process.env.SERVERLESS_REGION || 'us-west-2',
 
     s3:{
       bucket: {

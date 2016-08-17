@@ -10,7 +10,7 @@ module.exports = function(configuration){
 
   const instance = {
     bucket: function(name){
-      return new Bucket(name,S3,configuration)
+      return Q(new Bucket(name,S3,configuration))
     },
     list: function(){
       return S3.listBuckets()
@@ -35,7 +35,6 @@ module.exports = function(configuration){
     drop: function(name){
       if(configuration.s3.allowDrop){
         return S3.dropBucket(name);
-
       } else {
         throw "Configuration does not allow buckets to be dropped.";
       }
