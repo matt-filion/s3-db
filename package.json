@@ -5,11 +5,9 @@
   "main": "src/index.js",
   "homepage": "https://bitbucket.org/sexycastle/s3-db/src",
   "dependencies": {
-    "q": "^1.4.1",
-    "uuid": "^2.0.2"
+    "q": "^1.4.1"
   },
   "devDependencies": {
-    "minifier": "^0.8.0",
     "aws-sdk": "^2.5.0"
   },
   "maintainers": [

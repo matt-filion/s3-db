@@ -131,10 +131,11 @@ You can change then name of the id attribute from the default of 'id' by setting
 ```
 
 ### Generation
-By default we use https://www.npmjs.com/browse/keyword/uuid to create a unique ID that has a low chance of collision. You can change this to another function within the configuration.
+By default it uses a timestamp (new Date().getTime()) to create a unique ID that has a low chance of collision. You can change this to another function within the configuration.
 ```javascript
 	{  id : {
-	    generator : function(){..your logic here}
+	    generator : require('uuid').v4
+	    generator : require('shortid').generate
 	} }
 ```
 ### Bucket Names (advanced)

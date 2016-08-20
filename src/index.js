@@ -43,7 +43,9 @@ module.exports = function(_configuration){
     },
     id:{
       name: 'id',
-      generator: require('uuid').v4
+      generator: function(){
+        return new Date().getTime()
+      }
     }
   };
 
