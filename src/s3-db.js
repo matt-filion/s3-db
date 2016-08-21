@@ -2,17 +2,17 @@
 /**
  * S3DB behaviors, for the given configuration.
  */
-module.exports = function(configuration){
+module.exports = (configuration) => {
 
   const Q      = require('q');
   const Bucket = require('./s3-db-bucket');
-  const S3     = require('./s3-wrapper')(configuration);
+  const S3     = require('./s3-wrapper')(configuration || {});
 
   const instance = {
-    bucket: function(name){
-      return Q(new Bucket(name,S3,configuration))
+    bucket: (name) => {
+      return new Bucket(name,S3,configuration)
     },
-    list: function(){
+    list: () => {
       return S3.listBuckets()
         .then(function(results){
           var ownedBuckets = [];
@@ -32,7 +32,7 @@ module.exports = function(configuration){
           return Q(ownedBuckets);
         })
     },
-    drop: function(name){
+    drop: (name) =>{
       if(configuration.s3.allowDrop){
         return S3.dropBucket(name);
       } else {
@@ -40,10 +40,10 @@ module.exports = function(configuration){
       }
 
     },
-    create : function(name,tags){
-      configuration.s3.bucket.prefix();
-      return S3.createBucket(name)
-        .then(function(results){
+    create : (name,tags) => {
+      ;
+      return S3.createBucket(configuration.s3.bucket.prefix(name))
+        .then((results) => {
 
           if(!tags){
             tags = {};
@@ -54,10 +54,8 @@ module.exports = function(configuration){
 
           return S3.putBucketTagging(name,tags)
         })
-        .then(function(){
-          return Q(new Bucket(name,S3,configuration));
-        })
-        .fail(function(results){
+        .then(() => Q(new Bucket(name,S3,configuration)) )
+        .fail((results) => {
 
           if(results.code==='BucketAlreadyOwnedByYou'){
             return Q.reject({status:'already-exists'});
@@ -75,6 +73,7 @@ module.exports = function(configuration){
   return {
     list : instance.list,
     create : instance.create,
-    bucketOf : instance.bucket,
+    bucket : (name) => Q(instance.bucket),
+    bucketOf : instance.bucket
   }
 }

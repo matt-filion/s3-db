@@ -7,48 +7,28 @@ module.exports = function(name,_S3,_configuration){
     configuration: null,
     bucket: null,
     
-    _initialize : function(name,S3,configuration){
+    _initialize : (name,S3,configuration) => {
       instance.S3            = S3;
       instance.configuration = configuration;
       instance.bucket        = name;
     },
     
-    _consistentMeta: function(data){
+    _consistentMeta: (data) => {
 
       var meta = {}
 
-      if(data.Metadata){
-        meta = data.Metadata;
-      }
-
-      if(data.Size){
-        meta.size = data.Size;
-      }
-
-      if(data.ContentLength){
-        meta.size = data.ContentLength;
-      }
-
-      if(data.ServerSideEncryption){
-        meta.encryption = data.ServerSideEncryption;
-      }
-
-      if(data.LastModified){
-        meta.lastModified = new Date(data.LastModified);
-      }
-
-      /*
-       * Fix the stupid eTag.
-       */
-      if(data.ETag){
-        meta.eTag = data.ETag.replace(/"/g,'');
-      }
+      if(data.Metadata) meta = data.Metadata
+      if(data.Size) meta.size = data.Size
+      if(data.ContentLength) meta.size = data.ContentLength;
+      if(data.ServerSideEncryption) meta.encryption = data.ServerSideEncryption
+      if(data.LastModified) meta.lastModified = new Date(data.LastModified)
+      if(data.ETag) meta.eTag = data.ETag.replace(/"/g,'') /* Fix the stupid eTag. */
 
       return meta;
-      
+
     },
 
-    _listResponse : function(data) {
+    _listResponse : (data) => {
       
       var response = {
           hasMore :    data.IsTruncated,
@@ -57,22 +37,18 @@ module.exports = function(name,_S3,_configuration){
           results:     []
       };
 
-      if(data.Prefix){
-        response.startsWith = data.Prefix;
-      }
+      if(data.Prefix) response.startsWith = data.Prefix
 
-      data.Contents.forEach(function(record){
-        response.results.push({
-          id : record.Key,
-          get : function(){ return instance.load(record.Key) },
-          __meta : instance._consistentMeta(record)
-        })
-      });
+      response.results = data.Contents.map(record => { return {
+        id : record.Key,
+        get : () => instance.load(record.Key),
+        __meta : instance._consistentMeta(record)
+      }});
 
       return [response,data];
     },
 
-    _attachNext : function(response,data){
+    _attachNext : (response,data) => {
 
       /*
        * Simplify the gathering of the next batch of results
@@ -84,11 +60,9 @@ module.exports = function(name,_S3,_configuration){
          * TODO be nice to have a collection of some sort that will do this under the covers
          *  as its being iterated through, but not realistic for the short term.
          */
-        response.next = function(){
+        response.next = () => {
           return instance.S3.listObjects(instance.bucket,response.startsWith,data.NextContinuationToken)
-            .then(function(data){
-              return instance._listResponse(data);
-            })
+            .then( data =>  instance._listResponse(data))
             .spread(instance._attachNext);
         }
       }
@@ -101,40 +75,44 @@ module.exports = function(name,_S3,_configuration){
      *  though within the limits of s3's api, only
      *  100 at a time.
      */
-    list : function(startsWith){
+    list : (startsWith) => {
       return instance.S3.listObjects(instance.bucket,startsWith)
-        .then(function(data){
-          return instance._listResponse(data);
-        })
+        .then( data => instance._listResponse(data) )
         .spread(instance._attachNext)
     },
 
     /**
      * Loads a specific record.
      */
-    load : function(id){
+    load : (id) => {
       return instance.S3.getObject(instance.bucket,id)
-        .then(function(data){
-          var body   = data.Body.toString();
-          var record = JSON.parse(body);
+        .then((data) => {
+          var record = JSON.parse(data.Body.toString());
 
           record.__meta = instance._consistentMeta(data);
 
           return Q(record);
-        });
+        })
+        .fail( error => {
+          if(error.code==='NoSuchKey' && !instance.configuration.errorOnNotFound){
+            return Q();
+          } else {
+            return Q.reject(error);
+          }
+        })
     },
 
     /**
      * Removes the file at the specified location.
      */
-    delete : function(id){
+    delete : (id) => {
       return instance.S3.deleteObject(instance.bucket,id);
     },
 
     /**
      * Creates a new file within S3.
      */
-    save : function(record){
+    save : (record) => {
 
       var idName = instance.configuration.id.name;
       var id     = record[idName] || instance.configuration.id.generator();
@@ -150,7 +128,7 @@ module.exports = function(name,_S3,_configuration){
       delete record.__meta;
 
       return instance.S3.putObject(instance.bucket,record[idName],record)
-        .then(function(data){
+        .then((data) => {
           record.__meta = instance._consistentMeta(data);
           return Q(record); 
         })

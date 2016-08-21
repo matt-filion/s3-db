@@ -3,7 +3,7 @@
  * Entry point
  * @see https://bitbucket.org/sexycastle/s3-db/src
  */
-module.exports = function(_configuration){
+module.exports = (_configuration) => {
 
   /*
    * Set configuration defaults so that if nothing is specified we can
@@ -19,18 +19,18 @@ module.exports = function(_configuration){
 
     s3:{
       bucket: {
-        prefix: function(){
+        prefix: () => {
           return 's3-db.' + configuration.appname + '.' + configuration.environment + '-';
         },
-        name: function(name){
-          return this.prefix() + name;
+        name: (name)  => {
+          return configuration.s3.bucket.prefix() + name;
         },
-        isOwned: function(fqn){
-          return this.prefix().length === 0 || fqn.startsWith(this.prefix());
+        isOwned: (fqn) => {
+          return configuration.s3.bucket.prefix().length === 0 || fqn.startsWith(configuration.s3.bucket.prefix());
         },
-        parseName: function(fqn){
-          if(this.prefix().length > 0 ){
-            return fqn.substring(this.prefix().length);
+        parseName: (fqn) => {
+          if(configuration.s3.bucket.prefix().length > 0 ){
+            return fqn.substring(configuration.s3.bucket.prefix().length);
           } else {
             return fqn;
           }
@@ -44,7 +44,7 @@ module.exports = function(_configuration){
     id:{
       name: 'id',
       generator: function(){
-        return new Date().getTime()
+        return configuration.db + '-' + new Date().getTime()
       }
     }
   };
@@ -59,7 +59,7 @@ module.exports = function(_configuration){
     }
   }
 
-  updateAttributes(configuration,_configuration);
+  updateAttributes(configuration,_configuration || {});
 
   return require('./s3-db')(configuration);
 }

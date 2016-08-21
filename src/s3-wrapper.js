@@ -17,20 +17,24 @@ module.exports = function(configuration){
 
   const instance = {
 
-    _hasNoerror : function(defer,error,data){
-
+    _hasNoerror : (defer,error,data) => {
       if(error){
         defer.reject(error);
         return false;
       }
-
       return true;
+    },
+    
+    _handleReturnData: (defer,error,data) => {
+      if(instance._hasNoerror(defer,error,data)){
+        defer.resolve(data);
+      }
     },
 
     /**
      * 
      */
-    createBucket : function(bucket){
+    createBucket : (bucket) => {
 
       var defer  = Q.defer();
       var params = {
@@ -38,11 +42,7 @@ module.exports = function(configuration){
         ACL: 'private'
       };
 
-      s3.createBucket(params, function(error, data) {
-        if(instance._hasNoerror(defer,error,data)){
-          defer.resolve(data);
-        }
-      });
+      s3.createBucket(params, (error, data) => instance._handleReturnData(defer,error,data) );
 
       return defer.promise;
     },
@@ -52,7 +52,7 @@ module.exports = function(configuration){
      *  s3-db so we know what ones to list out when a list request
      *  is being made.
      */
-    putBucketTagging : function(bucket,tags){
+    putBucketTagging : (bucket,tags) => {
       var defer  = Q.defer();
       var params = {
         Bucket: configuration.s3.bucket.name(bucket),
@@ -68,38 +68,26 @@ module.exports = function(configuration){
         });
       }
       
-      s3.putBucketTagging(params, function(error, data) {
-        if(instance._hasNoerror(defer,error,data)){
-          defer.resolve(data);
-        }
-      });
+      s3.putBucketTagging(params, (error, data) => instance._handleReturnData(defer,error,data) );
       return defer.promise;
     },
     
-    dropBucket: function(bucket){
+    dropBucket: (bucket) => {
       var defer  = Q.defer();
       var params = {
         Bucket: configuration.s3.bucket.name(bucket)
       };
-      s3.deleteBucket(params, function(err, data) {
-        if(instance._hasNoerror(defer,error,data)){
-          defer.resolve(data);
-        }
-      });
+      s3.deleteBucket(params, (error, data) => instance._handleReturnData(defer,error,data) );
       return defer.promise;
     },
 
     /**
      * 
      */
-    listBuckets: function(){
+    listBuckets: () => {
       var defer  = Q.defer();
 
-      s3.listBuckets(function(error, data) {
-        if(instance._hasNoerror(defer,error,data)){
-          defer.resolve(data);
-        }
-      });
+      s3.listBuckets((error, data) => instance._handleReturnData(defer,error,data) );
 
       return defer.promise;
     },
@@ -107,7 +95,7 @@ module.exports = function(configuration){
     /**
      * 
      */
-    listObjects: function(bucket,startsWith,continuationToken){
+    listObjects: (bucket,startsWith,continuationToken) => {
 
       var defer  = Q.defer();
       var params = {
@@ -116,19 +104,10 @@ module.exports = function(configuration){
         MaxKeys: configuration.s3.pageSize
       };
 
-      if(startsWith){
-        params.Prefix = startsWith;
-      }
+      if(startsWith) params.Prefix = startsWith
+      if(continuationToken) params.ContinuationToken = continuationToken
 
-      if(continuationToken){
-        params.ContinuationToken = continuationToken;
-      }
-
-      s3.listObjectsV2(params, function(error, data) {
-        if(instance._hasNoerror(defer,error,data)){
-          defer.resolve(data);
-        }
-      });
+      s3.listObjectsV2(params, (error, data) => instance._handleReturnData(defer,error,data) );
 
       return defer.promise;
     },
@@ -136,12 +115,13 @@ module.exports = function(configuration){
     /**
      * 
      */
-    deleteObject : function(bucket,id){
+    deleteObject : (bucket,id) => {
       var defer  = Q.defer();
+      var params = { Bucket : configuration.s3.bucket.name(bucket), Key : id };
 
-      s3.deleteObject({ Bucket : configuration.s3.bucket.name(bucket), Key : id }, function(error, data) {
+      s3.deleteObject(params, function(error, data) {
         if(instance._hasNoerror(defer,error,data)){
-          defer.resolve(); //?
+          defer.resolve();
         }
       });
 
@@ -151,16 +131,11 @@ module.exports = function(configuration){
     /**
      * 
      */
-    getObject : function(bucket,id){
-      var defer = Q.defer();
-      
-      //TODO can this be done better with a stream/pipe?
+    getObject : (bucket,id) => {
+      var defer  = Q.defer();
+      var params = {Bucket : configuration.s3.bucket.name(bucket), Key : id};
 
-      s3.getObject({Bucket : configuration.s3.bucket.name(bucket), Key : id},function(error,data){
-        if(instance._hasNoerror(defer,error,data)){
-          defer.resolve(data);
-        }
-      })
+      s3.getObject(params, (error, data) => instance._handleReturnData(defer,error,data) )
 
       return defer.promise;
     },
@@ -168,7 +143,7 @@ module.exports = function(configuration){
     /**
      * 
      */
-    putObject : function(bucket,id,record){
+    putObject : (bucket,id,record) => {
 
       var defer   = Q.defer();
       var toWrite = JSON.stringify(record,null,configuration.s3.file.spacer);
@@ -185,15 +160,9 @@ module.exports = function(configuration){
         delete record._metadata;
       }
 
-      if(!configuration.s3.encryption===false){
-        params.ServerSideEncryption = 'AES256';
-      }
+      if(!configuration.s3.encryption===false) params.ServerSideEncryption = 'AES256'
 
-      s3.putObject(params,function(error,data){
-        if(instance._hasNoerror(defer,error,data)){
-          defer.resolve(data);
-        }
-      })
+      s3.putObject(params,(error, data) => instance._handleReturnData(defer,error,data) )
 
       return defer.promise;
     },

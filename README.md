@@ -5,7 +5,7 @@ s3-db
 
 [API](#markdown-header-api) | [Examples](#markdown-header-examples) | [Configurations](#markdown-header-configurations)
 
-Quick and simple data storage solution. Has most CRUD operations but does't not attempt to overcome the natural limitations of S3 like querying or insert collisions.
+Quick and simple data storage solution. Has all CRUD operations. Doesn't attempt to overcome  limitations of S3 like querying.
 
 _s3-db is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._ 
 
@@ -33,6 +33,33 @@ Add the requirement with your configuration.
 	});
 ```
 
+# Examples
+IMPORTANT: CURRENTLY, a list of records is not the actual records, a list of ID's. You can call get() after you've identified the one you want from the list. See https://bitbucket.org/sexycastle/s3-db/issues/4/optimistic-loading-on-list-of-records
+
+List the current buckets, choose one, and list its contents.
+```javascript
+    s3db.list()
+    	.then( results => results[0].get() ) //Select the first item from the results.
+    	.then( bucket => bucket.list() )
+    	.then( records => console.log("records",records) );
+```
+
+Create a record, load it, change it, save it, delete it. Not a very logical operation, but it demonstrates everything I want to demonstrate.
+
+```javascript
+	const users = s3db.bucketOf('users');
+	const user = {name : 'Richard Cranium'} 
+	users.save(user)
+		.then( user => users.load(user.id) )
+		.then( user => {
+			user.size = 1234;
+			user.sex = 'male';
+			return users.save(user);
+		})
+		.then( user => users.delete(user.id) )
+		.fail( error => console.error(error.stack)
+```
+
 # API
 The API attempts to be as simple to understand as possible. If a function returns a promise, it is indicated with a rocket pointoing to a Q.
 
@@ -41,7 +68,9 @@ The API attempts to be as simple to understand as possible. If a function return
 	  List of the visible buckets, for the current configuration. Within the list you can use get() to return a '**bucket**' for that specific item.
     - **create('bucketName') => Q**
 	  Creates a new '**bucket**', that will be visible to this configuration.
-    - **bucketOf('bucketName') => Q (v1.0.9)**
+    - **bucket('bucketName') => Q (v1.0.11)**
+	  Returns a specific '**bucket**' to interact with, wrapped in a promise.
+    - **bucketOf('bucketName') => **
 	  Returns a specific '**bucket**' to interact with.
 
 - **bucket.** 
@@ -55,60 +84,17 @@ The API attempts to be as simple to understand as possible. If a function return
 	  Create or overwrite a specific record. The id attribute determines the underlying file name.
 
 ## Why S3?
-Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. This does not YET take advantage of either versioning or cross region replication. Generally, this makes for a very compelling solution to a simple scenario where performance does matter.
+Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. s3-db does not YET take advantage of either versioning or cross region replication.
 
 ## I'm from SQL
 Welcome! Most everything is straight forward, think of this more as folders and files rather than tables and records. 
 
-When documentation says bucket or collection, associate it to a table.
-When documentation says record or document, associate that to a row in a table.
-
 ## Create and Update
-_Logically these are the same operations._ This does not make any attempt to know the state before the action is taken. If you specify an ID that already exists, the document will be blindly overwritten with your new record. Have to have a good naming convention for your id's or ensure you maintain a good reference. For example, if your application has an authentication service, you would store a detailed profile record in an ID that was stored on that external authentication service. This way there is nothing to figure out, just a retrieval of known data.
+_Logically these are the same operations._ s3-db does not currently make any attempt to know the state before the action is taken. See https://bitbucket.org/sexycastle/s3-db/issues/1/etag-collisions-on-save.
 
 ### __meta
-Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. In the case of a document it will contain the file attributes or Metadata attached to that doc within AWS s3, in addition to basic attributes like eTag or file size. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. _If you provide a property of your own with __meta on a record you are saving, it will be deleted or overwritten._
+Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. A record will contain the s3 file attributes (eTag or file size) and/or Metadata. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. _If you provide a property of your own with __meta on a record you are saving, it will be deleted or overwritten._
 
-# Examples
-
-__*IMPORTANT: CURRENTLY, a list of records is not the actual records, but pointers to the records. You will need to call get() on the specific record after you've identified the one you want from the list. Will likely be the next item to fix. Haven't decided to solve it with a proxy, or optimistic loading ([feedback](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
-).*__
-
-List the current buckets, choose one, and list its contents.
-```javascript
-    s3db.list()
-    	.then(function(results){
-    		return results[0].get()
-    	})
-    	.then(function(bucket){
-    		return bucket.list();
-    	})
-    	.then(function(records){
-    		console.log("records",records);
-    	});
-```
-
-Create a record, load it, change it, save it, delete it. Clearly not a very logical operation, but it demonstrates everything I want to communicate at the moment.
-
-```javascript
-	const users = s3db.bucketOf('users');
-	const user = {name : 'Richard Cranium'} 
-	users.save(user)
-		.then(function(user){
-			return users.load(user.id)
-		})
-		.then(function(user){
-			user.size = 1234;
-			user.sex = 'male';
-			return users.save(user);
-		})
-		.then(function(user){
-		    return users.delete(user.id);
-		})
-		.fail(function(error){
-		    console.error(error.stack);
-		})
-```
 
 # Configurations
 
@@ -121,6 +107,7 @@ Create a record, load it, change it, save it, delete it. Clearly not a very logi
 | s3.pageSize | Determines how many results will be returned, by default, for each list request on a bucket of records. The default value is 100. A value larger than 1000 will be ignored and likely result in a cap of 1000, since AWS imposes that limit. | { s3 : { pageSize : 100 } } |
 | s3.allowDrop |  **To avoid accidental loss of data the default configuration does not allow buckets to be deleted.** To enable dropping of buckets through the API. | { s3 : { allowDrop: true } } |
 | s3.file.spacer | By default each file is saved unformatted. If you want to add formatting (done via JSON.stringify) you need to pass in a spacing pattern. The below example will format each new indentation with a single tab. | { s3 : { file : { spacer: '\t' } } } |
+| errorOnNotFound | Default value is false. If set, when a bucket or record is not found, the request will reject the promise | ```javascript {errorOnNotFound:true} ``` |
 
 ## ID's (advanced)
 
