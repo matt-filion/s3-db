@@ -24,13 +24,16 @@ Add the dependency.
 Add the requirement with your configuration.
 
 ```javascript
-    const s3db = require('s3-db')({
-	  appname: 'app',
-	  environment: 'dev',
-	  region: 'us-west-2', //Omit if in Lambda and want to use Lambda's region
-	  accessKeyId: 'YOUR_AWS_ACCESS_KEY_ID', //Omit if in Lambda
-	  secretAccessKey: 'YOUR_AWS_SCRET_ACCESS_KEY' //Omit if in Lambda
-	});
+   //For use within lambda (or serverless v1+), shortcut of just appname.
+   const s3db = require('s3-db')('YOUR_APPNAME'); 
+   //For non Lambda scenarios.
+   const s3db = require('s3-db')({
+      appname: 'YOUR_APPNAME',
+	  region: 'us-west-2',
+	  accessKeyId: 'YOUR_AWS_ACCESS_KEY_ID',
+	  secretAccessKey: 'YOUR_AWS_SCRET_ACCESS_KEY'
+   });    
+    
 ```
 
 # Examples
@@ -101,7 +104,7 @@ Each record returned will have a \_\_meta attribute added to it which will conta
 | Name | Description | Example |
 | ------ | ------------------------------- | -------------------------------- |
 | appname | Used in naming to keep your application unique. The default needs to be overridden. | { appname : 'app' } |
-| environment | Used in naming to keep your application unique. The default needs to be overridden. | { environment : 'dev' } |
+| environment | Used in naming to keep your application unique. Defaulted to process.env.AWS_LAMBDA_FUNCTION_VERSION for lambda, otherwise 'dev'. | { environment : 'dev' } |
 | AWS credentials |  If you are not running this in an environment where AWS picks up your credentials automatically then you can set your access id and secret access key on the s3 object of the configuration. | { accessKeyId : 'YOUR ACCES ID', secretAccessKey : 'YOUR ACCESS KEY' } |
 | region |  The default region is looked up in the environment at process.env.AWS\_REGION and then process.env.AWS\_DEFAULT_REGION (default in AWS Lambda). This can be overridden in the configuration within s3 via the region attribute. | {region : 'us-west2'} |
 | s3.pageSize | Determines how many results will be returned, by default, for each list request on a bucket of records. The default value is 100. A value larger than 1000 will be ignored and likely result in a cap of 1000, since AWS imposes that limit. | { s3 : { pageSize : 100 } } |
@@ -134,7 +137,7 @@ To change it you can provide a new function in the configuration.
 
 ```javascript
 	{ s3: { bucket : {
-	      prefix: function(){
+	      prefix: () => {
 	      	... your logic here
 	}  }  }  }
 ```
@@ -146,13 +149,13 @@ If you need a more complex name than the above or have pre-existing names you wa
 
 ```javascript
 	{ s3: { bucket : {
-	      name: function(name){
+	      name: (name) => {
 	      	 return this.prefix() + name;
 	      },
-	      isOwned: function(fqn){
+	      isOwned: (fqn) => {
 	      	 return this.prefix().length === 0 || fqn.startsWith(this.prefix());
 	      },
-	      parseName: function(fqn) {
+	      parseName: (fqn) => {
 	        if(this.prefix().length > 0 ){
 	          return fqn.substring(this.prefix().length);
 	        } else {

@@ -15,7 +15,7 @@ module.exports = (_configuration) => {
     db : 's3-db',
     appname: 'app',
     environment: process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev',
-    region: process.env.AWS_LAMBDA_DEFAULT_REGION || 'us-west-2',
+    region: process.env.AWS_DEFAULT_REGION || 'us-west-2',
 
     s3:{
       bucket: {
@@ -50,11 +50,15 @@ module.exports = (_configuration) => {
   };
 
   function updateAttributes(configuration,_configuration){
-    for(var name in _configuration) {
-      if(typeof configuration[name] === 'object') {
-        updateAttributes(configuration[name],_configuration[name]);
-      } else {
-        configuration[name] = _configuration[name];
+    if(typeof _configuration === "string") {
+      configuration.appname = _configuration;
+    } else {
+      for(var name in _configuration) {
+        if(typeof configuration[name] === 'object') {
+          updateAttributes(configuration[name],_configuration[name]);
+        } else {
+          configuration[name] = _configuration[name];
+        }
       }
     }
   }
