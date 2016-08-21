@@ -13,9 +13,9 @@ module.exports = (_configuration) => {
   const configuration = {
 
     db : 's3-db',
-    appname: process.env.SERVERLESS_PROJECT || 'app',
-    environment: process.env.SERVERLESS_STAGE || 'dev',
-    region: process.env.SERVERLESS_REGION || 'us-west-2',
+    appname: 'app',
+    environment: process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev',
+    region: process.env.AWS_LAMBDA_DEFAULT_REGION || 'us-west-2',
 
     s3:{
       bucket: {
