@@ -5,11 +5,9 @@ s3-db
 
 [API](#markdown-header-api) | [Examples](#markdown-header-examples) | [Configurations](#markdown-header-configurations)
 
-Quick and simple data storage solution. Has all CRUD operations. Doesn't attempt to overcome  limitations of S3 like querying.
+Quick and simple data storage solution. Has all CRUD operations. Doesn't attempt to overcome  limitations of S3 like querying. Uses promises. Takes advantage of AWS Lambda runtime for config defaults.
 
 _s3-db is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._ 
-
-The implementation does favor AWS Lambda runtime a bit. Not entirely purposeful but that is one of the places this makes the most sense. The exposed API makes use of promises instead of callbacks. 
 
 # Getting Started
 Install the AWS SDK, its been purposely omitted. Makes Lambda deploys smaller.
