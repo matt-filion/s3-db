@@ -152,12 +152,12 @@ Each record returned will have a \_\_meta attribute added to it which will conta
 
 | Name | Description | default | |
 | ------ | ------------------------------- | -------------------------------- |
-| appname | Used in naming to keep your application unique. The default needs to be overridden. | { appname : 'app' } |
+| appname | Used in naming to keep your application unique. The default needs to be overridden. | 'app' |
 | environment | Used in naming to keep your application unique. Defaulted to process.env.AWS_LAMBDA_FUNCTION_VERSION for lambda, otherwise 'dev'. | dev |
 | AWS credentials |  If you are not running this in an environment where AWS picks up your credentials automatically then you can set your access id and secret access key on the s3 object of the configuration. | not specified |
 | region |  The default region is looked up in the environment at process.env.AWS\_REGION and then process.env.AWS\_DEFAULT_REGION (default in AWS Lambda). This can be overridden in the configuration within s3 via the region attribute. | us-west-2 |
 | s3.pageSize | Determines how many results will be returned, by default, for each list request on a bucket of records. The default value is 100. A value larger than 1000 will be ignored and likely result in a cap of 1000, since AWS imposes that limit. | 100 |
-| s3.allowDrop |  **To avoid accidental loss of data the default configuration does not allow buckets to be deleted.** To enable dropping of buckets through the API. | false |
+| s3.allowDrop |  **To avoid accidental loss of data the default configuration does not allow buckets to be deleted.** To enable, change the value to true. | false |
 | s3.file.spacer | By default each file is saved unformatted. If you want to add formatting (done via JSON.stringify) you need to pass in a spacing pattern. The below example will format each new indentation with a single tab. |  |
 | errorOnNotFound | Default value is false. If set, when a bucket or record is not found, the request will reject the promise | false |
 | onlyUpdateOnMD5Change | Each time a record is loaded, as it is serialized an md5 value is captured. On update, before serialization is pushed to S3, the saved MD5 value of the loaded record and the current md5 values are compared. Only if they are different, will a request to S3 be made to update he object. | true |
