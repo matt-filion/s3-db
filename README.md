@@ -34,6 +34,57 @@ Add the requirement with your configuration.
     
 ```
 
+# S3 Permissions
+
+### IAM Role
+
+```javascript
+
+	{
+        "Action": [
+            "s3:ListBucket",
+            "s3:ListAllMyBuckets",
+            "s3:CreateBucket",
+            "s3:PutBucketTagging",
+            "s3:DeleteBucket",
+            "s3:ListObject",
+            "s3:DeleteObject",
+            "s3:GetObject",
+            "s3:PutObject"
+        ],
+        "Resource": "arn:aws:s3:::s3-db*",
+        "Effect": "Allow"
+    }
+
+```
+
+### serverless.yml
+This will give s3-db to manage and create buckets that begin with the name s3-db, which is a configured
+ default for the start of the name.
+```yml
+
+	provider:
+	  name: aws
+	  runtime: nodejs4.3
+	  iamRoleStatements:
+	    -  Effect: "Allow"
+	       Action:
+	         - "s3:ListBucket"
+	         - "s3:ListAllMyBuckets"
+	         - "s3:CreateBucket"
+	         - "s3:PutBucketTagging"
+	         - "s3:DeleteBucket"
+	         - "s3:ListObject"
+	         - "s3:DeleteObject"
+	         - "s3:GetObject"
+	         - "s3:PutObject"
+	       Resource:
+	         Fn::Join:
+	           - ""
+	           - - "arn:aws:s3:::s3-db*"
+
+```
+
 # Examples
 IMPORTANT: CURRENTLY, a list of records is not the actual records, a list of ID's. You can call get() after you've identified the one you want from the list. See https://bitbucket.org/sexycastle/s3-db/issues/4/optimistic-loading-on-list-of-records
 
