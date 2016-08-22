@@ -62,11 +62,11 @@ module.exports = (_configuration) => {
       }
     }
   }
+  
+  //TODO Validation
 
   updateAttributes(configuration,_configuration || {});
   
-  console.log("configuration",configuration);
-
   return require('./s3-db')(configuration);
 }
 

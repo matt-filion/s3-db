@@ -42,7 +42,7 @@ module.exports = (configuration) => {
     },
     create : (name,tags) => {
       ;
-      return S3.createBucket(configuration.s3.bucket.prefix(name))
+      return S3.createBucket(name)
         .then((results) => {
 
           if(!tags){
