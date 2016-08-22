@@ -150,9 +150,9 @@ Each record returned will have a \_\_meta attribute added to it which will conta
 
 # Configurations
 
-| Name | Description | default | |
+| Name | Description | default |
 | ------ | ------------------------------- | -------------------------------- |
-| appname | Used in naming to keep your application unique. The default needs to be overridden. | 'app' |
+| appname | Used in naming to keep your application unique. The default needs to be overridden. | app |
 | environment | Used in naming to keep your application unique. Defaulted to process.env.AWS_LAMBDA_FUNCTION_VERSION for lambda, otherwise 'dev'. | dev |
 | AWS credentials |  If you are not running this in an environment where AWS picks up your credentials automatically then you can set your access id and secret access key on the s3 object of the configuration. | not specified |
 | region |  The default region is looked up in the environment at process.env.AWS\_REGION and then process.env.AWS\_DEFAULT_REGION (default in AWS Lambda). This can be overridden in the configuration within s3 via the region attribute. | us-west-2 |

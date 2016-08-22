@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Quick and simple data storage solution. Has all CRUD operations. Doesn't attempt to overcome  limitations of S3 like querying.",
   "main": "src/index.js",
   "homepage": "https://bitbucket.org/sexycastle/s3-db/src",
