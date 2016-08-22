@@ -14,7 +14,7 @@ module.exports = (_configuration) => {
 
     db : 's3-db',
     appname: 'app',
-    environment: process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev',
+    environment: (process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev').replace(/\$/g,""),
     region: process.env.AWS_DEFAULT_REGION || 'us-west-2',
 
     s3:{
@@ -64,8 +64,9 @@ module.exports = (_configuration) => {
   }
 
   updateAttributes(configuration,_configuration || {});
+  
+  console.log("configuration",configuration);
 
   return require('./s3-db')(configuration);
 }
-
 
