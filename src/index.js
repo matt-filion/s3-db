@@ -14,7 +14,7 @@ module.exports = (_configuration) => {
 
     db : 's3-db',
     appname: 'app',
-    environment: (process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev').replace(/\$/g,""),
+    environment: (process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev').replace(/\$/g,"").toLowerCase(),
     region: process.env.AWS_DEFAULT_REGION || 'us-west-2',
 
     s3:{
