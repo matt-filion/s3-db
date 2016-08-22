@@ -16,7 +16,9 @@ module.exports = (_configuration) => {
     appname: 'app',
     environment: (process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev').replace(/\$/g,"").toLowerCase(),
     region: process.env.AWS_DEFAULT_REGION || 'us-west-2',
-
+    onlyUpdateOnMD5Change: true,
+    collideOnETagMissmatch: false,
+    collideOnMD5Missmatch: false,
     s3:{
       bucket: {
         prefix: () => {

@@ -7,6 +7,7 @@
  */
 module.exports = function(configuration){
 
+  const crypto          = require('crypto');
   const AWS             = require('aws-sdk');
   const Q               = require('q');
   const region          = configuration.region || process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION;
@@ -30,7 +31,7 @@ module.exports = function(configuration){
         defer.resolve(data);
       }
     },
-
+    
     /**
      * 
      */
@@ -120,10 +121,22 @@ module.exports = function(configuration){
       var params = { Bucket : configuration.s3.bucket.name(bucket), Key : id };
 
       s3.deleteObject(params, function(error, data) {
-        if(instance._hasNoerror(defer,error,data)){
+        if(instance._hasNoerror(defer, error, data)){
           defer.resolve();
         }
       });
+
+      return defer.promise;
+    },
+    
+    /**
+     * 
+     */
+    headObject : (bucket,id) => {
+      var defer  = Q.defer();
+      var params = {Bucket : configuration.s3.bucket.name(bucket), Key : id};
+      
+      s3.headObject(params, (error, data) => instance._handleReturnData(defer,error,data));
 
       return defer.promise;
     },
@@ -143,25 +156,26 @@ module.exports = function(configuration){
     /**
      * 
      */
-    putObject : (bucket,id,record) => {
+    putObject : (bucket,id,toWrite,metadata) => {
 
-      var defer   = Q.defer();
-      var toWrite = JSON.stringify(record,null,configuration.s3.file.spacer);
-      var params  = {
+      var defer  = Q.defer();
+      var params = {
         Bucket : configuration.s3.bucket.name(bucket),
         Key : id,
         ContentType: 'application/json',
         ContentLength: toWrite.length,
-        Body : toWrite
+        Body : toWrite,
       };
       
-      if(record._metadata){
-        params.Metadata = record._metadata;
-        delete record._metadata;
+      if(metadata){
+        params.Metadata = metadata;
+        if(metadata.md5) {
+          params.ContentMD5 = metadata.md5;
+        }
       }
 
       if(!configuration.s3.encryption===false) params.ServerSideEncryption = 'AES256'
-
+      
       s3.putObject(params,(error, data) => instance._handleReturnData(defer,error,data) )
 
       return defer.promise;
@@ -175,10 +189,12 @@ module.exports = function(configuration){
     putBucketTagging: instance.putBucketTagging,
     dropBucket: instance.dropBucket,
     
+    getObjectSignature: instance.getObjectSignature,
     getObject: instance.getObject,
     deleteObject: instance.deleteObject,
     putObject: instance.putObject,
-    listObjects: instance.listObjects
+    listObjects: instance.listObjects,
+    headObject: instance.headObject
   }
   
 }
