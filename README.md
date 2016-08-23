@@ -9,8 +9,10 @@ Quick and simple database solution. Has all CRUD operations. Doesn't attempt to 
 
 _s3-db is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._
 
-## Latest Update <==
-Recently added a few more API's onto the returned records to allow easier promise chainging. No need to keep track of the bucket, as long as you have the record you will be able to .save(), .reload() or .delete() it.
+## Latest Update v1.0.19 <==
+Recently added a few more API's onto the returned records to allow easier promise chaining. No need to keep track of the bucket, as long as you have the record you will be able to .save(), .reload() or .delete() it.
+
+record.list()_ for a list of records now returns an array decorated with an attribute hasMore, and optionally, a function next(). The next function will get the next records if there is more. This is an API breakage. No more object being returned with the contents within a 'results' attribute. Just an array you can immediately use.
 
 ## Why S3?
 Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. s3-db does not YET take advantage of either versioning or cross region replication. Its a pretty compelling database solution for a lot of application scenarios.
