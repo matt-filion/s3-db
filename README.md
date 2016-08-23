@@ -3,7 +3,7 @@ s3-db
 
 #### [Feedback Appreciated and Needed](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
 
-[API](#markdown-header-api) | [Examples](#markdown-header-examples) | [Configurations](#markdown-header-configurations)
+[API](#api) | [Examples](#examples) | [Configurations](#configurations)
 
 Quick and simple data storage solution. Has all CRUD operations. Doesn't attempt to overcome  limitations of S3 like querying. Uses promises. Takes advantage of AWS Lambda runtime for config defaults.
 
@@ -122,7 +122,7 @@ The API attempts to be as simple to understand as possible. If a function return
 	  Creates a new '**bucket**', that will be visible to this configuration.
     - **bucket('bucketName') => Q (v1.0.11)**
 	  Returns a specific '**bucket**' to interact with, wrapped in a promise.
-    - **bucketOf('bucketName') => **
+    - **bucketOf('bucketName') =>**
 	  Returns a specific '**bucket**' to interact with.
 
 - **bucket.** 
