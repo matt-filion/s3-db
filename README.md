@@ -136,6 +136,7 @@ The API attempts to be as simple to understand as possible. If a function return
     - **bucketOf('bucketName') =>**
 	  Returns a specific '**bucket**' to interact with.
 
+
 - **bucket.** 
     - **list('startsWith') => Q** 
 	  List of references pointing to the records within the bucket. Within a list, you can use hasNext and next() to get the next batch of records, if there are any. 
@@ -145,7 +146,8 @@ The API attempts to be as simple to understand as possible. If a function return
 	  Erases a specific record.
     - **save({id:'xxx',...}) => Q**
 	  Create or overwrite a specific record. The id attribute determines the underlying file name. If omitted, an id is generated.
-	  
+
+
 - **{records}. (v1.0.19)**
     - **reload() => Q (v1.0.19)**
 	  Reloads this record from S3.
