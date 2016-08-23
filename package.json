@@ -1,9 +1,10 @@
 {
   "name": "s3-db",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Quick and simple database solution powered by S3. Has all CRUD operations. Doesn't attempt to overcome limitations of S3, like querying. Uses promises. Takes advantage of AWS Lambda runtime.",
   "main": "src/index.js",
   "homepage": "https://bitbucket.org/sexycastle/s3-db/src",
+  "author":"Matt Filion <matt.filion@gmail.com>",
   "dependencies": {
     "q": "^1.4.1"
   },
@@ -16,12 +17,21 @@
       "email": "matt.filion@gmail.com"
     }
   ],
+  "contributors": [
+    {
+      "name": "Matt Filion",
+      "email": "matt.filion@gmail.com"
+    }
+  ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "mercurial",
     "url": "https://bitbucket.org/sexycastle/s3-db/src"
+  },
+  "bugs" : {
+    "url": "https://bitbucket.org/sexycastle/s3-db/issues"
   },
   "author": {
     "name": "Matt Filion",
@@ -36,13 +46,12 @@
     }
   ],
   "keywords": [
-    "database",
+    "aws",
+    "aws s3",
     "s3",
-    "sds",
+    "database",
     "db",
-    "datastore",
     "s3 database",
     "s3 db",
-    "s3 datastore"
   ]
 }
