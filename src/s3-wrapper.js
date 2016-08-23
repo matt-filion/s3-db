@@ -39,7 +39,7 @@ module.exports = function(configuration){
 
       var defer  = Q.defer();
       var params = {
-        Bucket: configuration.s3.bucket.name(bucket), /* required */
+        Bucket: configuration.bucket.name(bucket), /* required */
         ACL: 'private'
       };
 
@@ -56,7 +56,7 @@ module.exports = function(configuration){
     putBucketTagging : (bucket,tags) => {
       var defer  = Q.defer();
       var params = {
-        Bucket: configuration.s3.bucket.name(bucket),
+        Bucket: configuration.bucket.name(bucket),
         Tagging: { 
           TagSet: [] 
         }
@@ -70,13 +70,14 @@ module.exports = function(configuration){
       }
       
       s3.putBucketTagging(params, (error, data) => instance._handleReturnData(defer,error,data) );
+
       return defer.promise;
     },
     
     dropBucket: (bucket) => {
       var defer  = Q.defer();
       var params = {
-        Bucket: configuration.s3.bucket.name(bucket)
+        Bucket: configuration.bucket.name(bucket)
       };
       s3.deleteBucket(params, (error, data) => instance._handleReturnData(defer,error,data) );
       return defer.promise;
@@ -100,9 +101,9 @@ module.exports = function(configuration){
 
       var defer  = Q.defer();
       var params = {
-        Bucket : configuration.s3.bucket.name(bucket),
+        Bucket : configuration.bucket.name(bucket),
         FetchOwner: false,
-        MaxKeys: configuration.s3.pageSize
+        MaxKeys: configuration.pageSize
       };
 
       if(startsWith) params.Prefix = startsWith
@@ -118,7 +119,7 @@ module.exports = function(configuration){
      */
     deleteObject : (bucket,id) => {
       var defer  = Q.defer();
-      var params = { Bucket : configuration.s3.bucket.name(bucket), Key : id };
+      var params = { Bucket : configuration.bucket.name(bucket), Key : id };
 
       s3.deleteObject(params, function(error, data) {
         if(instance._hasNoerror(defer, error, data)){
@@ -134,7 +135,7 @@ module.exports = function(configuration){
      */
     headObject : (bucket,id) => {
       var defer  = Q.defer();
-      var params = {Bucket : configuration.s3.bucket.name(bucket), Key : id};
+      var params = {Bucket : configuration.bucket.name(bucket), Key : id};
       
       s3.headObject(params, (error, data) => instance._handleReturnData(defer,error,data));
 
@@ -146,7 +147,7 @@ module.exports = function(configuration){
      */
     getObject : (bucket,id) => {
       var defer  = Q.defer();
-      var params = {Bucket : configuration.s3.bucket.name(bucket), Key : id};
+      var params = {Bucket : configuration.bucket.name(bucket), Key : id};
 
       s3.getObject(params, (error, data) => instance._handleReturnData(defer,error,data) )
 
@@ -160,7 +161,7 @@ module.exports = function(configuration){
 
       var defer  = Q.defer();
       var params = {
-        Bucket : configuration.s3.bucket.name(bucket),
+        Bucket : configuration.bucket.name(bucket),
         Key : id,
         ContentType: 'application/json',
         ContentLength: toWrite.length,
@@ -174,7 +175,7 @@ module.exports = function(configuration){
         }
       }
 
-      if(!configuration.s3.encryption===false) params.ServerSideEncryption = 'AES256'
+      if(configuration.encryption) params.ServerSideEncryption = 'AES256'
       
       s3.putObject(params,(error, data) => instance._handleReturnData(defer,error,data) )
 

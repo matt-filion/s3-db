@@ -7,30 +7,25 @@ const configuration = {
   region: 'us-west-2',
   collideOnETagMissmatch:true,
   collideOnMD5Missmatch:true,
-  s3:{
-    bucket: {
-      prefix: () => {
-        return 's3-db.' + configuration.appname + '.' + configuration.environment + '-';
-      },
-      name: (name)  => {
-        return configuration.s3.bucket.prefix() + name;
-      },
-      isOwned: (fqn) => {
-        return configuration.s3.bucket.prefix().length === 0 || fqn.startsWith(configuration.s3.bucket.prefix());
-      },
-      parseName: (fqn) => {
-        if(configuration.s3.bucket.prefix().length > 0 ){
-          return fqn.substring(configuration.s3.bucket.prefix().length);
-        } else {
-          return fqn;
-        }
+  bucket: {
+    prefix: () => {
+      return 's3-db.' + configuration.appname + '.' + configuration.environment + '-';
+    },
+    name: (name)  => {
+      return configuration.bucket.prefix() + name;
+    },
+    isOwned: (fqn) => {
+      return configuration.bucket.prefix().length === 0 || fqn.startsWith(configuration.bucket.prefix());
+    },
+    parseName: (fqn) => {
+      if(configuration.bucket.prefix().length > 0 ){
+        return fqn.substring(configuration.bucket.prefix().length);
+      } else {
+        return fqn;
       }
-    },
-    file: {
-      spacer : null
-    },
-    pageSize : 100
+    }
   },
+  pageSize : 100,
   id:{
     name: 'id',
     generator: function(){

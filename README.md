@@ -1,19 +1,26 @@
 s3-db
 ======
 
-#### [Feedback Appreciated and Needed](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
+#### [Feedback Appreciated and Needed <==](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
 
 [API](#api) | [Examples](#examples) | [Configurations](#configurations)
 
-Quick and simple data storage solution. Has all CRUD operations. Doesn't attempt to overcome  limitations of S3 like querying. Uses promises. Takes advantage of AWS Lambda runtime for config defaults.
+Quick and simple database solution. Has all CRUD operations. Doesn't attempt to overcome the limitations of S3 like querying. Uses promises. Takes advantage of AWS Lambda runtime.
 
-_s3-db is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._ 
+_s3-db is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._
+
+## Latest Update <==
+Recently added a few more API's onto the returned records to allow easier promise chainging. No need to keep track of the bucket, as long as you have the record you will be able to .save(), .reload() or .delete() it.
+
+## Why S3?
+Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. s3-db does not YET take advantage of either versioning or cross region replication. Its a pretty compelling database solution for a lot of application scenarios.
 
 # Getting Started
-Install the AWS SDK, its been purposely omitted. Makes Lambda deploys smaller.
+Install the AWS SDK, its been purposely omitted. Makes AWS Lambda deploys smaller.
 ```javascript
     npm install aws-sdk --save-dev
 ```
+
 Add the dependency.
 ```javascript
 	npm install s3-db --save
@@ -34,9 +41,9 @@ Add the requirement with your configuration.
     
 ```
 
-# S3 Permissions
+Add Permissions, 
 
-### IAM Role
+_AWS Policy example._
 
 ```javascript
 
@@ -46,7 +53,6 @@ Add the requirement with your configuration.
             "s3:ListAllMyBuckets",
             "s3:CreateBucket",
             "s3:PutBucketTagging",
-            "s3:DeleteBucket",
             "s3:ListObject",
             "s3:DeleteObject",
             "s3:GetObject",
@@ -58,7 +64,7 @@ Add the requirement with your configuration.
 
 ```
 
-### serverless.yml
+_Serverless.com serverless.yml example_
 This will give s3-db to manage and create buckets that begin with the name s3-db, which is a configured
  default for the start of the name.
 ```yml
@@ -73,7 +79,6 @@ This will give s3-db to manage and create buckets that begin with the name s3-db
 	         - "s3:ListAllMyBuckets"
 	         - "s3:CreateBucket"
 	         - "s3:PutBucketTagging"
-	         - "s3:DeleteBucket"
 	         - "s3:ListObject"
 	         - "s3:DeleteObject"
 	         - "s3:GetObject"
@@ -86,38 +91,44 @@ This will give s3-db to manage and create buckets that begin with the name s3-db
 ```
 
 # Examples
-IMPORTANT: CURRENTLY, a list of records is not the actual records, a list of ID's. You can call get() after you've identified the one you want from the list. See https://bitbucket.org/sexycastle/s3-db/issues/4/optimistic-loading-on-list-of-records
-
-List the current buckets, choose one, and list its contents.
+List the current buckets, choose one, and list its contents. 
 ```javascript
     s3db.list()
-    	.then( results => results[0].get() ) //Select the first item from the results.
+    	.then( results => results[0] ) //Select the first item from the results.
     	.then( bucket => bucket.list() )
     	.then( records => console.log("records",records) );
+    	.then( record => { record.attribute=true; return record;} );
+    	.then( record => record.save() );
 ```
 
 Create a record, load it, change it, save it, delete it. Not a very logical operation, but it demonstrates everything I want to demonstrate.
 
 ```javascript
-	const users = s3db.bucketOf('users');
 	const user = {name : 'Richard Cranium'} 
-	users.save(user)
-		.then( user => users.load(user.id) )
+	s3db.bucketOf('users')
+		.save(user)
 		.then( user => {
 			user.size = 1234;
 			user.sex = 'male';
-			return users.save(user);
+			return user;
 		})
+		.then( user => users.save() )
+		.then( user => {
+			user.size = 122345;
+			user.sex = 'female';
+			return user;
+		})
+		.then( user => users.reload() )
 		.then( user => users.delete(user.id) )
-		.fail( error => console.error(error.stack)
+		.fail( error => console.error(error.stack) )
 ```
 
 # API
 The API attempts to be as simple to understand as possible. If a function returns a promise, it is indicated with a rocket pointoing to a Q.
 
 - **s3db.** 
-    * **list() => Q**
-	  List of the visible buckets, for the current configuration. Within the list you can use get() to return a '**bucket**' for that specific item.
+    - **list() => Q**
+	  List of the visible buckets, for the current configuration.
     - **create('bucketName') => Q**
 	  Creates a new '**bucket**', that will be visible to this configuration.
     - **bucket('bucketName') => Q (v1.0.11)**
@@ -127,26 +138,24 @@ The API attempts to be as simple to understand as possible. If a function return
 
 - **bucket.** 
     - **list('startsWith') => Q** 
-	  List of references pointing to the records within the bucket. Within a list, you can use next() to get the next back of records. You can also use get() to return a specific record in the list.
+	  List of references pointing to the records within the bucket. Within a list, you can use hasNext and next() to get the next batch of records, if there are any. 
     - **load(id) => Q**
-	  A specific record, with __meta further describing the file of the records origin.
+	  A specific record.
     - **delete(id) => Q**
-	  Erases a specific document.
+	  Erases a specific record.
     - **save({id:'xxx',...}) => Q**
-	  Create or overwrite a specific record. The id attribute determines the underlying file name.
-
-## Why S3?
-Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. s3-db does not YET take advantage of either versioning or cross region replication.
-
-## I'm from SQL
-Welcome! Most everything is straight forward, think of this more as folders and files rather than tables and records. 
+	  Create or overwrite a specific record. The id attribute determines the underlying file name. If omitted, an id is generated.
+	  
+- **{records}. (v1.0.19)**
+    - **reload() => Q (v1.0.19)**
+	  Reloads this record from S3.
+    - **delete() => Q (v1.0.19)**
+	  Erases this record.
+    - **save() => Q (v1.0.19)**
+	  Saves this record.
 
 ## Create and Update
-_Logically these are the same operations._ s3-db does not currently make any attempt to know the state before the action is taken. See https://bitbucket.org/sexycastle/s3-db/issues/1/etag-collisions-on-save.
-
-### __meta
-Each record returned will have a \_\_meta attribute added to it which will contain extra properties that are specific to that document or bucket. A record will contain the s3 file attributes (eTag or file size) and/or Metadata. Similarly for a bucket, it will contain the tags. It is safe to reference this data, the __meta name is used to avoid naming collisions. _If you provide a property of your own with __meta on a record you are saving, it will be deleted or overwritten._
-
+_Logically these are the same operations._ If you enable collideOnMissmatch, then a failure can be caught when the underlying record has changed. See configuration for details.
 
 # Configurations
 
@@ -156,13 +165,13 @@ Each record returned will have a \_\_meta attribute added to it which will conta
 | environment | Used in naming to keep your application unique. Defaulted to process.env.AWS_LAMBDA_FUNCTION_VERSION for lambda, otherwise 'dev'. | dev |
 | AWS credentials |  If you are not running this in an environment where AWS picks up your credentials automatically then you can set your access id and secret access key on the s3 object of the configuration. | not specified |
 | region |  The default region is looked up in the environment at process.env.AWS\_REGION and then process.env.AWS\_DEFAULT_REGION (default in AWS Lambda). This can be overridden in the configuration within s3 via the region attribute. | us-west-2 |
-| s3.pageSize | Determines how many results will be returned, by default, for each list request on a bucket of records. The default value is 100. A value larger than 1000 will be ignored and likely result in a cap of 1000, since AWS imposes that limit. | 100 |
-| s3.allowDrop |  **To avoid accidental loss of data the default configuration does not allow buckets to be deleted.** To enable, change the value to true. | false |
-| s3.file.spacer | By default each file is saved unformatted. If you want to add formatting (done via JSON.stringify) you need to pass in a spacing pattern. The below example will format each new indentation with a single tab. |  |
+| pageSize | Determines how many results will be returned, by default, for each list request on a bucket of records. The default value is 100. A value larger than 1000 will be ignored and likely result in a cap of 1000, since AWS imposes that limit. | 100 |
+| allowDrop |  **To avoid accidental loss of data the default configuration does not allow buckets to be deleted.** To enable, change the value to true, you will also need to make sure that your user has the S3 permission "s3:DeleteBucket". | false |
 | errorOnNotFound | Default value is false. If set, when a bucket or record is not found, the request will reject the promise | false |
 | onlyUpdateOnMD5Change | Each time a record is loaded, as it is serialized an md5 value is captured. On update, before serialization is pushed to S3, the saved MD5 value of the loaded record and the current md5 values are compared. Only if they are different, will a request to S3 be made to update he object. | true |
-| collideOnETagMissmatch | Before a save is executed, a headObject request is done to see if the eTag on the record has been modified since it was loaded. If it has, then the promise is rejected. The head check comes at a performance cost of the save operation, since a request must be made to S3 for the metInformation. Though it is not as high as getObject. | false |
-| collideOnMD5Missmatch | Before a save is executed, a headObject request is done to see if the md5 on the record has been modified since it was loaded. If it has, then the promise is rejected. The head check comes at a performance cost of the save operation, since a request must be made to S3 for the metInformation. Though it is not as high as getObject. | false |
+| collideOnMissmatch | Before a save is executed, a headObject request is done to see if the eTag on the record has been modified, and if the md5 is different, since it was loaded. If either are different, then the promise is rejected. The head check comes at a performance cost of the save operation, since a request must be made to S3 for the metInformation. Though it is not as high as getObject. | false |
+| encryption | If you want to enable AES256 encryption for at rest storage of your docs | false |
+
 
 ## ID's (advanced)
 
@@ -188,10 +197,10 @@ To keep bucket names unique, the name for each bucket created will have the appn
 To change it you can provide a new function in the configuration.
 
 ```javascript
-	{ s3: { bucket : {
+	{ bucket : {
 	      prefix: () => {
 	      	... your logic here
-	}  }  }  }
+	}  }  }
 ```
 
 If you need a more complex name than the above or have pre-existing names you want to filter out that mistakenly match, you have 3 other functions that you can override. 
@@ -200,7 +209,7 @@ If you need a more complex name than the above or have pre-existing names you wa
 - parseName(fqn), should pull out the specific bucket/table/collection name of records that your application references.
 
 ```javascript
-	{ s3: { bucket : {
+	{ bucket : {
 	      name: (name) => {
 	      	 return this.prefix() + name;
 	      },
@@ -213,6 +222,6 @@ If you need a more complex name than the above or have pre-existing names you wa
 	        } else {
 	          return fqn;
 	        }
-	}  }  }  }
+	}  }  }
 ```
 
