@@ -35,12 +35,12 @@ module.exports = function(configuration){
     /**
      * 
      */
-    createBucket : (bucket) => {
+    createBucket : (bucket,acl) => {
 
       var defer  = Q.defer();
       var params = {
         Bucket: configuration.bucket.name(bucket), /* required */
-        ACL: 'private'
+        ACL: acl || 'private'
       };
 
       s3.createBucket(params, (error, data) => instance._handleReturnData(defer,error,data) );
@@ -70,6 +70,21 @@ module.exports = function(configuration){
       }
       
       s3.putBucketTagging(params, (error, data) => instance._handleReturnData(defer,error,data) );
+
+      return defer.promise;
+    },
+    
+    /*
+     * Tags are used to track what buckets were created by
+     *  s3-db so we know what ones to list out when a list request
+     *  is being made.
+     */
+    getBucketTagging : (bucket) => {
+      var defer  = Q.defer();
+      var params = {
+        Bucket: configuration.bucket.name(bucket)
+      };
+      s3.getBucketTagging(params, (error, data) => instance._handleReturnData(defer,error,data) );
 
       return defer.promise;
     },
@@ -188,6 +203,7 @@ module.exports = function(configuration){
     listBuckets: instance.listBuckets,
     createBucket: instance.createBucket,
     putBucketTagging: instance.putBucketTagging,
+    getBucketTagging: instance.getBucketTagging,
     dropBucket: instance.dropBucket,
     
     getObjectSignature: instance.getObjectSignature,

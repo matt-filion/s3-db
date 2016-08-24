@@ -3,35 +3,37 @@ s3-db
 
 #### [Feedback Appreciated and Needed <==](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
 
-[API](#api) | [Examples](#examples) | [Configurations](#configurations)
+[API](#api) | [Examples](#examples) | [Permissions](#permissions) | [Configurations](#configurations) | [Release Notes](#release-notes)
 
 Quick and simple database solution. Has all CRUD operations. Doesn't attempt to overcome the limitations of S3 like querying. Uses promises. Takes advantage of AWS Lambda runtime.
 
 _s3-db is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._
 
-## Latest Update v1.0.19 <==
-Recently added a few more API's onto the returned records to allow easier promise chaining. No need to keep track of the bucket, as long as you have the record you will be able to .save(), .reload() or .delete() it.
+## Latest Update v1.0.21 <==
+_API breakage_ again. Previously you could use s3db.bucketOf to get a bucket, and it would return a bucket which could be acted upon rather than a promise. Its no longer possible to do it this way. The configuration for the bucket must be loaded when the bucket is loaded.
 
-record.list()_ for a list of records now returns an array decorated with an attribute hasMore, and optionally, a function next(). The next function will get the next records if there is more. This is an API breakage. No more object being returned with the contents within a 'results' attribute. Just an array you can immediately use.
+You can now specify a settings object when creating a bucket. See [API](#api) for details. The summary configuration can give you access to additional fields beyond record id when calling list(). Also gives you access to .summary() which can be used to get summary record information, for scenarios when your record data can take a long time to load but only require a few attributes of information.  
+
+A protection was also added to save, for records that are loaded from a list, so that list items don't end up overwriting the fully populated record. 
 
 ## Why S3?
 Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. s3-db does not YET take advantage of either versioning or cross region replication. Its a pretty compelling database solution for a lot of application scenarios.
 
 # Getting Started
-Install the AWS SDK, its been purposely omitted. Makes AWS Lambda deploys smaller.
+Install the **AWS SDK**, its been purposely omitted.
 ```javascript
     npm install aws-sdk --save-dev
 ```
 
-Add the dependency.
+Add the **dependency**.
 ```javascript
 	npm install s3-db --save
 ```
 
-Add the requirement with your configuration.
+Add the requirement with your **[configuration](#configurations)**.
 
 ```javascript
-   //For use within lambda (or serverless v1+), shortcut of just appname.
+   //For use within lambda (or serverless v1+)
    const s3db = require('s3-db')('YOUR_APPNAME'); 
    //For non Lambda scenarios.
    const s3db = require('s3-db')({
@@ -43,7 +45,76 @@ Add the requirement with your configuration.
     
 ```
 
-Add Permissions, 
+Finally, add the appropriate **[permissions](#permissions)** to the role or user. See the [permissions](#permissions) section below for what is required..
+
+# Examples
+Create a record, load it, change it, save it, delete it. Not a very logical operation, but it demonstrates everything I want to demonstrate.
+
+```javascript
+	const user = {name : 'Richard Cranium'} 
+	s3db.bucketOf('users')
+		.save(user)
+		.then( user => {
+			user.size = 1234;
+			user.sex = 'male';
+			return user;
+		})
+		.then( user => users.save() )
+		.then( user => {
+			user.size = 122345;
+			user.sex = 'female';
+			return user;
+		})
+		.then( user => users.reload() )
+		.then( user => users.delete(user.id) )
+		.fail( error => console.error(error.stack) )
+```
+
+# API
+The API attempts to be as simple to understand as possible.
+
+- **s3db.** 
+    - **list(startsWith)**
+	  List of the visible buckets.
+    - **create('bucketName',configuration)**
+	  Creates a new '**bucket**'. The table below outlines the possible configuration attributes.
+        | Name | Description | default |
+        | ------ | ------------------------------- | -------------------------------- |
+        | visibility | A direct map to the bucket ACL value. Possible values are private, public-read, public-read-write and authenticated-read. | private |
+        | summary | Allows you to specify a few basic type (number, string boolean), root level attributes of a record. These records will then be loaded when .list() or .summary() is called on a bucket. | undefined |
+    - **bucket('bucketName') (v1.0.11)**
+	  Returns a specific '**bucket**' to interact with, wrapped in a promise.
+    - **bucketOf('bucketName')**
+	  Returns a specific '**bucket**' to interact with.
+    - **delete('bucketName') || delete('bucketName') Q(v1.0.21)**
+	  Deletes a specific '**bucket**', if the configuration allows an all records have been removed.
+
+
+- **bucket.** 
+    - **list('startsWith')** 
+	  List of references pointing to the records within the bucket. Within a list, you can use hasNext and next() to get the next batch of records, if there are any. 
+    - **load(id)**
+	  A specific record.
+    - **delete(id)**
+	  Erases a specific record.
+    - **save({id:'xxx',...})**
+	  Create or overwrite a specific record. The id attribute determines the underlying file name. If omitted, an id is generated.
+    - **summary(id) (v1.0.21)**
+	  Returns the configured summary data for a record.
+
+
+- **{record}. (v1.0.19)**
+    - **reload() (v1.0.19)**
+	  Reloads this record from S3.
+    - **delete() (v1.0.19)**
+	  Erases this record.
+    - **save() (v1.0.19)**
+	  Saves this record.
+
+## Create and Update
+_Logically these are the same operations._ If you enable collideOnMissmatch, then a failure can be caught when the underlying record has changed. See configuration for details.
+
+# Permissions
 
 _AWS Policy example._
 
@@ -91,75 +162,6 @@ This will give s3-db to manage and create buckets that begin with the name s3-db
 	           - - "arn:aws:s3:::s3-db*"
 
 ```
-
-# Examples
-List the current buckets, choose one, and list its contents. 
-```javascript
-    s3db.list()
-    	.then( results => results[0] ) //Select the first item from the results.
-    	.then( bucket => bucket.list() )
-    	.then( records => console.log("records",records) );
-    	.then( record => { record.attribute=true; return record;} );
-    	.then( record => record.save() );
-```
-
-Create a record, load it, change it, save it, delete it. Not a very logical operation, but it demonstrates everything I want to demonstrate.
-
-```javascript
-	const user = {name : 'Richard Cranium'} 
-	s3db.bucketOf('users')
-		.save(user)
-		.then( user => {
-			user.size = 1234;
-			user.sex = 'male';
-			return user;
-		})
-		.then( user => users.save() )
-		.then( user => {
-			user.size = 122345;
-			user.sex = 'female';
-			return user;
-		})
-		.then( user => users.reload() )
-		.then( user => users.delete(user.id) )
-		.fail( error => console.error(error.stack) )
-```
-
-# API
-The API attempts to be as simple to understand as possible. If a function returns a promise, it is indicated with a rocket pointoing to a Q.
-
-- **s3db.** 
-    - **list() => Q**
-	  List of the visible buckets, for the current configuration.
-    - **create('bucketName') => Q**
-	  Creates a new '**bucket**', that will be visible to this configuration.
-    - **bucket('bucketName') => Q (v1.0.11)**
-	  Returns a specific '**bucket**' to interact with, wrapped in a promise.
-    - **bucketOf('bucketName') =>**
-	  Returns a specific '**bucket**' to interact with.
-
-
-- **bucket.** 
-    - **list('startsWith') => Q** 
-	  List of references pointing to the records within the bucket. Within a list, you can use hasNext and next() to get the next batch of records, if there are any. 
-    - **load(id) => Q**
-	  A specific record.
-    - **delete(id) => Q**
-	  Erases a specific record.
-    - **save({id:'xxx',...}) => Q**
-	  Create or overwrite a specific record. The id attribute determines the underlying file name. If omitted, an id is generated.
-
-
-- **{records}. (v1.0.19)**
-    - **reload() => Q (v1.0.19)**
-	  Reloads this record from S3.
-    - **delete() => Q (v1.0.19)**
-	  Erases this record.
-    - **save() => Q (v1.0.19)**
-	  Saves this record.
-
-## Create and Update
-_Logically these are the same operations._ If you enable collideOnMissmatch, then a failure can be caught when the underlying record has changed. See configuration for details.
 
 # Configurations
 
@@ -229,3 +231,9 @@ If you need a more complex name than the above or have pre-existing names you wa
 	}  }  }
 ```
 
+# Release Notes
+
+## Update v1.0.19
+Recently added a few more API's onto the returned records to allow easier promise chaining. No need to keep track of the bucket, as long as you have the record you will be able to .save(), .reload() or .delete() it.
+
+record.list()_ for a list of records now returns an array decorated with an attribute hasMore, and optionally, a function next(). The next function will get the next records if there is more. This is an _API breakage_. No more object being returned with the contents within a 'results' attribute. Just an array you can immediately use.

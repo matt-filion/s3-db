@@ -6,6 +6,8 @@ module.exports = {
 
   METANAME : '__s3db',
   
+  LIST_MARKER : 'origin',
+  
   serialize : (record) => JSON.stringify(record),
   
   deserialize : (serialized) => JSON.parse(serialized),
@@ -44,11 +46,30 @@ module.exports = {
     return module.exports.decorate(record,data);
   },
   
+  getOrigin : record => {
+    if(record[module.exports.METANAME]){
+      return record[module.exports.METANAME].origin;
+    }
+    return undefined;
+  },
+  
+  setOrigin : (record,originName) => {
+    if(record[module.exports.METANAME]){
+      record[module.exports.METANAME].origin = originName;
+    } else {
+      Object.defineProperty(record, module.exports.METANAME, {value:{metadata:{},origin:originName},writable:true});
+    }
+    
+    return record;
+  },
+  
   parseMeta: (data) => {
 
     var meta = {}
 
     if(data.Metadata) meta = data.Metadata
+
+    if(data.LIST_MARKER) meta.LIST_MARKER = data.LIST_MARKER
     if(data.Size) meta.size = data.Size
     if(data.StorageClass) meta.storageClass = data.StorageClass
     if(data.ContentLength) meta.size = data.ContentLength;
@@ -65,8 +86,9 @@ module.exports = {
     var metadata        = {};
     
     if(record[module.exports.METANAME] && record[module.exports.METANAME].metadata) {
+
       metadata = record[module.exports.METANAME].metadata;
-      
+
       /*
        * Overwrite existing metadata information
        *  with new values.
