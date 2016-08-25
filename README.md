@@ -77,16 +77,14 @@ The API attempts to be as simple to understand as possible.
     - **list(startsWith)**
 	  List of the visible buckets.
     - **create('bucketName',configuration)**
-	  Creates a new '**bucket**'. The table below outlines the possible configuration attributes.
-      
-     ```javascript
-
-      
+	  Creates a new '**bucket**'. The table below outlines the possible configuration attributes. ```
       {
-		visibility:'private',// A direct map to the bucket ACL value. Possible values are private, public-read, public-read-write and authenticated-read.
+
+		visibility:'private', // A direct map to the bucket ACL value. Possible values are private, public-read, public-read-write and authenticated-read.
+
 		summary: ['name','age'] // Allows you to specify a few basic type (number, string boolean), root level attributes of a record. These records will then be loaded when .list() or .summary() is called on a bucket.
+
       }
-      
       ```
     - **bucket('bucketName') (v1.0.11)**
 	  Returns a specific '**bucket**' to interact with, wrapped in a promise.
