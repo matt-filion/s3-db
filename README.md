@@ -78,7 +78,9 @@ The API attempts to be as simple to understand as possible.
 	  List of the visible buckets.
     - **create('bucketName',configuration)**
 	  Creates a new '**bucket**'. The table below outlines the possible configuration attributes.
-      ```javascript
+      
+     ```javascript
+
       
       {
 		visibility:'private',// A direct map to the bucket ACL value. Possible values are private, public-read, public-read-write and authenticated-read.
