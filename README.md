@@ -3,16 +3,14 @@ s3-db
 
 #### [Feedback Appreciated and Needed <==](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
 
-[API](#api) | [Examples](#examples) | [Configurations](#configurations)
+[API](#api) | [Examples](#examples) | [Performance](#performance)| [Configurations](#configurations)
 
 Quick and simple database solution. Has all CRUD operations. Doesn't attempt to overcome the limitations of S3 like querying. Uses promises. Takes advantage of AWS Lambda runtime.
 
 _s3-db is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._
 
-## Latest Update v1.0.19 <==
-Recently added a few more API's onto the returned records to allow easier promise chaining. No need to keep track of the bucket, as long as you have the record you will be able to .save(), .reload() or .delete() it.
-
-record.list()_ for a list of records now returns an array decorated with an attribute hasMore, and optionally, a function next(). The next function will get the next records if there is more. This is an API breakage. No more object being returned with the contents within a 'results' attribute. Just an array you can immediately use.
+## Latest Update v1.0.21 <==
+Removing Q dependency in favor of ES6 built in promises which is what the AWS SDK will also fall back on. Shrinks the deployed size slightly. Also removed test folder and moved into a separate project (not yet committed) to a repository.) Executed some performance tests to get an idea for general code performance on a remote machine vs. lambda for very small file sizes. 
 
 ## Why S3?
 Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. s3-db does not YET take advantage of either versioning or cross region replication. Its a pretty compelling database solution for a lot of application scenarios.
@@ -161,6 +159,45 @@ The API attempts to be as simple to understand as possible. If a function return
 ## Create and Update
 _Logically these are the same operations._ If you enable collideOnMissmatch, then a failure can be caught when the underlying record has changed. See configuration for details.
 
+# Performance
+Some basic performance tests were done against bucket operations both remotely (North San Diego going to us-west-2) and within a Lambda function in the same region as the S3 bucket. The test code is available for anyone who is curious. Each test was run twice. It worth noting that the document size could dramatically affect the performance you encounter. These tests are admittedly primitive and aimed more to determine the performance of the s3-db code itself. More comprehensive tests will be done in the future for loading and saving of larger documents.
+
+### 25 delete requests, of invalid records. bucket.delete() 
+| Environment | Average | Median | Total | 
+| -------- | ---- | ---- | ---- | 
+| Remote | 298.92 | 218 | 7486.5 |
+| Lambda | 37.82 | 29 | 945.5 |
+
+### 25 load requests, of the same document. bucket.load()
+| Environment | Average | Median | Total | 
+| -------- | ---- | ---- | ---- | 
+| Remote | 221.5 | 215 | 5537.5 |
+| Lambda | 28.4 | 22 | 710 |
+
+### 25 save requests, of unique documents each time. bucket.save()
+| Environment | Average | Median | Total | 
+| -------- | ---- | ---- | ---- | 
+| Remote | 221.5 | 215 | 6140.5 |
+| Lambda | 59.14 | 40.5 | 1478.5 |
+
+### 25 list requests, # of record pointers returned was between 70 and 100
+| Environment | Average | Median | Total | 
+| -------- | ---- | ---- | ---- | 
+| Remote | 309.5 | 306.5 | 7747 | 
+| Lambda | 58.8 | 50 | 1472 | 
+
+### Load every document on a bucket.list() request via .get() on each record
+| Environment | # of docs | Total Time| Average | 
+| -------- | ---- | ---- | ---- | 
+| Remote | 85.5 | 21701.5 | 256.5 | 
+| Lambda | 98 | 3280.5 | 33.6 | 
+
+### CRUD chain save(), modify, save(), reload(), delete()
+| Environment | Average Total Time| 
+| -------- | -------- | 
+| Remote | 1369.5 | 
+| Lambda | 226 | 
+        
 # Configurations
 
 | Name | Description | default |
@@ -229,3 +266,9 @@ If you need a more complex name than the above or have pre-existing names you wa
 	}  }  }
 ```
 
+# Release Notes
+
+## Latest Update v1.0.19
+Recently added a few more API's onto the returned records to allow easier promise chaining. No need to keep track of the bucket, as long as you have the record you will be able to .save(), .reload() or .delete() it.
+
+record.list()_ for a list of records now returns an array decorated with an attribute hasMore, and optionally, a function next(). The next function will get the next records if there is more. This is an API breakage. No more object being returned with the contents within a 'results' attribute. Just an array you can immediately use.

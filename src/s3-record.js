@@ -1,3 +1,4 @@
+'use strict'
 /**
  * Wraps around each record returned to add on 
  *  syntantcial sugar and s3db properties.
@@ -71,9 +72,9 @@ module.exports = {
        * Overwrite existing metadata information
        *  with new values.
        */
-      for( var name in metadataToApply) {
+      Object.keys(metadataToApply).forEach(name => {
         metadata[name] = metadataToApply[name];
-      }
+      })
 
     } else {
       metadata = metadataToApply;

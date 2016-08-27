@@ -1,8 +1,7 @@
-  
+'use strict'  
 module.exports = function(name,_S3,_configuration) {
 
   const METANAME      = '__s3db';
-  const Q             = require('q');
   const crypto        = require('crypto');
   const S3DBRecord    = require('./s3-record');
   const S3            = _S3;
@@ -65,11 +64,11 @@ module.exports = function(name,_S3,_configuration) {
           record.reload = () => instance.load(record.id)
           return record;
         })
-        .fail( error => {
+        .catch( error => {
           if(error.code==='NoSuchKey' && !configuration.errorOnNotFound){
-            return Q();
+            return Promise.resolve();
           } else {
-            return Q.reject(error);
+            return Promise.reject(error);
           }
         })
     },
@@ -94,12 +93,12 @@ module.exports = function(name,_S3,_configuration) {
         return S3.headObject(instance.bucket,record[idName])
           .then( head => {
             if(S3DBRecord.hasSourceChanged(record,head)){
-              return Q.reject('Collision, the document has been modified.');
+              return Promise.reject('Collision, the document has been modified.');
             }
-            return Q([instance.bucket,record[idName],record]);
+            return Promise.resolve({bucket:instance.bucket,id:record[idName],record:record});
           })
       } else {
-        return Q([instance.bucket,record[idName],record]);
+        return Promise.resolve({bucket:instance.bucket,id:record[idName],record:record});
       }
     },
     
@@ -109,7 +108,7 @@ module.exports = function(name,_S3,_configuration) {
     save : (record) => {
       
       if(!record){
-        return Q.reject("Cannot save undefined or null objects.");
+        return Promise.reject("Cannot save undefined or null objects.");
       }
       
       /*
@@ -117,12 +116,16 @@ module.exports = function(name,_S3,_configuration) {
        *  do not bother doing an update at S3.
        */
       if(configuration.onlyUpdateOnMD5Change && S3DBRecord.isModified(record)) {
-        return Q(record);
+        return Promise.resolve(record);
 
       } else {
         
         return instance._isModified(record)
-          .spread( (bucket,id,record) => {
+          .then( responseWrapper => {
+            
+            var bucket = responseWrapper.bucket;
+            var id     = responseWrapper.id;
+            var record = responseWrapper.record;
 
             //TODO add other tags from the record if they should be available
             // during head, and can we use head for list with a postitive performance
@@ -139,9 +142,9 @@ module.exports = function(name,_S3,_configuration) {
              */
             S3DBRecord.decorate(record,{Body:toWrite})
             
-            return Q([bucket,id,toWrite,metaData])
+            return Promise.resolve({bucket:bucket,id:id,toWrite:toWrite,metaData:metaData})
           })
-          .spread(S3.putObject)
+          .then( wrapper => S3.putObject(wrapper.bucket,wrapper.id,wrapper.toWrite,wrapper.metaData))
           .then( data => S3DBRecord.decorate(record,data) )
           .then( record => {
             record.save   = () => instance.save(record)

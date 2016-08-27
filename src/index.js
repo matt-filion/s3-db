@@ -1,4 +1,4 @@
-
+'use strict'
 /**
  * Entry point
  * @see https://bitbucket.org/sexycastle/s3-db/src
