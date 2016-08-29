@@ -61,12 +61,22 @@ module.exports = function(name,_S3,_configuration) {
        /*
         * Remove all of the duplicate IDs.
         */
-        ids.reduce( (accumulator,current,index,array) => {
-          if(accumulator.indexOf(current)==-1){
-            accumulator.push(current);
-          }
-          return accumulator;
-        },[])
+        ids
+          .map(id => {
+            if(id === 'object') {
+              var idName = configuration.id.name;
+              if(id[idName]) {
+                return id[idName];
+              }
+            }
+            return id;
+          })
+          .reduce( (accumulator,current,index,array) => {
+            if(accumulator.indexOf(current)==-1){
+              accumulator.push(current);
+            }
+            return accumulator;
+          },[])
         /*
          * Creates a promise, that catches any errors, which
          *  is necessary with Promise.all's fail fast behavior. Otherwise
