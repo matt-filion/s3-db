@@ -51,11 +51,44 @@ module.exports = function(name,_S3,_configuration) {
       return S3.listObjects(instance.bucket,startsWith)
         .then( data => instance._listResponse(data) )
     },
+    
+    /**
+     * Loads all of the ID's identified.
+     */
+    loadAll: ids => {
+      
+     var promises =
+       /*
+        * Remove all of the duplicate IDs.
+        */
+        ids.reduce( (accumulator,current,index,array) => {
+          if(accumulator.indexOf(current)==-1){
+            accumulator.push(current);
+          }
+          return accumulator;
+        },[])
+        /*
+         * Creates a promise, that catches any errors, which
+         *  is necessary with Promise.all's fail fast behavior. Otherwise
+         *  documents that are not found will cause no documents to load
+         *  at all. 
+         */
+        .map( id => instance.load(id).catch(e => Promise.resolve()) )
+      
+      return Promise.all( promises )
+        .then(results => {
+          /*
+           * The filter will remove the 'undefined'
+           *  results for documents that were not found.
+           */
+          return results.filter( item => item)
+        })
+    },
 
     /**
      * Loads a specific record.
      */
-    load : (id) => {
+    load : id => {
       return S3.getObject(instance.bucket,id)
         .then( data => S3DBRecord.newRecord(data))
         .then( record => {
@@ -163,6 +196,7 @@ module.exports = function(name,_S3,_configuration) {
     name: name,
     list: instance.list,
     load: instance.load,
+    loadAll: instance.loadAll,
     delete: instance.delete,
     save: instance.save
   }

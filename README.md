@@ -9,8 +9,8 @@ Quick and simple database solution. Has all CRUD operations. Doesn't attempt to 
 
 _s3-db is not intended to be a replacement for any sort of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at the simple scenarios where select and CRUD operations are by an ID (key), and transactional integrity will be handled externally, if its needed._
 
-## Latest Update v1.0.21 <==
-Removing Q dependency in favor of ES6 built in promises which is what the AWS SDK will also fall back on. Shrinks the deployed size slightly. Also removed test folder and moved into a separate project (not yet committed) to a repository.) Executed some performance tests to get an idea for general code performance on a remote machine vs. lambda for very small file sizes. 
+## Latest Update v1.0.22 <==
+Added .loadAll([]) onto the bucket. This will make loading a collection of documents a touch easier. It uses Promise to load all of the documents in parallel. You could run into system or resource constraints loading to many documents at the same time. Please provide feedback if you encounter this and I'll add in some batching.
 
 ## Why S3?
 Basically, S3 is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, cross region replication and versioning. s3-db does not YET take advantage of either versioning or cross region replication. Its a pretty compelling database solution for a lot of application scenarios.
@@ -141,7 +141,9 @@ The API attempts to be as simple to understand as possible. If a function return
     - **list('startsWith') => Q** 
 	  List of references pointing to the records within the bucket. Within a list, you can use hasNext and next() to get the next batch of records, if there are any. 
     - **load(id) => Q**
-	  A specific record.
+	  A specific record. 
+    - **loadAll([]) => Q**
+	  Loads each of the documents requested.
     - **delete(id) => Q**
 	  Erases a specific record.
     - **save({id:'xxx',...}) => Q**
@@ -267,6 +269,10 @@ If you need a more complex name than the above or have pre-existing names you wa
 ```
 
 # Release Notes
+
+
+## Latest Update v1.0.21
+Removing Q dependency in favor of ES6 built in promises which is what the AWS SDK will also fall back on. Shrinks the deployed size slightly. Also removed test folder and moved into a separate project (not yet committed) to a repository.) Executed some performance tests to get an idea for general code performance on a remote machine vs. lambda for very small file sizes. 
 
 ## Latest Update v1.0.19
 Recently added a few more API's onto the returned records to allow easier promise chaining. No need to keep track of the bucket, as long as you have the record you will be able to .save(), .reload() or .delete() it.
