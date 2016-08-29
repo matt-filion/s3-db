@@ -23,8 +23,10 @@ module.exports = {
      *  overwritten. So if the MD5 on the __meta of the current record
      *  matches the target MD5, the underlying object is likely not
      *  modified.
+     *  
+     * Md5 does not always get returned.
      */
-    if(targetMetaData.md5 !== record[module.exports.METANAME].metadata.md5){
+    if(targetMetaData.md5 && targetMetaData.md5 !== record[module.exports.METANAME].metadata.md5){
       return true;
     }
     

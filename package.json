@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "1.0.22",
+  "version": "1.0.23",
   "description": "Quick and simple database solution powered by S3. Has all CRUD operations. Doesn't attempt to overcome limitations of S3, like querying. Uses promises. Takes advantage of AWS Lambda runtime.",
   "main": "src/index.js",
   "homepage": "https://bitbucket.org/sexycastle/s3-db/src",
