@@ -1,22 +1,36 @@
-'use strict'  
+'use strict'
 module.exports = function(name,_S3,_configuration) {
 
   const METANAME      = '__s3db';
-  const crypto        = require('crypto');
   const S3DBRecord    = require('./s3-record');
   const S3            = _S3;
   const configuration = _configuration;
   const instance = {
-    _initialize : (name) => {
+
+    _initialize: name => {
       instance.bucket = name;
     },
-    _listResponse : (data) => {
-      
-      var results = data.Contents
+
+    _handleError: error => {
+      if(error.code==='NoSuchBucket'){
+        return Promise.reject(`${configuration.bucket.name(instance.bucket)} is not a valid bucket or is not visible/accssible.`);
+
+      } else if(error.code==='NoSuchKey' && !configuration.errorOnNotFound){
+        return Promise.resolve();
+
+      } else {
+        return Promise.reject(error);
+
+      }
+    },
+
+    _listResponse: data => {
+
+      const results = data.Contents
         .map(record => S3DBRecord.decorate({ id : record.Key },record))
         .map(record => {record.get = () => instance.load(record.id); return record} )
 
-      var metadata = {
+      const metadata = {
         hasMore :          data.IsTruncated,
         batchSize:         data.MaxKeys,
         resultCount:       data.KeyCount,
@@ -32,13 +46,10 @@ module.exports = function(name,_S3,_configuration) {
       results.hasMore = metadata.hasMore;
 
       if(results.hasMore) {
-        results.next = () => {
-          return S3.listObjects(instance.bucket,results[METANAME].metadata.startsWith,results[METANAME].metadata.continuationToken)
+        results.next = () => S3.listObjects(instance.bucket,results[METANAME].metadata.startsWith,results[METANAME].metadata.continuationToken)
             .then( data => instance._listResponse(data))
-        }
       }
 
-      
       return results;
     },
 
@@ -47,17 +58,16 @@ module.exports = function(name,_S3,_configuration) {
      *  though within the limits of s3's api, only
      *  100 at a time.
      */
-    list : (startsWith) => {
-      return S3.listObjects(instance.bucket,startsWith)
-        .then( data => instance._listResponse(data) )
-    },
-    
+    list: (startsWith) => S3.listObjects(instance.bucket,startsWith)
+      .then( data => instance._listResponse(data) )
+      .catch( instance._handleError ),
+
     /**
      * Loads all of the ID's identified.
      */
     loadAll: ids => {
-      
-     var promises =
+
+     const promises =
        /*
         * Remove all of the duplicate IDs.
         */
@@ -81,10 +91,10 @@ module.exports = function(name,_S3,_configuration) {
          * Creates a promise, that catches any errors, which
          *  is necessary with Promise.all's fail fast behavior. Otherwise
          *  documents that are not found will cause no documents to load
-         *  at all. 
+         *  at all.
          */
         .map( id => instance.load(id).catch(e => Promise.resolve()) )
-      
+
       return Promise.all( promises )
         .then(results => {
           /*
@@ -98,35 +108,25 @@ module.exports = function(name,_S3,_configuration) {
     /**
      * Loads a specific record.
      */
-    load : id => {
-      return S3.getObject(instance.bucket,id)
-        .then( data => S3DBRecord.newRecord(data))
-        .then( record => {
-          record.save   = () => instance.save(record)
-          record.delete = () => instance.delete(record.id)
-          record.reload = () => instance.load(record.id)
-          return record;
-        })
-        .catch( error => {
-          if(error.code==='NoSuchKey' && !configuration.errorOnNotFound){
-            return Promise.resolve();
-          } else {
-            return Promise.reject(error);
-          }
-        })
-    },
+    load: id => S3.getObject(instance.bucket,id)
+      .then( data => S3DBRecord.newRecord(data))
+      .then( record => {
+        record.save   = () => instance.save(record)
+        record.delete = () => instance.delete(record.id)
+        record.reload = () => instance.load(record.id)
+        return record;
+      })
+      .catch( instance._handleError ),
 
     /**
      * Removes the file at the specified location.
      */
-    delete : (id) => {
-      return S3.deleteObject(instance.bucket,id);
-    },
-    
+    delete: (id) => S3.deleteObject(instance.bucket,id).catch( instance._handleError ),
+
     _isModified : (record) => {
-      
-      var idName = configuration.id.name;
-      var id     = record[idName] || configuration.id.generator();
+
+      const idName = configuration.id.name;
+      const id     = record[idName] || configuration.id.generator();
 
       if(!record[idName]){
         record[idName] = id;
@@ -144,47 +144,40 @@ module.exports = function(name,_S3,_configuration) {
         return Promise.resolve({bucket:instance.bucket,id:record[idName],record:record});
       }
     },
-    
+
     /**
      * Creates a new file within S3.
      */
-    save : (record) => {
-      
-      if(!record){
-        return Promise.reject("Cannot save undefined or null objects.");
-      }
-      
+    save: (record) => {
+
+      if(!record) return Promise.reject("Cannot save undefined or null objects.");
+
       /*
-       * If the MD5 of the object to write has not changed, then 
+       * If the MD5 of the object to write has not changed, then
        *  do not bother doing an update at S3.
        */
       if(configuration.onlyUpdateOnMD5Change && S3DBRecord.isModified(record)) {
         return Promise.resolve(record);
 
       } else {
-        
+
         return instance._isModified(record)
           .then( responseWrapper => {
-            
-            var bucket = responseWrapper.bucket;
-            var id     = responseWrapper.id;
-            var record = responseWrapper.record;
 
-            //TODO add other tags from the record if they should be available
-            // during head, and can we use head for list with a postitive performance
-            // increase?
-            
-            var toWrite  = S3DBRecord.serialize(record);
-            var metaData = {
+            const bucket   = responseWrapper.bucket;
+            const id       = responseWrapper.id;
+            const record   = responseWrapper.record;
+            const toWrite  = S3DBRecord.serialize(record);
+            const metaData = {
               md5 : S3DBRecord.signature(toWrite)
             }
 
             /*
-             * Update the metadata on the record before saving, since 
+             * Update the metadata on the record before saving, since
              *  this is where we have the data.
              */
             S3DBRecord.decorate(record,{Body:toWrite})
-            
+
             return Promise.resolve({bucket:bucket,id:id,toWrite:toWrite,metaData:metaData})
           })
           .then( wrapper => S3.putObject(wrapper.bucket,wrapper.id,wrapper.toWrite,wrapper.metaData))
@@ -195,13 +188,13 @@ module.exports = function(name,_S3,_configuration) {
             record.reload = () => instance.load(record.id)
             return record;
           })
-          
+          .catch( instance._handleError )
       }
     }
   }
-  
+
   instance._initialize(name);
- 
+
   return {
     name: name,
     list: instance.list,
