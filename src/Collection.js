@@ -1,10 +1,22 @@
 'use strict'
-module.exports = function(name,_S3,_configuration) {
+
+/*
+
+        if(!tags){ tags = {}; }
+
+        tags['s3-db']             = configuration.appname;
+        tags['s3-db.environment'] = configuration.environment;
+
+        return S3.putBucketTagging(name,tags)
+*/
+module.exports = function(name,configuration,provider,Document) {
+
+  if(!configuration) throw new Error("A configuration must be supplied.");
+  if(!configuration.db) throw new Error("A configuration must have a value defined for 'db'.");
+  if(!provider) throw new Error("No provider was supplied, this object will have nothing to act upon.");
+  if(!Collection) throw new Error("The Collection class is required.");
 
   const METANAME      = '__s3db';
-  const S3DBRecord    = require('./s3-record');
-  const S3            = _S3;
-  const configuration = _configuration;
   const instance = {
 
     _initialize: name => {
@@ -196,11 +208,10 @@ module.exports = function(name,_S3,_configuration) {
   instance._initialize(name);
 
   return {
-    name: name,
-    list: instance.list,
-    load: instance.load,
-    loadAll: instance.loadAll,
-    delete: instance.delete,
-    save: instance.save
+    getName: name,
+    findOne: instance.load,
+    findStartingWith: instance.list,
+    deleteOne: instance.delete,
+    replaceOne: instance.save
   }
 }
