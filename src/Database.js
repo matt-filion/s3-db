@@ -30,6 +30,7 @@ module.exports = function(configuration,provider,Collection,Document) {
         .map( collection => configuration.collection.parseName( collection ) )
       ),
     dropCollection: name => configuration.allowDrop ? provider.dropCollection(name) : Promise.reject("Configuration does not allow collections to be dropped."),
+    /* Future proofing. Eventaully add configurations onto the bucket itself to determine id generation and serialization policies. */
     getCollection: name => Promise.resolve(new Collection(name, configuration, provider, Document)),
     createCollection: name => provider.createCollection(name)
       .then( results => new Collection(name, configuration, provider, Document) )
