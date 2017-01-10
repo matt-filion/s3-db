@@ -16,8 +16,8 @@ s3-db is not intended to be a replacement for anything in the ballpark of enterp
 Install dependencies and the s3-db module.
 
 ```
-    npm install aws-sdk --save-dev
-    npm install s3-db --save
+npm install aws-sdk --save-dev
+npm install s3-db --save
 ```
 
 Assuming your execution environment is [Lambda](https://aws.amazon.com/lambda/), or you have [AWS CLI](https://aws.amazon.com/cli/) configured locally (with all [AWS S3](https://aws.amazon.com/s3) permissions), just use it! Quick example of getting a user and setting the age on it. *If you do not have either of those, check out the [Configuration](./docs/Configuration.md) or [Examples](./docs/Examples.md) page*.
