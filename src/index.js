@@ -1,13 +1,11 @@
 'use strict';
 
+const Common = require('./lib/Common');
+
 /**
  * @see https://www.npmjs.com/package/s3-db
  */
-module.exports = (overrides) => {
-
-  const Common = require('./lib/Common');
-
-  /*
+module.exports = (overrides) => {  /*
    * @see https://bitbucket.org/sexycastle/s3-db/docs/Configuration.md
    */
   const configuration = {
