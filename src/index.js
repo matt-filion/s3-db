@@ -20,7 +20,7 @@ module.exports = (overrides) => {
        */
       region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
     },
-    environment: (process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev').replace(/\$/g,"").toLowerCase(),
+    environment: (process.env.STAGE || process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev').replace(/\$/g,"").toLowerCase(),
     onlyUpdateOnMD5Change: true,
     collideOnMissmatch: true,
     pageSize: 100,

@@ -32,19 +32,19 @@
     }
   ],
   "files": [
-    "docs/README.md",
+    "README.md",
     "docs/Configuration.md",
     "docs/Examples.md",
     "docs/Performance.md",
+    "spec/TesCollection.js",
+    "spec/TestDatabase.js",
+    "spec/TestIndex.js",
     "src/index.js",
     "src/Collection.js",
     "src/Database.js",
     "src/Document.js",
     "src/lib/AWSProvider.js",
-    "src/lib/Common.js",
-    "spec/TesCollection.js",
-    "spec/TestDatabase.js",
-    "spec/TestIndex.js"
+    "src/lib/Common.js"
   ],
   "repository": {
     "type": "mercurial",

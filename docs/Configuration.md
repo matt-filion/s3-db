@@ -9,7 +9,7 @@ There is also a lot of potential for friendly usage along side of [serverless.co
 | Name |        Description      | default |
 | ------ | ------------------------------------------- | ----- |
 | db | Used in naming to keep your allocated buckets uniquely grouped to different application spaces. | process.env.S3DB_NAME or 's3-db' |
-| environment | Keeps different application environments unique from one another. | process.env.AWS_LAMBDA_FUNCTION_VERSION or 'dev' |
+| environment | Keeps different application environments unique from one another. | process.env.STAGE or process.env.AWS_LAMBDA_FUNCTION_VERSION or 'dev' |
 | pageSize | Determines how many results will be returned when calling on a collection find(). A value larger than 1000 will be ignored and likely result in a cap of 1000, since AWS imposes that limit. | 100 |
 | allowDrop | A code restriction keeping Database.deleteCollection(). You will also need to make sure that your user has the S3 permission "s3:DeleteBucket". | false |
 | errorOnNotFound | Allows you to receive a Promise.reject instead of empty Promise.resolve when a document is not found. | false |
