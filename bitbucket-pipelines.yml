@@ -5,8 +5,8 @@ pipelines:
       - step:
           script:
             - apt-get install mercurial
-            - printf "//registry.npmjs.org/:_authToken=$NPM_TOKEN\n" >> ~/.npmrc
-            - echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN"
+            - printf "//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n" >> ~/.npmrc
+            - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}"
             - npm --version
             - npm install
             - npm test
@@ -16,7 +16,7 @@ pipelines:
     - step:
         script:
           - apt-get install mercurial
-          - printf "//registry.npmjs.org/:_authToken=$NPM_TOKEN\n" >> ~/.npmrc
+          - printf "//registry.npmjs.org/:_authToken=${NPM_TOKEN}\n" >> ~/.npmrc
           - npm --version
           - npm install
           - npm test
