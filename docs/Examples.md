@@ -1,4 +1,4 @@
-## [Main Docs](../README.md)
+## [Main Docs](./README.md)
 
 
 # [Serverless.com](http://serverless.com)
