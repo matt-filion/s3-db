@@ -1,4 +1,4 @@
-## [Main Docs](../README.md)
+## [Main Docs](./README.md)
 
 # Performance
 Some basic performance tests were done against bucket operations both remotely (North San Diego going to us-west-2) and within a Lambda function in the same region as the S3 bucket. The test code is available for anyone who is curious. Each test was run twice. It worth noting that the document size could dramatically affect the performance you encounter. These tests are admittedly primitive and aimed more to determine the performance of the s3-db code itself. More comprehensive tests will be done in the future for loading and saving of larger documents.
