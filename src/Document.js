@@ -1,6 +1,6 @@
 'use strict'
 
-const Class = require('./lib/Common').Class;
+const Utils = require('./lib/Common').Utils;
 
 /**
  * Convenience method for getting the ID from a document. If there is no ID then
@@ -19,12 +19,12 @@ module.exports.signature = toWrite => require('crypto').createHash('md5').update
 /*
 * Common method for serializing the body before it is saved as a document
 */
-module.exports.serialize = body => JSON.stringify(body),
+module.exports.serialize = body => typeof body === 'string' ? body : JSON.stringify(body);
 
 /*
 * Common method for deserializing data serialized by this Document class.
 */
-module.exports.deserialize = serialized => JSON.parse(serialized),
+module.exports.deserialize = serialized => typeof serialized === 'string' ? JSON.parse(serialized) : serialized;
 
 /*
 * Checks to see if the object is owned by S3DB process.
@@ -46,7 +46,8 @@ module.exports.isModified = (document,provider) => {
 module.exports.isModified = (document,configuration,provider) => {
 
   if(document.getId && configuration.collideOnMissmatch){
-    return provider.getDocumentHead(instance.bucket,document.getId())
+    const metadata = Utils.getMetaData(document);
+    return provider.getDocumentHead(metadata.collection,document.getId())
       .then( head => {
         const targetMetaData = provider.buildDocumentMetaData(head);
         let   hasChanged     = false;
@@ -59,11 +60,11 @@ module.exports.isModified = (document,configuration,provider) => {
          *
          * Md5 does not always get returned.
          */
-        if(targetMetaData.md5 && targetMetaData.md5 !== record[module.exports.METANAME].metadata.md5){
+        if(targetMetaData.md5 && targetMetaData.md5 !== metadata.md5){
           hasChanged = true;
         }
 
-        if(targetMetaData.eTag !== record[module.exports.METANAME].metadata.eTag){
+        if(targetMetaData.eTag !== metadata.eTag){
           hasChanged = true;
         }
 
@@ -82,22 +83,24 @@ module.exports.isModified = (document,configuration,provider) => {
  *  the returned object with convenience objects and metadata.
  * @param file
  */
-module.exports.new = function(file,provider,collection){
+module.exports.new = function(file,configuration,provider,collection){
 
-  const body     = file.toString();
+  const body     = provider.getDocumentBody(file);
   const document = module.exports.deserialize(body);
-  const metadata = provider.buildMetaData(file);
+  const metadata = provider.buildDocumentMetaData(file);
 
   if(document) metadata.md5 = module.exports.signature(body);
 
-  Utils.setMetaData(results,metadata);
+  metadata.collection = collection.getName();
+
+  Utils.setMetaData(document,metadata);
 
   /*
    * Decorate with the isModified function for the save logic.
    */
-  document.getId      = () => Document.getDocumentId(document,configuration);
-  document.isModified = () => Document.isModified(document,configuration,provider);
-  document.save       = () => collection.replaceDocument(document);
+  document.getId      = () => module.exports.getDocumentId(document,configuration);
+  document.isModified = () => module.exports.isModified(document,configuration,provider);
+  document.save       = () => collection.saveDocument(document);
   document.delete     = () => collection.deleteDocument(document.getId());
   document.refresh    = () => collection.getDocument(document.getId());
 

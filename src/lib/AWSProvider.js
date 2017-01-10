@@ -42,7 +42,7 @@ module.exports = function(configuration){
      * Remove a collection from the underlying source.
      */
     dropCollection: bucket => s3.deleteBucket({
-        Bucket: configuration.bucket.name(bucket)
+        Bucket: configuration.collection.name(bucket)
       }).promise(),
 
     /*
@@ -52,7 +52,7 @@ module.exports = function(configuration){
      */
     setCollectionTags: (bucket,tags) => {
       const params = {
-        Bucket: configuration.bucket.name(bucket),
+        Bucket: configuration.collection.name(bucket),
         Tagging: {
           TagSet: []
         }
@@ -72,7 +72,7 @@ module.exports = function(configuration){
      *  s3-db so we know what ones to list out when a list request
      *  is being made.
      */
-    getCollectionTags: bucket => s3.getBucketTagging({Bucket: configuration.bucket.name(bucket)})
+    getCollectionTags: bucket => s3.getBucketTagging({Bucket: configuration.collection.name(bucket)})
       .promise()
       .then( tagging => tagging.TagSet.map( tag => {return {[tag.Key]:tag.Value}})),
 
@@ -82,7 +82,7 @@ module.exports = function(configuration){
     findDocuments: (bucket,startsWith,continuationToken) => {
 
       const params = {
-        Bucket : configuration.bucket.name(bucket),
+        Bucket : configuration.collection.name(bucket),
         FetchOwner: false,
         MaxKeys: configuration.pageSize
       };
@@ -91,7 +91,7 @@ module.exports = function(configuration){
       if(continuationToken) params.ContinuationToken = continuationToken
 
       return s3.listObjectsV2(params).promise()
-        .then(data => data.Contents);
+        .then( data => data.Contents )
         .then( results => results.map( result => result.Key) )
     },
 
@@ -99,21 +99,21 @@ module.exports = function(configuration){
      *
      */
     deleteDocument: (bucket,id) => s3.deleteObject({
-       Bucket : configuration.bucket.name(bucket), Key : id
+       Bucket : configuration.collection.name(bucket), Key : id
     }).promise(),
 
     /**
      *
      */
     getDocumentHead : (bucket,id) => s3.headObject({
-      Bucket : configuration.bucket.name(bucket), Key : id
+      Bucket : configuration.collection.name(bucket), Key : id
     }).promise(),
 
     /**
      *
      */
     getDocument : (bucket,id) => s3.getObject({
-      Bucket : configuration.bucket.name(bucket), Key : id
+      Bucket : configuration.collection.name(bucket), Key : id
     }).promise(),
 
     /**
@@ -121,7 +121,7 @@ module.exports = function(configuration){
      */
     putDocument : (request) => {
       const params = {
-        Bucket : configuration.bucket.name(request.collection),
+        Bucket : configuration.collection.name(request.collection),
         Key : request.id,
         ContentType: 'application/json',
         ContentLength: request.body.length,
@@ -157,6 +157,8 @@ module.exports = function(configuration){
 
       return metadata;
     },
+
+    getDocumentBody: file => typeof file.Body === 'string' ? file.Body : file.Body.toString(),
 
     buildDocumentMetaData: document => {
       const metadata = document.Metadata || {};

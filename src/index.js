@@ -3,8 +3,8 @@
 /**
  * @see https://www.npmjs.com/package/s3-db
  */
-module.exports = (configuration) => {
-  const defaults = {
+module.exports = (overrides) => {
+  const configuration = {
     db: process.env.S3DB_NAME || 's3-db',
     /*
      * Placeholder to allow changing the underlying storage mechanism
@@ -60,7 +60,7 @@ module.exports = (configuration) => {
       /*
        * How each S3 collection will be named.
        */
-      name: name  => `${configuration.db}.${configuration.environment}-${name}`,
+      name: name  => `${configuration.db}.${configuration.environment}.${name}`,
       /*
        * Used to determine if the current database and environment owns the
        *  s3 collection.
@@ -93,19 +93,19 @@ module.exports = (configuration) => {
   /*
    * Allows for a simple configuration when all the defaults are OK.
    */
-  if(typeof configuration === "string"){
-    configuration = {db: configuration}
+  if(typeof overrides === "string"){
+    Object.assign(configuration,{db: overrides})
+  } else {
+    Object.assign(configuration,overrides);
   }
-
-  Object.assign(defaults,configuration)
 
   /*
    * The AWS PRovider interacts with S3 on behalf of the behaviors
    *  exposed in the S3-DB API.
    */
-  const provider   = require('./lib/AWSProvider')(defaults);
+  const provider   = require('./lib/AWSProvider')(configuration);
   const Collection = require('./Collection');
   const Document   = require('./Document');
 
-  return require('./Database')(defaults,provider,Collection,Document);
+  return require('./Database')(configuration,provider,Collection,Document);
 }

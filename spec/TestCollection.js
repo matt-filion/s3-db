@@ -76,12 +76,12 @@ describe('Collection', () => {
     const collection = new Collection('test',{collection: {name:()=>{}},id:{propertyName:'id',generator:()=>{}}}, testProvider, TestDocument);
 
     it('to be a valid configuration and return a collection.',() => expect(collection)
-      .to.have.all.keys('getName','getDocument','deleteDocument','findSomeStartingWith','replaceDocument'));
+      .to.have.all.keys('getName','getDocument','deleteDocument','find','saveDocument'));
 
     it('to be a valid configuration and return a collection.',() => expect(collection.getName())
       .to.equal('test'));
 
-    it('to be able to find documents',() => expect(collection.findSomeStartingWith())
+    it('to be able to find documents',() => expect(collection.find())
       .to.eventually.be.an('array')
       .with.deep.property('[0]')
       .with.deep.property('id')
@@ -95,7 +95,7 @@ describe('Collection', () => {
     it('to be able to delete a document',() => expect(collection.deleteDocument('x'))
       .to.eventually.be.undefined);
 
-    it('to be able to save a document',() => expect(collection.replaceDocument({id:'x'}))
+    it('to be able to save a document',() => expect(collection.saveDocument({id:'x'}))
       .to.eventually.be.an('object')
       .with.deep.property('id')
       .that.equals('x'));

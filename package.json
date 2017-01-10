@@ -37,7 +37,11 @@
     "src/Collection.js",
     "src/Database.js",
     "src/Document.js",
-    "src/lib/AWSProvider.js"
+    "src/lib/AWSProvider.js",
+    "src/lib/Common.js",
+    "spec/TesCollection.js",
+    "spec/TestDatabase.js",
+    "spec/TestIndex.js"
   ],
   "repository": {
     "type": "mercurial",

@@ -7,6 +7,12 @@ module.exports.Check = {
 module.exports.METANAME = '__s3db'
 
 module.exports.Utils = {
-  setMetaData: (target,metadata) => Object.defineProperty(target, module.exports.METANAME, {value:{metadata:metadata}}),
-  getMetaData: (target) => Object.getOwnPropertyDescriptor(target,module.exports.METANAME) ? Object.getOwnPropertyDescriptor(target,module.exports.METANAME).metadata : {},
+  setMetaData: (target,metadata) => {
+    Object.defineProperty(target, module.exports.METANAME, {get: () => this.value, set: newValue => this.value = newValue });
+    Object.getOwnPropertyDescriptor(target, module.exports.METANAME).set(metadata);
+  },
+  getMetaData: (target) => {
+    const metadata = Object.getOwnPropertyDescriptor(target, module.exports.METANAME);
+    if(metadata) return metadata.get()
+  }
 }

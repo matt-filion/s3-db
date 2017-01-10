@@ -45,7 +45,7 @@ module.exports = function(name,configuration,provider,Document) {
   const handleError = error => {
     switch (error.code) {
       case 'NoSuchBucket':
-        return Promise.reject(`${configuration.collection.name(instance.bucket)} is not a valid bucket or is not visible/accssible.`);
+        return Promise.reject(`${configuration.collection.name(name)} is not a valid bucket or is not visible/accssible.`);
       case 'NoSuchKey':
         if(!configuration.errorOnNotFound) {
           return Promise.resolve();
@@ -86,12 +86,21 @@ module.exports = function(name,configuration,provider,Document) {
     // setTags: instance.setTags,
 
 
+
+    /**
+     * Looks for any documents that start with the provided string.
+     * @param startsWith, optional string to filter documents keys.
+     */
+    find: startsWith => provider.findDocuments(name,startsWith)
+      .then( listResponse )
+      .catch( handleError ),
+
     /**
      * Loads a specific document.
      * @param document id
      */
     getDocument: id => provider.getDocument(name,id)
-      .then( data => Document.new(data,provider,collection))
+      .then( data => Document.new(data,configuration,provider,collection))
       .catch( handleError ),
 
     /**
@@ -105,7 +114,7 @@ module.exports = function(name,configuration,provider,Document) {
      *  document object in the data store.
      * @param document or file to be saved (id will be created)
      */
-    replaceDocument: document => Promise.resolve(document)
+    saveDocument: documentToSave => Promise.resolve(documentToSave)
       .then( document => !document ? Promise.reject("Cannot save undefined or null objects.") : document)
       .then( document => configuration.onlyUpdateOnMD5Change && document.isModified ? document.isModified() : document)
       .then( document => {
@@ -120,17 +129,15 @@ module.exports = function(name,configuration,provider,Document) {
         }
       })
       .then( provider.putDocument )
-      .then( data => Document.new(data,provider,collection) )
+      .then( data => provider.buildDocumentMetaData(data) )
+      .then( metadata => {
+        return {
+          Body: Document.serialize(documentToSave),
+          ETag: metadata.eTag
+        }
+      } )
+      .then( data => Document.new(data,configuration,provider,collection) )
       .catch( handleError ),
-
-
-      /**
-       * Looks for any documents that start with the provided string.
-       * @param startsWith optional string to filter documents by.
-       */
-      findSomeStartingWith: startsWith => provider.findDocuments(name,startsWith)
-        .then( listResponse )
-        .catch( handleError ),
   }
 
   return collection;
