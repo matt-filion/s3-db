@@ -1,17 +1,21 @@
-# This is a sample build configuration for Javascript.
-# Only use spaces to indent your .yml configuration.
-# -----
-# You can specify a custom docker image from Dockerhub as your build environment.
 image: node:5.11.0
-
 pipelines:
+  custom:
+    publish:
+      - step:
+          script:
+            - apt-get install mercurial
+            - printf "//`node -p \"require('url').parse('https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" >> ~/.npmrc
+            - npm --version
+            - npm install
+            - npm test
+            - npm version patch
+            - npm publish
   default:
     - step:
-        script: # Modify the commands below to build your repository.
+        script:
           - apt-get install mercurial
           - printf "//`node -p \"require('url').parse('https://registry.npmjs.org').host\"`/:_authToken=${NPM_TOKEN}\nregistry=${NPM_REGISTRY_URL:-https://registry.npmjs.org}\n" >> ~/.npmrc
           - npm --version
           - npm install
           - npm test
-          - npm version patch
-          - npm publish
