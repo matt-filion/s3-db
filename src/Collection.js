@@ -1,217 +1,137 @@
 'use strict'
 
-/*
-
-        if(!tags){ tags = {}; }
-
-        tags['s3-db']             = configuration.appname;
-        tags['s3-db.environment'] = configuration.environment;
-
-        return S3.putBucketTagging(name,tags)
-*/
+/**
+ * Wraps around the logical file collection.
+ * @param name of the Collection
+ * @param configuration for this colleciton
+ * @param the provider for the underlying files.
+ * @param Document class for wrapping around the files returned form the provider.
+ */
 module.exports = function(name,configuration,provider,Document) {
 
-  if(!configuration) throw new Error("A configuration must be supplied.");
-  if(!configuration.db) throw new Error("A configuration must have a value defined for 'db'.");
-  if(!provider) throw new Error("No provider was supplied, this object will have nothing to act upon.");
-  if(!Collection) throw new Error("The Collection class is required.");
+  const Common = require('./lib/Common');
+  const Check  = Common.Check;
+  const Utils  = Common.Utils;
 
-  const METANAME      = '__s3db';
-  const instance = {
+  if(!Check.exist(name)) throw new Error("A name must be supplied.");
 
-    _initialize: name => {
-      instance.bucket = name;
-    },
+  /* No clue why its not working. */
+  // if(!Check.exist(configuration)) throw new Error("A configuration must be supplied.");
+  if(!Check.exist(configuration.collection)) throw new Error("A configuration must have an object for the 'collection' attribute.");
+  if(!Check.isFunction(configuration.collection.name)) throw new Error("A configuration must have a function for the 'collection.name' attribute.");
+  if(!Check.exist(configuration.id)) throw new Error("A configuration must have an object for the 'id' attribute.");
+  if(!Check.exist(configuration.id.propertyName)) throw new Error("A configuration must have a value for the 'id.propertyName' attribute.");
+  if(!Check.isFunction(configuration.id.generator)) throw new Error("A configuration must have a function for the 'id.generator' attribute.");
 
-    _handleError: error => {
-      if(error.code==='NoSuchBucket'){
-        return Promise.reject(`${configuration.bucket.name(instance.bucket)} is not a valid bucket or is not visible/accssible.`);
+  if(!Check.exist(provider)) throw new Error("No provider was supplied, this object will have nothing to act upon.");
+  if(!Check.isFunction(provider.findDocuments) ||
+     !Check.isFunction(provider.getDocument) ||
+     !Check.isFunction(provider.buildListMetaData) ||
+     !Check.isFunction(provider.deleteDocument) ||
+     !Check.isFunction(provider.putDocument) ||
+     !Check.isFunction(provider.setCollectionTags) ||
+     !Check.isFunction(provider.getCollectionTags) ) throw new Error("Provider does not have the required functions.");
 
-      } else if(error.code==='NoSuchKey' && !configuration.errorOnNotFound){
-        return Promise.resolve();
+  if(!Check.isObject(Document)) throw new Error("The Document class is required.");
+  if(!Check.isFunction(Document.getDocumentId) ||
+     !Check.isFunction(Document.isModified) ||
+     !Check.isFunction(Document.new) ||
+     !Check.isFunction(Document.serialize) ||
+     !Check.isFunction(Document.signature) ) throw new Error("The Document class does not have the required functions.");
 
-      } else {
+  /*
+   * Handling of common error scenarios for friendlier messages.
+   */
+  const handleError = error => {
+    switch (error.code) {
+      case 'NoSuchBucket':
+        return Promise.reject(`${configuration.collection.name(instance.bucket)} is not a valid bucket or is not visible/accssible.`);
+      case 'NoSuchKey':
+        if(!configuration.errorOnNotFound) {
+          return Promise.resolve();
+        }
+      default:
         return Promise.reject(error);
-
-      }
-    },
-
-    _listResponse: data => {
-
-      const results = data.Contents
-        .map(record => S3DBRecord.decorate({ id : record.Key },record))
-        .map(record => {record.get = () => instance.load(record.id); return record} )
-
-      const metadata = {
-        hasMore :          data.IsTruncated,
-        batchSize:         data.MaxKeys,
-        resultCount:       data.KeyCount,
-        continuationToken: data.NextContinuationToken,
-        bucket:            data.Name,
-        commonPrefixes:    data.CommonPrefixes
-      };
-
-      if(data.Prefix) metadata.startsWith = data.Prefix
-
-      Object.defineProperty(results, METANAME, {value:{metadata:metadata}});
-
-      results.hasMore = metadata.hasMore;
-
-      if(results.hasMore) {
-        results.next = () => S3.listObjects(instance.bucket,results[METANAME].metadata.startsWith,results[METANAME].metadata.continuationToken)
-            .then( data => instance._listResponse(data))
-      }
-
-      return results;
-    },
-
-    /**
-     * Lists out all of the files within the bucket,
-     *  though within the limits of s3's api, only
-     *  100 at a time.
-     */
-    list: (startsWith) => S3.listObjects(instance.bucket,startsWith)
-      .then( data => instance._listResponse(data) )
-      .catch( instance._handleError ),
-
-    /**
-     * Loads all of the ID's identified.
-     */
-    loadAll: ids => {
-
-     const promises =
-       /*
-        * Remove all of the duplicate IDs.
-        */
-        ids
-          .map(id => {
-            if(id === 'object') {
-              var idName = configuration.id.name;
-              if(id[idName]) {
-                return id[idName];
-              }
-            }
-            return id;
-          })
-          .reduce( (accumulator,current,index,array) => {
-            if(accumulator.indexOf(current)==-1){
-              accumulator.push(current);
-            }
-            return accumulator;
-          },[])
-        /*
-         * Creates a promise, that catches any errors, which
-         *  is necessary with Promise.all's fail fast behavior. Otherwise
-         *  documents that are not found will cause no documents to load
-         *  at all.
-         */
-        .map( id => instance.load(id).catch(e => Promise.resolve()) )
-
-      return Promise.all( promises )
-        .then(results => {
-          /*
-           * The filter will remove the 'undefined'
-           *  results for documents that were not found.
-           */
-          return results.filter( item => item)
-        })
-    },
-
-    /**
-     * Loads a specific record.
-     */
-    load: id => S3.getObject(instance.bucket,id)
-      .then( data => S3DBRecord.newRecord(data))
-      .then( record => {
-        record.save   = () => instance.save(record)
-        record.delete = () => instance.delete(record.id)
-        record.reload = () => instance.load(record.id)
-        return record;
-      })
-      .catch( instance._handleError ),
-
-    /**
-     * Removes the file at the specified location.
-     */
-    delete: (id) => S3.deleteObject(instance.bucket,id).catch( instance._handleError ),
-
-    _isModified : (record) => {
-
-      const idName = configuration.id.name;
-      const id     = record[idName] || configuration.id.generator();
-
-      if(!record[idName]){
-        record[idName] = id;
-      }
-
-      if(S3DBRecord.isS3DBRecord(record) && configuration.collideOnMissmatch){
-        return S3.headObject(instance.bucket,record[idName])
-          .then( head => {
-            if(S3DBRecord.hasSourceChanged(record,head)){
-              return Promise.reject('Collision, the document has been modified.');
-            }
-            return Promise.resolve({bucket:instance.bucket,id:record[idName],record:record});
-          })
-      } else {
-        return Promise.resolve({bucket:instance.bucket,id:record[idName],record:record});
-      }
-    },
-
-    /**
-     * Creates a new file within S3.
-     */
-    save: (record) => {
-
-      if(!record) return Promise.reject("Cannot save undefined or null objects.");
-
-      /*
-       * If the MD5 of the object to write has not changed, then
-       *  do not bother doing an update at S3.
-       */
-      if(configuration.onlyUpdateOnMD5Change && S3DBRecord.isModified(record)) {
-        return Promise.resolve(record);
-
-      } else {
-
-        return instance._isModified(record)
-          .then( responseWrapper => {
-
-            const bucket   = responseWrapper.bucket;
-            const id       = responseWrapper.id;
-            const record   = responseWrapper.record;
-            const toWrite  = S3DBRecord.serialize(record);
-            const metaData = {
-              md5 : S3DBRecord.signature(toWrite)
-            }
-
-            /*
-             * Update the metadata on the record before saving, since
-             *  this is where we have the data.
-             */
-            S3DBRecord.decorate(record,{Body:toWrite})
-
-            return Promise.resolve({bucket:bucket,id:id,toWrite:toWrite,metaData:metaData})
-          })
-          .then( wrapper => S3.putObject(wrapper.bucket,wrapper.id,wrapper.toWrite,wrapper.metaData))
-          .then( data => S3DBRecord.decorate(record,data) )
-          .then( record => {
-            record.save   = () => instance.save(record)
-            record.delete = () => instance.delete(record.id)
-            record.reload = () => instance.load(record.id)
-            return record;
-          })
-          .catch( instance._handleError )
-      }
     }
   }
 
-  instance._initialize(name);
+  /*
+   * Decorates a list of results with some convenience methods.
+   *  to easily lod specific documents as well as helper methods
+   *  for pagination through the results.
+   */
+  const listResponse = results => {
 
-  return {
-    getName: name,
-    findOne: instance.load,
-    findStartingWith: instance.list,
-    deleteOne: instance.delete,
-    replaceOne: instance.save
+    const documents = results
+      .map( id => { return { id: id } } )
+      .map( record => { record.getDocument = () => collection.getDocument(record.id); return record} );
+
+    const metadata = provider.buildListMetaData(documents);
+
+    Utils.setMetaData(documents,metadata);
+
+    if(metadata.hasMore){
+      results.hasMore = metadata.hasMore;
+      results.next    = () => Promise.resolve( Utils.getMetaData(documents) )
+        .then( metadata => provider.listDocuments(name, metadata.startsWith, metadata.continuationToken) )
+        .then( listResponse )
+    }
+
+    return documents;
   }
+
+  const collection = {
+    getName: () => name,
+    // getTags: instance.getTags,
+    // setTags: instance.setTags,
+
+
+    /**
+     * Loads a specific document.
+     * @param document id
+     */
+    getDocument: id => provider.getDocument(name,id)
+      .then( data => Document.new(data,provider,collection))
+      .catch( handleError ),
+
+    /**
+     * Removes a document from the document store.
+     * @param document id
+     */
+    deleteDocument: id => provider.deleteDocument(name,id).catch( handleError ),
+
+    /**
+     * Replaces or creates current document identified by the id on the
+     *  document object in the data store.
+     * @param document or file to be saved (id will be created)
+     */
+    replaceDocument: document => Promise.resolve(document)
+      .then( document => !document ? Promise.reject("Cannot save undefined or null objects.") : document)
+      .then( document => configuration.onlyUpdateOnMD5Change && document.isModified ? document.isModified() : document)
+      .then( document => {
+        const toWrite = Document.serialize(document);
+        return {
+          collection: name,
+          id: Document.getDocumentId(document,configuration),
+          body: toWrite,
+          metaData:{
+            md5 : Document.signature(toWrite)
+          }
+        }
+      })
+      .then( provider.putDocument )
+      .then( data => Document.new(data,provider,collection) )
+      .catch( handleError ),
+
+
+      /**
+       * Looks for any documents that start with the provided string.
+       * @param startsWith optional string to filter documents by.
+       */
+      findSomeStartingWith: startsWith => provider.findDocuments(name,startsWith)
+        .then( listResponse )
+        .catch( handleError ),
+  }
+
+  return collection;
 }

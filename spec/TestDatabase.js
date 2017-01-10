@@ -10,7 +10,7 @@ const Database = require('../src/Database.js');
 
 describe('S3-DB', () => {
   const testProvider = {
-    listCollections: () => Promise.resolve({Buckets:[{Name:'test.dev-x'},{Name:'y'}]}),
+    listCollections: () => Promise.resolve(['test.dev-x','y']),
     dropCollection: () => Promise.resolve({ok:true}),
     createCollection: () => Promise.resolve({})
   };

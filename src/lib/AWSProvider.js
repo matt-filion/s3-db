@@ -1,4 +1,5 @@
 'use strict'
+
 /**
  * Wrapper for AWS S3 API's.
  *
@@ -15,6 +16,12 @@ module.exports = function(configuration){
   const s3              = new AWS.S3(awsConfig);
 
   return {
+
+    /**
+     * @return Array of the collection names
+     */
+    listCollections: () => s3.listBuckets().promise()
+      .then(  results => results.Buckets.map( bucket => bucket.Name ) ),
 
     /**
      *
@@ -38,16 +45,12 @@ module.exports = function(configuration){
         Bucket: configuration.bucket.name(bucket)
       }).promise(),
 
-    /**
-     *
-     */
-    listCollections: () => s3.listBuckets().promise(),
     /*
      * Tags are used to track what buckets were created by
      *  s3-db so we know what ones to list out when a list request
      *  is being made.
      */
-    putBucketTagging: (bucket,tags) => {
+    setCollectionTags: (bucket,tags) => {
       const params = {
         Bucket: configuration.bucket.name(bucket),
         Tagging: {
@@ -64,10 +67,19 @@ module.exports = function(configuration){
       return s3.putBucketTagging(params).promise();
     },
 
+    /*
+     * Tags are used to track what buckets were created by
+     *  s3-db so we know what ones to list out when a list request
+     *  is being made.
+     */
+    getCollectionTags: bucket => s3.getBucketTagging({Bucket: configuration.bucket.name(bucket)})
+      .promise()
+      .then( tagging => tagging.TagSet.map( tag => {return {[tag.Key]:tag.Value}})),
+
     /**
      *
      */
-    listObjects: (bucket,startsWith,continuationToken) => {
+    findDocuments: (bucket,startsWith,continuationToken) => {
 
       const params = {
         Bucket : configuration.bucket.name(bucket),
@@ -78,44 +90,46 @@ module.exports = function(configuration){
       if(startsWith) params.Prefix = startsWith
       if(continuationToken) params.ContinuationToken = continuationToken
 
-      return s3.listObjectsV2(params).promise();
+      return s3.listObjectsV2(params).promise()
+        .then(data => data.Contents);
+        .then( results => results.map( result => result.Key) )
     },
 
     /**
      *
      */
-    deleteObject: (bucket,id) => s3.deleteObject({
+    deleteDocument: (bucket,id) => s3.deleteObject({
        Bucket : configuration.bucket.name(bucket), Key : id
     }).promise(),
 
     /**
      *
      */
-    headObject : (bucket,id) => s3.headObject({
+    getDocumentHead : (bucket,id) => s3.headObject({
       Bucket : configuration.bucket.name(bucket), Key : id
     }).promise(),
 
     /**
      *
      */
-    getObject : (bucket,id) => s3.getObject({
+    getDocument : (bucket,id) => s3.getObject({
       Bucket : configuration.bucket.name(bucket), Key : id
     }).promise(),
 
     /**
      *
      */
-    putObject : (bucket,id,toWrite,metadata) => {
-      var params = {
-        Bucket : configuration.bucket.name(bucket),
-        Key : id,
+    putDocument : (request) => {
+      const params = {
+        Bucket : configuration.bucket.name(request.collection),
+        Key : request.id,
         ContentType: 'application/json',
-        ContentLength: toWrite.length,
-        Body : toWrite,
+        ContentLength: request.body.length,
+        Body : request.body,
       };
 
-      if(metadata){
-        params.Metadata = metadata;
+      if(request.metadata){
+        params.Metadata = request.metadata;
         if(metadata.md5) {
           params.ContentMD5 = metadata.md5;
         }
@@ -125,5 +139,36 @@ module.exports = function(configuration){
 
       return s3.putObject(params).promise();
     },
+
+    /*
+     * Gets the metadata from the providers attributes.
+     */
+    buildListMetaData: results => {
+      const metadata = {
+        hasMore :          results.IsTruncated,
+        batchSize:         results.MaxKeys,
+        resultCount:       results.KeyCount,
+        continuationToken: results.NextContinuationToken,
+        bucket:            results.Name,
+        commonPrefixes:    results.CommonPrefixes
+      }
+
+      if(results.Prefix) metadata.startsWith = results.Prefix
+
+      return metadata;
+    },
+
+    buildDocumentMetaData: document => {
+      const metadata = document.Metadata || {};
+
+      if(document.Size) metadata.size = document.Size
+      if(document.StorageClass) metadata.storageClass = document.StorageClass
+      if(document.ContentLength) metadata.size = document.ContentLength;
+      if(document.ServerSideEncryption) metadata.encryption = document.ServerSideEncryption
+      if(document.LastModified) metadata.lastModified = new Date(document.LastModified)
+      if(document.ETag) metadata.eTag = document.ETag.replace(/"/g,'') /* Fix the stupid AWS eTag. */
+
+      return metadata;
+    }
   }
 }

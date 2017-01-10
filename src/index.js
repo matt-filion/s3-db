@@ -78,7 +78,7 @@ module.exports = (configuration) => {
       /*
        * The value on the document to use as the key for the S3 Object.
        */
-      name: 'id',
+      propertyName: 'id',
       /*
        * A generator to ensure that the keys are always unique, when an id
        *  is not provided. Generally an external library should be used

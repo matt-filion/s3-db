@@ -1,6 +1,5 @@
 'use strict';
 
-const Check = require('./lib/Check').Check;
 
 /**
  * Implementation of all the database behaviors.
@@ -9,6 +8,8 @@ const Check = require('./lib/Check').Check;
  * @param Collection class to instantiate each time a collection is requested.
  */
 module.exports = function(configuration,provider,Collection,Document) {
+
+  const Check = require('./lib/Common').Check;
 
   if(!Check.exist(configuration)) throw new Error("A configuration must be supplied.");
   if(!Check.exist(configuration.db)) throw new Error("A configuration must have a value defined for 'db'.");
@@ -31,9 +32,9 @@ module.exports = function(configuration,provider,Collection,Document) {
      * Lists out all of the names in the 'database'
      */
     getCollectionNames: () => provider.listCollections()
-      .then( results => results.Buckets
-        .filter( collection => configuration.collection.isOwned( collection.Name ) )
-        .map( collection => configuration.collection.parseName( collection.Name ) )
+      .then( results => results
+        .filter( collection => configuration.collection.isOwned( collection ) )
+        .map( collection => configuration.collection.parseName( collection ) )
       ),
 
     /*
