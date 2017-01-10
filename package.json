@@ -1,0 +1,74 @@
+{
+  "name": "s3-db",
+  "version": "1.1.0",
+  "description": "Document database API wrapped around Amazon S3.",
+  "main": "src/index.js",
+  "homepage": "https://www.npmjs.com/package/s3-db",
+  "author": {
+    "name": "Matt Filion",
+    "email": "matt.filion@gmail.com"
+  },
+  "scripts": {
+    "test": "mocha spec"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "aws-sdk": "^2.5.0",
+    "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
+    "mocha": "^3.2.0",
+    "sinon": "^1.17.7"
+  },
+  "maintainers": [
+    {
+      "name": "Matt Filion",
+      "email": "matt.filion@gmail.com"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Matt Filion",
+      "email": "matt.filion@gmail.com"
+    }
+  ],
+  "files": [
+    "docs/README.md",
+    "docs/Configuration.md",
+    "docs/Examples.md",
+    "docs/Performance.md",
+    "src/index.js",
+    "src/Collection.js",
+    "src/Database.js",
+    "src/Document.js",
+    "src/lib/AWSProvider.js",
+    "src/lib/Common.js",
+    "spec/TesCollection.js",
+    "spec/TestDatabase.js",
+    "spec/TestIndex.js"
+  ],
+  "repository": {
+    "type": "mercurial",
+    "url": "https://bitbucket.org/sexycastle/s3-db/src"
+  },
+  "bugs": {
+    "url": "https://bitbucket.org/sexycastle/s3-db/issues"
+  },
+  "private": false,
+  "readmeFilename": "README.md",
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/jeremyosborne/packagejsonexample/blob/master/LICENSE.txt"
+    }
+  ],
+  "keywords": [
+    "s3db",
+    "aws",
+    "aws s3",
+    "s3",
+    "database",
+    "db",
+    "s3 database",
+    "s3 db"
+  ]
+}

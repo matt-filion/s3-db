@@ -1,0 +1,5 @@
+
+syntax: regexp
+^node_modules$
+syntax: regexp
+^\.project$
