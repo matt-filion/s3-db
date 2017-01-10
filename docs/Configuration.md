@@ -2,7 +2,7 @@
 
 All of the available configurations to change the underlying behavior of s3-db. One of the primary goals is to keep the amount of out of the box configuration minimal, so where possible reasonable defaults have been established.
 
-There is also a lot of potential for friendly usage along side of [serverless.com](2), so some environment properties have been added in to make it possible to avoid having to do any configuration of the s3-db module before you use it.
+There is also a lot of potential for friendly usage along side of [serverless.com][2], so some environment properties have been added in to make it possible to avoid having to do any configuration of the s3-db module before you use it.
 
 | Name |        Description      | default |
 | ------ | ------------------------------------------- | ----- |
