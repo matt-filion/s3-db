@@ -80,7 +80,6 @@ module.exports = function(configuration){
      *
      */
     findDocuments: (bucket,startsWith,continuationToken) => {
-
       const params = {
         Bucket : configuration.collection.name(bucket),
         FetchOwner: false,
