@@ -23,34 +23,14 @@ module.exports = function(configuration,provider,Collection,Document) {
   if(!Check.isFunction(Collection)) throw new Error("The Collection class is required.");
 
   return {
-    /*
-     * Returns the name of the database
-     */
     getName: () => configuration.db,
-
-    /*
-     * Lists out all of the names in the 'database'
-     */
     getCollectionNames: () => provider.listCollections()
       .then( results => results
         .filter( collection => configuration.collection.isOwned( collection ) )
         .map( collection => configuration.collection.parseName( collection ) )
       ),
-
-    /*
-     * Removes a collection, as long as AWS permits it for the current user.
-     */
     dropCollection: name => configuration.allowDrop ? provider.dropCollection(name) : Promise.reject("Configuration does not allow collections to be dropped."),
-
-    /*
-     * Does not verify the collection, assumes it is valid and Returns
-     *  a wrapper around the possible collection back to the caller.
-     */
-    getCollection: name => new Collection(name, configuration, provider, Document),
-
-    /*
-     * Creates a new s3 collection that will 'live' within the configured database
-     */
+    getCollection: name => Promise.resolve(new Collection(name, configuration, provider, Document)),
     createCollection: name => provider.createCollection(name)
       .then( results => new Collection(name, configuration, provider, Document) )
   }

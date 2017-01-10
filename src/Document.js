@@ -26,20 +26,6 @@ module.exports.serialize = body => typeof body === 'string' ? body : JSON.string
 */
 module.exports.deserialize = serialized => typeof serialized === 'string' ? JSON.parse(serialized) : serialized;
 
-/*
-* Checks to see if the object is owned by S3DB process.
-*/
-// module.exports.isS3DBRecord = document => Class.getMetaData(document),
-
-/*
- * Checks if the record has been modified.
- */
-module.exports.isModified = (document,provider) => {
-  const toWrite  = module.exports.serialize(document);
-  const md5      = module.exports.signature(toWrite);
-  return document[module.exports.METANAME] && document[module.exports.METANAME].metadata && document[module.exports.METANAME].metadata.md5 === md5
-}
-
 /**
  * Removes the file at the specified location.
  */
