@@ -2,33 +2,10 @@
 
 const Utils = require('./lib/Common').Utils;
 
-/**
- * Convenience method for getting the ID from a document. If there is no ID then
- *  one is generated using the configuraiton.id.generator function.
- *
- * @param the document with the id
- * @param the current configuration containing the id mapping.
- */
 module.exports.getDocumentId = (document,configuration) => document[configuration.id.propertyName] || configuration.id.generator();
-
-/*
-* Creates a unique signature from the contents of the
-*/
 module.exports.signature = toWrite => require('crypto').createHash('md5').update(toWrite).digest('base64');
-
-/*
-* Common method for serializing the body before it is saved as a document
-*/
 module.exports.serialize = body => typeof body === 'string' ? body : JSON.stringify(body);
-
-/*
-* Common method for deserializing data serialized by this Document class.
-*/
 module.exports.deserialize = serialized => typeof serialized === 'string' ? JSON.parse(serialized) : serialized;
-
-/**
- * Removes the file at the specified location.
- */
 module.exports.isModified = (document,configuration,provider) => {
 
   if(document.getId && configuration.collideOnMissmatch){
