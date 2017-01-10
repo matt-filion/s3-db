@@ -8,7 +8,7 @@ chai.use(chaiAsPromised)
 
 const Database = require('../src/Database.js');
 
-describe('S3-DB', () => {
+describe('Database', () => {
   const testProvider = {
     listCollections: () => Promise.resolve(['test.dev-x','y']),
     dropCollection: () => Promise.resolve({ok:true}),
@@ -51,7 +51,7 @@ describe('S3-DB', () => {
       .to.throw("The Collection class is required."));
   })
 
-  describe('AWS Configuration', () => {
+  describe('Good Configuration', () => {
     const database = new Database({
       db:'test',
       // allowDrop: false,
@@ -67,7 +67,7 @@ describe('S3-DB', () => {
     }, testProvider, TestCollection);
     it('should have the expected methods',() => expect(database).to.have.all.keys(['getName','getCollectionNames','getCollection','dropCollection','createCollection']) );
     it('should have the defined database name.',() => expect(database.getName()).to.equal('test') );
-    it('to return a collection.',() => expect(database.getCollection('test').name).to.equal('x') );
+    it('to return a collection.',() => expect(database.getCollection('test')).to.eventually.have.property('name').that.equals('x') );
     it('to create a new collection.',() => expect(database.createCollection('test')).to.eventually.have.property('name') );
     it('to not allow a collection to be dropped by default.',() => expect(database.dropCollection('test')).to.be.rejectedWith("Configuration does not allow collections to be dropped.") );
     it('to list the collection.',() => expect(database.getCollectionNames()).to.eventually.be.an('array').with.deep.property('[0]').that.equals('x') );

@@ -108,6 +108,7 @@ module.exports = function(name,configuration,provider,Document) {
       .then( provider.putDocument )
       .then( data => provider.buildDocumentMetaData(data) )
       .then( metadata => {
+        console.log("------- metadata",metadata);
         return {
           Body: Document.serialize(documentToSave),
           ETag: metadata.eTag

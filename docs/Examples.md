@@ -1,10 +1,9 @@
-## [Main Docs](./README.md)
-
+## [Main Docs](../README.md)
 
 # [Serverless.com](http://serverless.com)
 I use [serverless.com](http://serverless.com) for quite a bit of my development and it also happens to be the best way to take advantage of some of the additional S3 features like triggers off an S3 bucket. The combination of these s3-db and [serverless.com](http://serverless.com) makes for some incredibly rapid data centric development.
 
-
+## Getting Started
 
 <!--
 _Serverless.com serverless.yml example_

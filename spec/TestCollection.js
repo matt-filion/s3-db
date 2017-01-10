@@ -16,10 +16,11 @@ describe('Collection', () => {
     findDocuments: () => Promise.resolve(['x','y']),
     getDocument: (name,id) => Promise.resolve({id:id}),
     deleteDocument: (name,id) => Promise.resolve(),
-    putDocument: document => Promise.resolve(document),
+    putDocument: document => Promise.resolve({ETag:"'asdfasdfasdf'"}),
     setCollectionTags: () => Promise.resolve(),
     getCollectionTags: () => Promise.resolve(),
-    buildListMetaData: () => {return {}}
+    buildListMetaData: () => {return {}},
+    buildDocumentMetaData: () => {return {eTag:"asdfasdfasdf"}},
   };
 
   const TestDocument = {
@@ -27,7 +28,7 @@ describe('Collection', () => {
     isModified: () => true,
     signature: () =>'x',
     serialize: document => JSON.stringify(document),
-    new: (data,provider,collection) =>{ return data }
+    new: (data,provider,collection) => data.Body ? JSON.parse(data.Body) : data
   }
 
   describe('Invalid Configurations', () => {
