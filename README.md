@@ -1,16 +1,10 @@
-# [S3-DB](https://bitbucket.org/sexycastle/s3-db)
-======
-
-## [Feedback Appreciated](https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open)
-Open an issue here https://bitbucket.org/sexycastle/s3-db/issues?status=new&status=open.
-
 # Summary
+===
 Document database API wrapped around [AWS S3](https://aws.amazon.com/s3). It doesn't attempt to overcome the limitations of [AWS S3](https://aws.amazon.com/s3), such as querying.
 
 [AWS S3](https://aws.amazon.com/s3) is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, triggers via [AWS Lambda](https://aws.amazon.com/lambda/), cross region replication, versioning and pretty decent [Performance](./docs/Performance.md). Its a pretty compelling database solution for a lot of scenarios. A few other people agree, see [Pet Warden's blog](https://petewarden.com/2010/10/01/how-i-ended-up-using-s3-as-my-database/) and [this interesting solution](http://www.s3nosql.com.s3.amazonaws.com/infinitedata.html).
 
-### What its not
-s3-db is not intended to be a replacement for anything in the ballpark of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at simple common scenarios around a known ID.
+Note: _s3-db is not intended to be a replacement for anything in the ballpark of enterprise, full scale and fully functional database with transactional integrity and complex queries. Instead, its aimed at simple common scenarios around a known ID._
 
 # Getting Started
 Install dependencies and the s3-db module.
