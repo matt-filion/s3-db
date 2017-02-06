@@ -1,13 +1,10 @@
 {
   "name": "s3-db",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Document database API wrapped around Amazon S3.",
   "main": "src/index.js",
   "homepage": "https://www.npmjs.com/package/s3-db",
-  "author": {
-    "name": "Matt Filion",
-    "email": "matt.filion@gmail.com"
-  },
+  "author": "Matt Filion <matt.filion@gmail.com>",
   "scripts": {
     "test": "mocha spec"
   },
@@ -36,9 +33,6 @@
     "docs/Configuration.md",
     "docs/Examples.md",
     "docs/Performance.md",
-    "spec/TesCollection.js",
-    "spec/TestDatabase.js",
-    "spec/TestIndex.js",
     "src/index.js",
     "src/Collection.js",
     "src/Database.js",
@@ -47,11 +41,11 @@
     "src/lib/Common.js"
   ],
   "repository": {
-    "type": "mercurial",
-    "url": "https://bitbucket.org/sexycastle/s3-db/src"
+    "type": "git",
+    "url": "https://github.com/matt-filion/s3-db.git"
   },
   "bugs": {
-    "url": "https://bitbucket.org/sexycastle/s3-db/issues"
+    "url": "https://github.com/matt-filion/s3-db/issues"
   },
   "private": false,
   "readmeFilename": "README.md",
