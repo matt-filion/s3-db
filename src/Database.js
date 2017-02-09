@@ -47,6 +47,3 @@ module.exports = function(configuration,provider,Collection,Document) {
       .then( results => new Collection(name, configuration, provider, Document) )
   }
 }
-
-const array = [];
-console.log( array.push({'x':'x'}))
