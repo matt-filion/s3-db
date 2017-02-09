@@ -22,6 +22,12 @@ module.exports = function(configuration,provider,Collection,Document) {
      !Check.isFunction(provider.createCollection) ) throw new Error("Provider does not have the required functions.");
   if(!Check.isFunction(Collection)) throw new Error("The Collection class is required.");
 
+  /*
+   * Each collection definition will not change as it has no configuration. No need to look it up again and recreate it
+   *  for each consecutive call.
+   */
+  const collectionCache = [];
+
   return {
     getName: () => configuration.db,
     getCollectionNames: () => provider.listCollections()
@@ -30,9 +36,17 @@ module.exports = function(configuration,provider,Collection,Document) {
         .map( collection => configuration.collection.parseName( collection ) )
       ),
     dropCollection: name => configuration.allowDrop ? provider.dropCollection(name) : Promise.reject("Configuration does not allow collections to be dropped."),
-    /* Future proofing. Eventaully add configurations onto the bucket itself to determine id generation and serialization policies. */
-    getCollection: name => Promise.resolve(new Collection(name, configuration, provider, Document)),
+    getCollection: name => Promise.resolve( collectionCache.find( collection => collection.name === name) ) 
+      .then( collection => {
+        if(collection) return collection;
+        collection = new Collection(name, configuration, provider, Document);
+        collectionCache.push( collection );
+        return collection;
+      }),
     createCollection: name => provider.createCollection(name)
       .then( results => new Collection(name, configuration, provider, Document) )
   }
 }
+
+const array = [];
+console.log( array.push({'x':'x'}))
