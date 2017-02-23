@@ -28,6 +28,7 @@ describe('Collection', () => {
   const TestDocument = {
     getDocumentId: () => 'x',
     isModified: () => true,
+    isCollided: () => false,
     signature: () =>'x',
     serialize: document => JSON.stringify(document),
     new: (data,provider,collection) => data.Body ? JSON.parse(data.Body) : data

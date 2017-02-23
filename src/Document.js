@@ -3,15 +3,19 @@
 const Utils = require('./lib/Common').Utils;
 
 module.exports.getDocumentId = (document,configuration) => document[configuration.id.propertyName] || configuration.id.generator();
-module.exports.signature = toWrite => require('crypto').createHash('md5').update(toWrite).digest('base64');
+module.exports.signature = toWrite => require('crypto').createHash('md5').update(typeof toWrite === 'string' ? toWrite : JSON.stringify(toWrite)).digest('base64');
 module.exports.serialize = body => typeof body === 'string' ? body : JSON.stringify(body);
 module.exports.deserialize = serialized => typeof serialized === 'string' ? JSON.parse(serialized) : serialized;
-module.exports.isModified = (document,configuration,provider) => {
-
-  if(document.getId && configuration.collideOnMissmatch){
-    const metadata = Utils.getMetaData(document);
+module.exports.isModified = document => {
+  const metadata = Utils.getMetaData(document);
+  const currentMD5 = module.exports.signature(document);
+  return metadata && metadata.md5 !== currentMD5;
+}
+module.exports.isCollided = (document,configuration,provider) => {
+  if(document.getId){
     return provider.getDocumentHead(metadata.collection,document.getId())
       .then( head => {
+
         const targetMetaData = provider.buildDocumentMetaData(head);
         let   hasChanged     = false;
 
@@ -37,7 +41,7 @@ module.exports.isModified = (document,configuration,provider) => {
 
         return document;
       })
-    }
+  }
   return Promise.resolve(document);
 },
 
@@ -62,7 +66,8 @@ module.exports.new = function(file,configuration,provider,collection){
    * Decorate with the isModified function for the save logic.
    */
   document.getId      = () => module.exports.getDocumentId(document,configuration);
-  document.isModified = () => module.exports.isModified(document,configuration,provider);
+  document.isModified = () => module.exports.isModified(document);
+  document.isCollided = () => module.exports.isCollided(document,configuration,provider);
   document.save       = () => collection.saveDocument(document);
   document.delete     = () => collection.deleteDocument(document.getId());
   document.refresh    = () => collection.getDocument(document.getId());

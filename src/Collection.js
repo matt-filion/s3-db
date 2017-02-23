@@ -35,6 +35,7 @@ module.exports = function(name,configuration,provider,Document) {
   if(!Check.isObject(Document)) throw new Error("The Document class is required.");
   if(!Check.isFunction(Document.getDocumentId) ||
      !Check.isFunction(Document.isModified) ||
+     !Check.isFunction(Document.isCollided) ||
      !Check.isFunction(Document.new) ||
      !Check.isFunction(Document.serialize) ||
      !Check.isFunction(Document.signature) ) throw new Error("The Document class does not have the required functions.");
@@ -92,8 +93,9 @@ module.exports = function(name,configuration,provider,Document) {
       .catch( handleError ),
     deleteDocument: id => provider.deleteDocument(name,id).catch( handleError ),
     saveDocument: documentToSave => Promise.resolve(documentToSave)
-      .then( document => !document ? Promise.reject("Cannot save undefined or null objects.") : document)
-      .then( document => configuration.onlyUpdateOnMD5Change && document.isModified ? document.isModified() : document)
+      .then( document => !document ? Promise.reject("Cannot save undefined or null objects.") : document )
+      .then( document => configuration.onlyUpdateOnMD5Change && document.isModified && document.isModified() ? document : Promise.reject('not-modified'))
+      .then( document => configuration.collideOnMissmatch && document.isCollided ? document.isCollided() : document )
       .then( document => {
         const toWrite = Document.serialize(document);
         return {
@@ -114,7 +116,7 @@ module.exports = function(name,configuration,provider,Document) {
         }
       } )
       .then( data => Document.new(data,configuration,provider,collection) )
-      .catch( handleError ),
+      .catch( error => 'not-modified' === error ? Promise.resolve(documentToSave) : handleError(error) ),
   }
 
   return collection;
