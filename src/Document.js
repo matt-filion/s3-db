@@ -13,6 +13,7 @@ module.exports.isModified = document => {
 }
 module.exports.isCollided = (document,configuration,provider) => {
   if(document.getId){
+    const metadata = Utils.getMetaData(document);
     return provider.getDocumentHead(metadata.collection,document.getId())
       .then( head => {
 
