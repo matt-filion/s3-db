@@ -9,7 +9,7 @@ module.exports.deserialize = serialized => typeof serialized === 'string' ? JSON
 module.exports.isModified = document => {
   const metadata = Utils.getMetaData(document);
   const currentMD5 = module.exports.signature(document);
-  return metadata && metadata.md5 !== currentMD5;
+  return !metadata || metadata.md5 !== currentMD5;
 }
 module.exports.isCollided = (document,configuration,provider) => {
   if(document.getId){
