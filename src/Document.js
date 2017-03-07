@@ -51,7 +51,7 @@ const isCollided = (document,configuration,provider) => {
  *  the returned object with convenience objects and metadata.
  * @param file
  */
-module.exports = function(file,configuration,provider,collection){
+const Document = function(file,configuration,provider,collection) {
 
   const body     = provider.getDocumentBody(file);
   const document = Common.deserialize(body);
@@ -63,10 +63,15 @@ module.exports = function(file,configuration,provider,collection){
 
   Utils.setMetaData(document,metadata);
 
+  console.log("document",document);
+  
   /*
    * Decorate with the isModified function for the save logic.
    */
-  document.getId      = () => Common.getDocumentId(this,configuration);
+  document.getId      = () => {
+    console.log("getting id")
+    return Common.getDocumentId(this,configuration)
+  };
   document.isModified = () => isModified(this);
   document.isCollided = () => isCollided(this,configuration,provider);
   document.save       = () => collection.saveDocument(this);
@@ -79,6 +84,9 @@ module.exports = function(file,configuration,provider,collection){
   document.save.bind(document);
   document.delete.bind(document);
   document.refresh.bind(document);
-
   return document;
+}
+
+module.exports = function(file,configuration,provider,collection){
+  return new Document(file,configuration,provider,collection);
 }
