@@ -24,7 +24,7 @@ module.exports = (overrides) => {  /*
     pageSize: 100,
     encryption: true,
     collection: {
-      name: name  => `${configuration.db}.${configuration.environment}.${name}`,
+      name: name => `${configuration.db}.${configuration.environment}.${name}`,
       isOwned: fqn => fq.startsWith(configuration.collection.name('')),
       parseName: fqn => fqn.substring(configuration.collection.name('').length)
     },

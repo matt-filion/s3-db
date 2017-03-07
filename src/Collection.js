@@ -32,13 +32,7 @@ module.exports = function(name,configuration,provider,Document) {
      !Check.isFunction(provider.setCollectionTags) ||
      !Check.isFunction(provider.getCollectionTags) ) throw new Error("Provider does not have the required functions.");
 
-  if(!Check.isObject(Document)) throw new Error("The Document class is required.");
-  if(!Check.isFunction(Document.getDocumentId) ||
-     !Check.isFunction(Document.isModified) ||
-     !Check.isFunction(Document.isCollided) ||
-     !Check.isFunction(Document.new) ||
-     !Check.isFunction(Document.serialize) ||
-     !Check.isFunction(Document.signature) ) throw new Error("The Document class does not have the required functions.");
+  if(!Check.isFunction(Document)) throw new Error("The Document class is required.");
 
   /*
    * Handling of common error scenarios for friendlier messages.
@@ -89,7 +83,7 @@ module.exports = function(name,configuration,provider,Document) {
       .then( listResponse )
       .catch( handleError ),
     getDocument: id => provider.getDocument(name,id)
-      .then( data => Document.new(data,configuration,provider,collection))
+      .then( data => new Document(data,configuration,provider,collection))
       .catch( handleError ),
     deleteDocument: id => provider.deleteDocument(name,id).catch( handleError ),
     saveDocument: documentToSave => Promise.resolve(documentToSave)
@@ -97,13 +91,13 @@ module.exports = function(name,configuration,provider,Document) {
       .then( document => configuration.onlyUpdateOnMD5Change && (!document.isModified || document.isModified()) ? document : Promise.reject('not-modified'))
       .then( document => configuration.collideOnMissmatch && document.isCollided ? document.isCollided() : document )
       .then( document => {
-        const toWrite = Document.serialize(document);
+        const toWrite = Common.serialize(document);
         return {
           collection: name,
-          id: Document.getDocumentId(document,configuration),
+          id: document.getId ? document.getId() : Common.getDocumentId(document,configuration),
           body: toWrite,
           metaData:{
-            md5 : Document.signature(toWrite)
+            md5 : Common.signature(toWrite)
           }
         }
       })
@@ -111,11 +105,11 @@ module.exports = function(name,configuration,provider,Document) {
       .then( data => provider.buildDocumentMetaData(data) )
       .then( metadata => {
         return {
-          Body: Document.serialize(documentToSave),
+          Body: Common.serialize(documentToSave),
           ETag: metadata.eTag
         }
       } )
-      .then( data => Document.new(data,configuration,provider,collection) )
+      .then( data => new Document(data,configuration,provider,collection) )
       .catch( error => 'not-modified' === error ? Promise.resolve(documentToSave) : handleError(error) ),
   }
 

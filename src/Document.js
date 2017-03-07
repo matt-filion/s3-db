@@ -1,17 +1,17 @@
 'use strict'
 
-const Utils = require('./lib/Common').Utils;
+const Common = require('./lib/Common');
+const Utils = Common.Utils;
 
-module.exports.getDocumentId = (document,configuration) => document[configuration.id.propertyName] || configuration.id.generator();
-module.exports.signature = toWrite => require('crypto').createHash('md5').update(typeof toWrite === 'string' ? toWrite : JSON.stringify(toWrite)).digest('base64');
-module.exports.serialize = body => typeof body === 'string' ? body : JSON.stringify(body);
-module.exports.deserialize = serialized => typeof serialized === 'string' ? JSON.parse(serialized) : serialized;
-module.exports.isModified = document => {
+const getDocumentId = (document,configuration) => document[configuration.id.propertyName] || configuration.id.generator();
+
+const isModified = document => {
   const metadata = Utils.getMetaData(document);
-  const currentMD5 = module.exports.signature(document);
+  const currentMD5 = Common.signature(document);
   return !metadata || metadata.md5 !== currentMD5;
 }
-module.exports.isCollided = (document,configuration,provider) => {
+
+const isCollided = (document,configuration,provider) => {
   if(document.getId){
     const metadata = Utils.getMetaData(document);
     return provider.getDocumentHead(metadata.collection,document.getId())
@@ -44,20 +44,20 @@ module.exports.isCollided = (document,configuration,provider) => {
       })
   }
   return Promise.resolve(document);
-},
+}
 
 /*
  * Extracts the data from the file, deserailizes it and decorates
  *  the returned object with convenience objects and metadata.
  * @param file
  */
-module.exports.new = function(file,configuration,provider,collection){
+module.exports = function(file,configuration,provider,collection){
 
   const body     = provider.getDocumentBody(file);
-  const document = module.exports.deserialize(body);
+  const document = Common.deserialize(body);
   const metadata = provider.buildDocumentMetaData(file);
 
-  if(document) metadata.md5 = module.exports.signature(body);
+  if(document) metadata.md5 = Common.signature(body);
 
   metadata.collection = collection.getName();
 
@@ -66,12 +66,19 @@ module.exports.new = function(file,configuration,provider,collection){
   /*
    * Decorate with the isModified function for the save logic.
    */
-  document.getId      = () => module.exports.getDocumentId(document,configuration);
-  document.isModified = () => module.exports.isModified(document);
-  document.isCollided = () => module.exports.isCollided(document,configuration,provider);
-  document.save       = () => collection.saveDocument(document);
-  document.delete     = () => collection.deleteDocument(document.getId());
-  document.refresh    = () => collection.getDocument(document.getId());
+  document.getId      = () => Common.getDocumentId(this,configuration);
+  document.isModified = () => isModified(this);
+  document.isCollided = () => isCollided(this,configuration,provider);
+  document.save       = () => collection.saveDocument(this);
+  document.delete     = () => collection.deleteDocument(this.getId());
+  document.refresh    = () => collection.getDocument(this.getId());
+
+  document.getId.bind(document);
+  document.isModified.bind(document);
+  document.isCollided.bind(document);
+  document.save.bind(document);
+  document.delete.bind(document);
+  document.refresh.bind(document);
 
   return document;
 }

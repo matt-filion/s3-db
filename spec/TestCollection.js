@@ -25,13 +25,16 @@ describe('Collection', () => {
     buildDocumentMetaData: () => {return {eTag:"asdfasdfasdf"}},
   };
 
-  const TestDocument = {
-    getDocumentId: () => 'x',
-    isModified: () => true,
-    isCollided: () => false,
-    signature: () =>'x',
-    serialize: document => JSON.stringify(document),
-    new: (data,provider,collection) => data.Body ? JSON.parse(data.Body) : data
+  const TestDocument = function(data){
+    const document = data.Body ? JSON.parse(data.Body) : data;
+    
+    document.getDocumentId = () => 'x';
+    document.isModified = () => true;
+    document.isCollided = () => false;
+    document.signature = () =>'x';
+    document.serialize = document => JSON.stringify(document);
+
+    return document;
   }
 
   describe('Invalid Configurations', () => {
@@ -71,9 +74,6 @@ describe('Collection', () => {
     it('to throw an exception for missing the Document class.',() => expect(() => new Collection('test',{collection: {name:()=>{}},id:{propertyName:'id',generator:()=>{}}},testProvider))
       .to.throw("The Document class is required."));
 
-    const InvalidTestDocument = {};
-    it('to throw an exception for Document class being invalid.',() => expect(() => new Collection('test',{collection: {name:()=>{}},id:{propertyName:'id',generator:()=>{}}},testProvider,InvalidTestDocument))
-      .to.throw("The Document class does not have the required functions."));
   })
 
   describe('Positive Tests', () => {

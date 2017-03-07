@@ -25,3 +25,8 @@ module.exports.Utils = {
     if(metadata) return metadata.get()
   }
 }
+
+module.exports.getDocumentId = (document,configuration) => document[configuration.id.propertyName] || configuration.id.generator();
+module.exports.signature     = toWrite => require('crypto').createHash('md5').update(typeof toWrite === 'string' ? toWrite : JSON.stringify(toWrite)).digest('base64');
+module.exports.serialize     = body => typeof body === 'string' ? body : JSON.stringify(body);
+module.exports.deserialize   = serialized => typeof serialized === 'string' ? JSON.parse(serialized) : serialized;
