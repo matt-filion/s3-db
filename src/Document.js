@@ -3,11 +3,9 @@
 const Common = require('./lib/Common');
 const Utils = Common.Utils;
 
-const getDocumentId = (document,configuration) => document[configuration.id.propertyName] || configuration.id.generator();
-
 const isModified = document => {
   const metadata = Utils.getMetaData(document);
-  const currentMD5 = Common.signature(document);
+  const currentMD5 = Utils.signature(document);
   return !metadata || metadata.md5 !== currentMD5;
 }
 
@@ -54,36 +52,25 @@ const isCollided = (document,configuration,provider) => {
 const Document = function(file,configuration,provider,collection) {
 
   const body     = provider.getDocumentBody(file);
-  const document = Common.deserialize(body);
+  const document = Utils.deserialize(body);
   const metadata = provider.buildDocumentMetaData(file);
 
-  if(document) metadata.md5 = Common.signature(body);
+  if(document) metadata.md5 = Utils.signature(body);
 
   metadata.collection = collection.getName();
 
   Utils.setMetaData(document,metadata);
-
-  console.log("document",document);
   
   /*
    * Decorate with the isModified function for the save logic.
    */
-  document.getId      = () => {
-    console.log("getting id")
-    return Common.getDocumentId(this,configuration)
-  };
-  document.isModified = () => isModified(this);
-  document.isCollided = () => isCollided(this,configuration,provider);
-  document.save       = () => collection.saveDocument(this);
-  document.delete     = () => collection.deleteDocument(this.getId());
-  document.refresh    = () => collection.getDocument(this.getId());
+  document.getId      = () => document[configuration.id.propertyName];
+  document.isModified = () => isModified(document);
+  document.isCollided = () => isCollided(document,configuration,provider);
+  document.save       = () => collection.saveDocument(document);
+  document.delete     = () => collection.deleteDocument(document.getId());
+  document.refresh    = () => collection.getDocument(document.getId());
 
-  document.getId.bind(document);
-  document.isModified.bind(document);
-  document.isCollided.bind(document);
-  document.save.bind(document);
-  document.delete.bind(document);
-  document.refresh.bind(document);
   return document;
 }
 

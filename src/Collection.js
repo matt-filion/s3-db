@@ -91,13 +91,16 @@ module.exports = function(name,configuration,provider,Document) {
       .then( document => configuration.onlyUpdateOnMD5Change && (!document.isModified || document.isModified()) ? document : Promise.reject('not-modified'))
       .then( document => configuration.collideOnMissmatch && document.isCollided ? document.isCollided() : document )
       .then( document => {
-        const toWrite = Common.serialize(document);
+        if(!document.getId && !document[configuration.id.propertyName]){
+          document[configuration.id.propertyName] = configuration.id.generator();
+        }
+        const toWrite = Utils.serialize(document);
         return {
           collection: name,
-          id: document.getId ? document.getId() : Common.getDocumentId(document,configuration),
+          id: document[configuration.id.propertyName],
           body: toWrite,
-          metaData:{
-            md5 : Common.signature(toWrite)
+          metaData: {
+            md5: Utils.signature(toWrite)
           }
         }
       })
@@ -105,7 +108,7 @@ module.exports = function(name,configuration,provider,Document) {
       .then( data => provider.buildDocumentMetaData(data) )
       .then( metadata => {
         return {
-          Body: Common.serialize(documentToSave),
+          Body: Utils.serialize(documentToSave),
           ETag: metadata.eTag
         }
       } )
