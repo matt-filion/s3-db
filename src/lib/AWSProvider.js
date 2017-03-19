@@ -6,14 +6,15 @@
  * @param s3
  * @param configuration
  */
-module.exports = function(configuration){
+module.exports = function(config){
 
-  const AWS             = require('aws-sdk');
-  const region          = configuration.provider.region;
-  const accessKeyId     = configuration.provider.accessKeyId || null;
-  const secretAccessKey = configuration.provider.secretAccessKey || null;
-  const awsConfig       = {region:region,accessKeyId:accessKeyId,secretAccessKey:secretAccessKey};
-  const s3              = new AWS.S3(awsConfig);
+  const AWS                 = require('aws-sdk');
+  const region              = config.get('provider.region');
+  const accessKeyId         = config.get('provider.accessKeyId');
+  const secretAccessKey     = config.get('provider.secretAccessKey');
+  const s3                  = new AWS.S3({region,accessKeyId,secretAccessKey});
+  const bucketName          = name => Utils.render(config.get('db.namePattern'),{db:config.get('db'),name});
+  const getCollectionConfig = (name,setting) => config.get(`collections.${name}.${setting}`) || config.get('collections.default.${setting}');
 
   return {
 
@@ -21,14 +22,13 @@ module.exports = function(configuration){
      * @return Array of the collection names
      */
     listCollections: () => s3.listBuckets().promise()
-      .then(  results => results.Buckets.map( bucket => bucket.Name ) ),
+      .then( results => results.Buckets.map( bucket => bucket.Name ) ),
 
     /**
      *
      */
-    createCollection: bucket => s3.createBucket({
-        Bucket: configuration.bucket.name(bucket), /* required */
-        ACL: 'private'
+    createCollection: name => s3.createBucket({
+        Bucket: bucketName(name), ACL: 'private'
       })
       .promise()
       .catch( results => {
@@ -41,8 +41,8 @@ module.exports = function(configuration){
     /*
      * Remove a collection from the underlying source.
      */
-    dropCollection: bucket => s3.deleteBucket({
-        Bucket: configuration.collection.name(bucket)
+    dropCollection: name => s3.deleteBucket({
+        Bucket: bucketName(name)
       }).promise(),
 
     /*
@@ -50,12 +50,10 @@ module.exports = function(configuration){
      *  s3-db so we know what ones to list out when a list request
      *  is being made.
      */
-    setCollectionTags: (bucket,tags) => {
+    setCollectionTags: (name,tags) => {
       const params = {
-        Bucket: configuration.collection.name(bucket),
-        Tagging: {
-          TagSet: []
-        }
+        Bucket: bucketName(name),
+        Tagging: { TagSet: [] }
       };
 
       Object.keys(tags).forEach(name => {
@@ -72,18 +70,18 @@ module.exports = function(configuration){
      *  s3-db so we know what ones to list out when a list request
      *  is being made.
      */
-    getCollectionTags: bucket => s3.getBucketTagging({Bucket: configuration.collection.name(bucket)})
+    getCollectionTags: name => s3.getBucketTagging({Bucket: bucketName(name)})
       .promise()
       .then( tagging => tagging.TagSet.map( tag => {return {[tag.Key]:tag.Value}})),
 
     /**
      *
      */
-    findDocuments: (bucket,startsWith,continuationToken) => {
+    findDocuments: (name,startsWith,continuationToken) => {
       const params = {
-        Bucket : configuration.collection.name(bucket),
+        Bucket : bucketName(name),
         FetchOwner: false,
-        MaxKeys: configuration.pageSize
+        MaxKeys: getCollectionConfig(name,'pageSize')
       };
 
       if(startsWith) params.Prefix = startsWith
@@ -97,22 +95,22 @@ module.exports = function(configuration){
     /**
      *
      */
-    deleteDocument: (bucket,id) => s3.deleteObject({
-       Bucket : configuration.collection.name(bucket), Key : id
+    deleteDocument: (name,id) => s3.deleteObject({
+      Bucket: bucketName(name), Key: id
     }).promise(),
 
     /**
      *
      */
-    getDocumentHead : (bucket,id) => s3.headObject({
-      Bucket : configuration.collection.name(bucket), Key : id
+    getDocumentHead : (name,id) => s3.headObject({
+      Bucket: bucketName(name), Key: id
     }).promise(),
 
     /**
      *
      */
-    getDocument : (bucket,id) => s3.getObject({
-      Bucket : configuration.collection.name(bucket), Key : id
+    getDocument : (name,id) => s3.getObject({
+      Bucket: bucketName(name), Key: id
     }).promise(),
 
     /**
@@ -120,11 +118,11 @@ module.exports = function(configuration){
      */
     putDocument : (request) => {
       const params = {
-        Bucket : configuration.collection.name(request.collection),
-        Key : request.id,
+        Bucket: bucketName(request.collection),
+        Key: request.id,
         ContentType: 'application/json',
         ContentLength: request.body.length,
-        Body : request.body,
+        Body: request.body,
       };
 
       if(request.metadata){
@@ -134,7 +132,7 @@ module.exports = function(configuration){
         }
       }
 
-      if(configuration.encryption) params.ServerSideEncryption = 'AES256'
+      if(getCollectionConfig(name,'encryption')) params.ServerSideEncryption = 'AES256'
 
       return s3.putObject(params).promise();
     },

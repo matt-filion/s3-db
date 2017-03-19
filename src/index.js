@@ -1,52 +1,54 @@
 'use strict';
 
-const Common = require('./lib/Common');
+const Common   = require('./lib/Common');
+const Config   = require('lamcfg');
+const Database = require('./Database');
 
 /**
  * @see https://www.npmjs.com/package/s3-db
  */
-module.exports = (overrides) => {  /*
-   * @see https://bitbucket.org/sexycastle/s3-db/docs/Configuration.md
-   */
-  const configuration = {
-    db: process.env.S3DB_NAME || 's3-db',
+module.exports = function(overrides){
+
+  const defaults = {
+    db: {
+      name: process.env['S3DB_NAME'] || 's3-db',
+      environment: process.env['STAGE'] || process.env['AWS_LAMBDA_FUNCTION_VERSION'] || 'dev',
+      namePattern: '${db.name}:${db.environment}::${name}',
+      allowDrop: false
+    },
     provider: {
-      name: process.env.PROVIDER_NAME || 'aws-s3',
-      /*
-       * Note: Previous versions defaulted to us-west-2 because it is the region I
-       *  typically use.
-       */
-      region: process.env.AWS_DEFAULT_REGION || 'us-east-1',
+      name: 'aws-s3',
+      region: process.env['AWS_DEFAULT_REGION'] || 'us-east-1'
     },
-    environment: (process.env.STAGE || process.env.AWS_LAMBDA_FUNCTION_VERSION || 'dev').replace(/\$/g,"").toLowerCase(),
-    onlyUpdateOnMD5Change: true,
-    collideOnMissmatch: true,
-    pageSize: 100,
-    encryption: true,
-    collection: {
-      name: name => `${configuration.db}.${configuration.environment}.${name}`,
-      isOwned: fqn => fq.startsWith(configuration.collection.name('')),
-      parseName: fqn => fqn.substring(configuration.collection.name('').length)
-    },
-    id:{
-      propertyName: 'id',
-      /* @see https://gist.github.com/jed/982883 */
-      generator: collectionName => Common.uuid()
+    collections: {
+      default: {
+        pageSize: 100,
+        encryption: true,
+        onlyUpdateOnMD5Change: true,
+        collideOnMissmatch: false,
+        id:{
+          propertyName: 'id',
+          /* @see https://gist.github.com/jed/982883 */
+          generator: Common.uuid
+        }
+      }
     }
-  }
+  };
+
+  const config = new Config({defaults});
 
   /*
    * Allows for a simple configuration when all the defaults are OK.
    */
   if(typeof overrides === "string"){
-    Object.assign(configuration,{db: overrides})
-  } else {
-    Object.assign(configuration,overrides);
+    config.update({db:{name:overrides}});
+  } else if(overrides) {
+    config.update(overrides);
   }
 
-  const provider   = require('./lib/AWSProvider')(configuration);
+  const provider   = require('./lib/AWSProvider')(config);
   const Collection = require('./Collection');
   const Document   = require('./Document');
 
-  return require('./Database')(configuration,provider,Collection,Document);
+  return new Database(config,provider,Collection,Document);
 }
