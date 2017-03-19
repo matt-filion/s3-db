@@ -1,20 +1,17 @@
 'use strict';
 
-const Common   = require('./lib/Common');
-const Config   = require('lamcfg');
-const Database = require('./Database');
-
 /**
  * @see https://www.npmjs.com/package/s3-db
  */
 module.exports = function(overrides){
 
+  const Common   = require('./lib/Common');
+  const Config   = require('lamcfg');
   const defaults = {
     db: {
       name: process.env['S3DB_NAME'] || 's3-db',
       environment: process.env['STAGE'] || process.env['AWS_LAMBDA_FUNCTION_VERSION'] || 'dev',
-      namePattern: '${db.name}:${db.environment}::${name}',
-      allowDrop: false
+      namePattern: '${db.name}:${db.environment}::${name}'
     },
     provider: {
       name: 'aws-s3',
@@ -23,18 +20,10 @@ module.exports = function(overrides){
     collections: {
       default: {
         pageSize: 100,
-        encryption: true,
-        onlyUpdateOnMD5Change: true,
-        collideOnMissmatch: false,
-        id:{
-          propertyName: 'id',
-          /* @see https://gist.github.com/jed/982883 */
-          generator: Common.uuid
-        }
+        encryption: true
       }
     }
   };
-
   const config = new Config({defaults});
 
   /*
@@ -49,6 +38,7 @@ module.exports = function(overrides){
   const provider   = require('./lib/AWSProvider')(config);
   const Collection = require('./Collection');
   const Document   = require('./Document');
+  const Database   = require('./Database');
 
   return new Database(config,provider,Collection,Document);
 }

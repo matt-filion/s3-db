@@ -3,7 +3,7 @@
 module.exports.Check = {
   exist: value => value !== undefined && value !== null,
   isFunction: value => typeof value === 'function',
-  isObject: value => typeof value === 'object',
+  isObject: value => null !== value && typeof value === 'object',
 }
 
 module.exports.METANAME = '__s3db'

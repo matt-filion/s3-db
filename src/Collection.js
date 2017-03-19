@@ -7,22 +7,14 @@
  * @param the provider for the underlying files.
  * @param Document class for wrapping around the files returned form the provider.
  */
-module.exports = function(name,configuration,provider,Document) {
+module.exports = function(fqn,config,provider,Document) {
 
   const Common = require('./lib/Common');
   const Check  = Common.Check;
   const Utils  = Common.Utils;
 
-  if(!Check.exist(name)) throw new Error("A name must be supplied.");
-
-  /* No clue why its not working. */
-  // if(!Check.exist(configuration)) throw new Error("A configuration must be supplied.");
-  if(!Check.exist(configuration.collection)) throw new Error("A configuration must have an object for the 'collection' attribute.");
-  if(!Check.isFunction(configuration.collection.name)) throw new Error("A configuration must have a function for the 'collection.name' attribute.");
-  if(!Check.exist(configuration.id)) throw new Error("A configuration must have an object for the 'id' attribute.");
-  if(!Check.exist(configuration.id.propertyName)) throw new Error("A configuration must have a value for the 'id.propertyName' attribute.");
-  if(!Check.isFunction(configuration.id.generator)) throw new Error("A configuration must have a function for the 'id.generator' attribute.");
-
+  if(!Check.exist(fqn) || !Check.exist(fqn.name) || !Check.exist(fqn.prefix)) throw new Error("A valid fqn must be supplied, which should contain a name and prefix attribute.");
+  if(!Check.exist(config) || !Check.exist(config.get)) throw new Error("A valid configuration must be supplied.");
   if(!Check.exist(provider)) throw new Error("No provider was supplied, this object will have nothing to act upon.");
   if(!Check.isFunction(provider.findDocuments) ||
      !Check.isFunction(provider.getDocument) ||
@@ -31,7 +23,6 @@ module.exports = function(name,configuration,provider,Document) {
      !Check.isFunction(provider.putDocument) ||
      !Check.isFunction(provider.setCollectionTags) ||
      !Check.isFunction(provider.getCollectionTags) ) throw new Error("Provider does not have the required functions.");
-
   if(!Check.isFunction(Document)) throw new Error("The Document class is required.");
 
   /*
@@ -40,15 +31,20 @@ module.exports = function(name,configuration,provider,Document) {
   const handleError = error => {
     switch (error.code) {
       case 'NoSuchBucket':
-        return Promise.reject(`${configuration.collection.name(name)} is not a valid bucket or is not visible/accssible.`);
+        return Promise.reject(`${fqn.prefix}${fqn.name} is not a valid bucket or is not visible/accssible.`);
       case 'NoSuchKey':
-        if(!configuration.errorOnNotFound) {
+        if(!config.get('errorOnNotFound',false)) {
           return Promise.resolve();
         }
       default:
         return Promise.reject(error);
     }
   }
+
+  const idGenerator    = config.get('id.generator',Common.uuid);
+  const idPropertyName = config.get('id.propertyName','id');
+
+  console.log("idGenerator",idGenerator);
 
   /*
    * Decorates a list of results with some convenience methods.
@@ -68,7 +64,7 @@ module.exports = function(name,configuration,provider,Document) {
     if(metadata.hasMore){
       results.hasMore = metadata.hasMore;
       results.next    = () => Promise.resolve( Utils.getMetaData(documents) )
-        .then( metadata => provider.listDocuments(name, metadata.startsWith, metadata.continuationToken) )
+        .then( metadata => provider.listDocuments(fqn, metadata.startsWith, metadata.continuationToken) )
         .then( listResponse )
     }
 
@@ -76,28 +72,38 @@ module.exports = function(name,configuration,provider,Document) {
   }
 
   const collection = {
-    getName: () => name,
+    getName: () => fqn.name,
     // getTags: instance.getTags,
     // setTags: instance.setTags,
-    find: startsWith => provider.findDocuments(name,startsWith)
+    find: startsWith => provider.findDocuments(fqn,startsWith)
       .then( listResponse )
       .catch( handleError ),
-    getDocument: id => provider.getDocument(name,id)
-      .then( data => new Document(data,configuration,provider,collection))
+    getDocument: id => provider.getDocument(fqn,id)
+      .then( data => new Document(data,config,provider,collection))
       .catch( handleError ),
-    deleteDocument: id => provider.deleteDocument(name,id).catch( handleError ),
+    deleteDocument: id => provider.deleteDocument(fqn,id).catch( handleError ),
     saveDocument: documentToSave => Promise.resolve(documentToSave)
       .then( document => !document ? Promise.reject("Cannot save undefined or null objects.") : document )
-      .then( document => configuration.onlyUpdateOnMD5Change && (!document.isModified || document.isModified()) ? document : Promise.reject('not-modified'))
-      .then( document => configuration.collideOnMissmatch && document.isCollided ? document.isCollided() : document )
       .then( document => {
-        if(!document.getId && !document[configuration.id.propertyName]){
-          document[configuration.id.propertyName] = configuration.id.generator();
+        if(config.get('onlyUpdateOnMD5Change',true)){
+          return !document.isModified || document.isModified() ? document : Promise.reject('not-modified')
+        }
+        return document;
+      })
+      .then( document => {
+        if(config.get('collideOnMissmatch',false)) {
+          return document.isCollided ? document.isCollided() : document 
+        }
+        return document;
+      })
+      .then( document => {
+        if(!document.getId && !document[idPropertyName]){
+          document[idPropertyName] = idGenerator(document);
         }
         const toWrite = Utils.serialize(document);
         return {
-          collection: name,
-          id: document[configuration.id.propertyName],
+          collection: `${fqn.prefix}${fqn.name}`,
+          id: document[idPropertyName],
           body: toWrite,
           metaData: {
             md5: Utils.signature(toWrite)
@@ -105,14 +111,14 @@ module.exports = function(name,configuration,provider,Document) {
         }
       })
       .then( provider.putDocument )
-      .then( data => provider.buildDocumentMetaData(data) )
+      .then( provider.buildDocumentMetaData )
       .then( metadata => {
         return {
           Body: Utils.serialize(documentToSave),
           ETag: metadata.eTag
         }
-      } )
-      .then( data => new Document(data,configuration,provider,collection) )
+      })
+      .then( data => new Document(data,config,provider,collection) )
       .catch( error => 'not-modified' === error ? Promise.resolve(documentToSave) : handleError(error) ),
   }
 
