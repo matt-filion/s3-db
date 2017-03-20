@@ -1,5 +1,9 @@
 'use strict'
 
+const Common = require('./lib/Common');
+const Check  = Common.Check;
+const Utils  = Common.Utils;
+
 /**
  * Wraps around the logical file collection.
  * @param name of the Collection
@@ -7,11 +11,7 @@
  * @param the provider for the underlying files.
  * @param Document class for wrapping around the files returned form the provider.
  */
-module.exports = function(fqn,config,provider,Document) {
-
-  const Common = require('./lib/Common');
-  const Check  = Common.Check;
-  const Utils  = Common.Utils;
+module.exports = function(fqn,config,provider,serializer,documentFactory) {
 
   if(!Check.exist(fqn) || !Check.exist(fqn.name) || !Check.exist(fqn.prefix)) throw new Error("A valid fqn must be supplied, which should contain a name and prefix attribute.");
   if(!Check.exist(config) || !Check.exist(config.get)) throw new Error("A valid configuration must be supplied.");
@@ -23,7 +23,8 @@ module.exports = function(fqn,config,provider,Document) {
      !Check.isFunction(provider.putDocument) ||
      !Check.isFunction(provider.setCollectionTags) ||
      !Check.isFunction(provider.getCollectionTags) ) throw new Error("Provider does not have the required functions.");
-  if(!Check.isFunction(Document)) throw new Error("The Document class is required.");
+  if(!Check.isObject(serializer)) throw new Error("A serializer is required.");
+  if(!Check.isObject(documentFactory)) throw new Error("The DocumentFactory Class is required.");
 
   /*
    * Handling of common error scenarios for friendlier messages.
@@ -43,8 +44,6 @@ module.exports = function(fqn,config,provider,Document) {
 
   const idGenerator    = config.get('id.generator',Common.uuid);
   const idPropertyName = config.get('id.propertyName','id');
-
-  console.log("idGenerator",idGenerator);
 
   /*
    * Decorates a list of results with some convenience methods.
@@ -71,6 +70,41 @@ module.exports = function(fqn,config,provider,Document) {
     return documents;
   }
 
+  const isCollided = (document) => {
+    if(document.getId){
+      const metadata = Utils.getMetaData(document);
+      return provider.getDocumentHead(fqn,document.getId())
+        .then( head => {
+
+          const targetMetaData = provider.buildDocumentMetaData(head);
+          let   hasChanged     = false;
+
+          /*
+           * The targetMetaData comes from a headCheck on the object being
+           *  overwritten. So if the MD5 on the __meta of the current record
+           *  matches the target MD5, the underlying object is likely not
+           *  modified.
+           *
+           * Md5 does not always get returned.
+           */
+          if(targetMetaData.md5 && targetMetaData.md5 !== metadata.md5){
+            hasChanged = true;
+          }
+
+          if(targetMetaData.eTag !== metadata.eTag){
+            hasChanged = true;
+          }
+
+          if(hasChanged){
+            return Promise.reject('Collision, the document has been modified.');
+          }
+
+          return document;
+        })
+    }
+    return Promise.resolve(document);
+  }
+
   const collection = {
     getName: () => fqn.name,
     // getTags: instance.getTags,
@@ -79,7 +113,7 @@ module.exports = function(fqn,config,provider,Document) {
       .then( listResponse )
       .catch( handleError ),
     getDocument: id => provider.getDocument(fqn,id)
-      .then( data => new Document(data,config,provider,collection))
+      .then( data => documentFactory.build(data,idPropertyName,collection))
       .catch( handleError ),
     deleteDocument: id => provider.deleteDocument(fqn,id).catch( handleError ),
     saveDocument: documentToSave => Promise.resolve(documentToSave)
@@ -92,17 +126,17 @@ module.exports = function(fqn,config,provider,Document) {
       })
       .then( document => {
         if(config.get('collideOnMissmatch',false)) {
-          return document.isCollided ? document.isCollided() : document 
+          return  isCollided(document);
         }
         return document;
       })
       .then( document => {
-        if(!document.getId && !document[idPropertyName]){
+        if(!Check.isFunction(document.getId) && !document[idPropertyName]){
           document[idPropertyName] = idGenerator(document);
         }
-        const toWrite = Utils.serialize(document);
+        const toWrite = serializer.serialize(document);
         return {
-          collection: `${fqn.prefix}${fqn.name}`,
+          fqn,
           id: document[idPropertyName],
           body: toWrite,
           metaData: {
@@ -111,14 +145,7 @@ module.exports = function(fqn,config,provider,Document) {
         }
       })
       .then( provider.putDocument )
-      .then( provider.buildDocumentMetaData )
-      .then( metadata => {
-        return {
-          Body: Utils.serialize(documentToSave),
-          ETag: metadata.eTag
-        }
-      })
-      .then( data => new Document(data,config,provider,collection) )
+      .then( data =>  documentFactory.build(data,idPropertyName,collection) )
       .catch( error => 'not-modified' === error ? Promise.resolve(documentToSave) : handleError(error) ),
   }
 

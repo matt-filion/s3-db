@@ -45,6 +45,7 @@ describe('Utils', () => {
 
   describe('#signature()',()=>{
     it('should create expected md5 hash', () => expect(Utils.signature('XYZ1234')).to.equal('K4gHhP85mat1opf5oR1LKQ=='))
+    it('should create expected md5 hash', () => expect(Utils.signature()).to.equal(''))
   })
 })
 

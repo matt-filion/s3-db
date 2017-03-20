@@ -8,6 +8,7 @@ chai.should()
 chai.use(chaiAsPromised)
 
 const Database = require('../src/Database.js');
+const Common = require('../src/lib/Common');
 
 const Config   = function(config) {
   const instance = {
@@ -36,12 +37,22 @@ const goodConfig = new Config({
 describe('new Database()', () => {
   const listCollectionResponse = ['test.dev-x','y'];
   const testProvider = {
-    listCollections: () => Promise.resolve(listCollectionResponse),
-    dropCollection: () => Promise.resolve({ok:true}),
-    createCollection: name => Promise.resolve({name})
+    database: {
+      listCollections: () => Promise.resolve(listCollectionResponse),
+      dropCollection: () => Promise.resolve({ok:true}),
+      createCollection: name => Promise.resolve({name})
+    }
   };
+  const testSerializer = {
+    serialize: () => {},
+    deserialize: () => {},
+  }
 
   const TestCollection = function(name,configuration,provider,Document){
+    return {name:'x'};
+  }
+
+  const TestDocumentFactory = function(name,configuration,provider,Document){
     return {name:'x'};
   }
 
@@ -56,44 +67,53 @@ describe('new Database()', () => {
       .to.throw("db.namePattern is required, and cannot be undefined, null or ''."));
 
     it('to throw an exception for provider missing from constructor.',() => expect(() => new Database(goodConfig) )
-      .to.throw("No provider was supplied, this object will have nothing to act upon."));
+      .to.throw("A valid provider must be supplied."));
 
-    it('to throw an exception for provider not having the required functions.',() => expect(() => new Database(goodConfig, {} ) )
+    it('to throw an exception for provider missing from constructor.',() => expect(() => new Database(goodConfig, {}) )
+      .to.throw("A valid provider must be supplied."));
+
+    it('to throw an exception for provider not having the required functions.',() => expect(() => new Database(goodConfig, {database:{}} ) )
       .to.throw("Provider does not have the required functions."));
 
-    it('to throw an exception for Colection class missing from constructor.',() => expect(() => new Database(goodConfig, testProvider ) )
+    it('to throw an exception for serializer missing from constructor.',() => expect(() => new Database(goodConfig, testProvider ) )
+      .to.throw("A serializer is required."));
+
+    it('to throw an exception for Colection class missing from constructor.',() => expect(() => new Database(goodConfig, testProvider, testSerializer ) )
       .to.throw("The Collection class is required."));
+
+    it('to throw an exception for Colection class missing from constructor.',() => expect(() => new Database(goodConfig, testProvider, testSerializer, function Collection(){} ) )
+      .to.throw("The DocumentFactory class is required."));
   });
 
   describe('Check signature', () => {
-    const database = new Database(goodConfig, testProvider, TestCollection);
+    const database = new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory);
     it('should have the expected methods',() => expect(database).to.have.all.keys(['getName','getCollectionNames','getCollection','dropCollection','createCollection']) );
   })
 
   describe('#getName()', () => {
-    const database = new Database(goodConfig, testProvider, TestCollection);
+    const database = new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory);
     it('should have the defined database name.',() => expect(database.getName()).to.equal('test') );
   })
 
   describe('#getCollection()', () => {
-    const database = new Database(goodConfig, testProvider, TestCollection);
+    const database = new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory);
     it('to return a collection.',() => expect(database.getCollection('test')).to.eventually.have.property('name').that.equals('x') );
   });
 
   describe('#getCollection() from cache', () => {
-    const database = new Database(goodConfig, testProvider, TestCollection);
+    const database = new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory);
     database.getCollection('test');
     it('to return a collection.',() => expect(database.getCollection('test')).to.eventually.have.property('name').that.equals('x') );
   });
 
   describe('#createCollection()', () => {
-    const database = new Database(goodConfig, testProvider, TestCollection);
+    const database = new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory);
     it('to create a new collection.',() => expect(database.createCollection('test')).to.eventually.have.property('name') );
   });
 
   describe('#dropCollection()', () => {
-    it('to NOT allow a collection to be dropped by default.',() => expect(new Database(goodConfig, testProvider, TestCollection).dropCollection('test')).to.be.rejectedWith("Configuration does not allow collections to be dropped.") );
-    it('to ALLOW a collection to be dropped by default.',() => expect(new Database(goodConfig.update({'db.allowDrop':true}), testProvider, TestCollection).dropCollection('test')).to.eventually.have.property("ok").that.equals(true) );
+    it('to NOT allow a collection to be dropped by default.',() => expect(new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory).dropCollection('test')).to.be.rejectedWith("Configuration does not allow collections to be dropped.") );
+    it('to ALLOW a collection to be dropped by default.',() => expect(new Database(goodConfig.update({'db.allowDrop':true}), testProvider, testSerializer, TestCollection, TestDocumentFactory).dropCollection('test')).to.eventually.have.property("ok").that.equals(true) );
   });
 
   describe('#getCollectionNames()', () => {
@@ -102,7 +122,7 @@ describe('new Database()', () => {
       listCollectionResponse.length = 0;
       listCollectionResponse.push('test.dev-x');
       listCollectionResponse.push('y');
-      const database = new Database(goodConfig, testProvider, TestCollection);
+      const database = new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory);
       expect(database.getCollectionNames()).to.eventually.be.an('array').with.deep.property('[0]').that.equals('x') 
     });
   });
@@ -113,7 +133,7 @@ describe('new Database()', () => {
       listCollectionResponse.length = 0;
       listCollectionResponse.push('test:dev::x');
       listCollectionResponse.push('y');
-      const database = new Database(goodConfig, testProvider, TestCollection);
+      const database = new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory);
       expect(database.getCollectionNames()).to.eventually.be.an('array').with.deep.property('[0]').that.equals('x') 
     });
   });
@@ -126,7 +146,7 @@ describe('new Database()', () => {
       listCollectionResponse.push('dev:test::y');
       listCollectionResponse.push('dev.test-z');
       listCollectionResponse.push('y');
-      const database = new Database(goodConfig, testProvider, TestCollection);
+      const database = new Database(goodConfig, testProvider, testSerializer, TestCollection, TestDocumentFactory);
       const names    = database.getCollectionNames();
       expect(names).to.eventually.be.an('array').with.deep.property('[0]').that.equals('x') 
       expect(names).to.eventually.be.an('array').with.deep.property('length').that.equals(1) 

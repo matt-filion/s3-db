@@ -1,5 +1,9 @@
 'use strict'
 
+const Common = require('./Common');
+const Check  = Common.Check;
+const Utils  = Common.Utils;
+
 /**
  * Wrapper for AWS S3 API's.
  *
@@ -13,161 +17,166 @@ module.exports = function(config){
   const accessKeyId         = config.get('provider.accessKeyId');
   const secretAccessKey     = config.get('provider.secretAccessKey');
   const s3                  = new AWS.S3({region,accessKeyId,secretAccessKey});
-  const bucketName          = name => Utils.render(config.get('db.namePattern'),{db:config.get('db'),name});
-  const getCollectionConfig = (name,setting) => config.get(`collections.${name}.${setting}`) || config.get('collections.default.${setting}');
+  const bucketName          = fqn => `${fqn.prefix}${fqn.name}`;
+  const getCollectionConfig = fqn => Utils.getCollectionConfig(fqn,config);
 
   return {
+    database: {
 
-    /**
-     * @return Array of the collection names
-     */
-    listCollections: () => s3.listBuckets().promise()
-      .then( results => results.Buckets.map( bucket => bucket.Name ) ),
+      /**
+       * @return Array of the collection names
+       */
+      listCollections: () => s3.listBuckets().promise()
+        .then( results => results.Buckets.map( bucket => bucket.Name ) ),
 
-    /**
-     *
-     */
-    createCollection: name => s3.createBucket({
-        Bucket: bucketName(name), ACL: 'private'
-      })
-      .promise()
-      .catch( results => {
-        let error = {status:results.code};
-        if(results.code==='BucketAlreadyOwnedByYou') error = {status:'already-exists'};
-        if(results.code==='BucketAlreadyExists') error = {status:'name-already-taken'};
-        return Promise.reject(error);
-      }),
+      /**
+       *
+       */
+      createCollection: fqn => s3.createBucket({
+          Bucket: bucketName(fqn), ACL: 'private'
+        })
+        .promise()
+        .catch( results => {
+          let error = {status:results.code};
+          if(results.code==='BucketAlreadyOwnedByYou') error = {status:'already-exists'};
+          if(results.code==='BucketAlreadyExists') error = {status:'name-already-taken'};
+          return Promise.reject(error);
+        }),
 
-    /*
-     * Remove a collection from the underlying source.
-     */
-    dropCollection: name => s3.deleteBucket({
-        Bucket: bucketName(name)
+      /*
+       * Remove a collection from the underlying source.
+       */
+      dropCollection: fqn => s3.deleteBucket({
+          Bucket:  bucketName(fqn)
+        }).promise()
+    },
+
+    colleciton: {
+      // /*
+      //  * Tags are used to track what buckets were created by
+      //  *  s3-db so we know what ones to list out when a list request
+      //  *  is being made.
+      //  */
+      // getCollectionTags: fqn => s3.getBucketTagging({Bucket: bucketName(fqn)})
+      //   .promise()
+      //   .then( tagging => tagging.TagSet.map( tag => {return {[tag.Key]:tag.Value}})),
+      // /*
+      //  * Tags are used to track what buckets were created by
+      //  *  s3-db so we know what ones to list out when a list request
+      //  *  is being made.
+      //  */
+      // setCollectionTags: (fqn,tags) => {
+      //   const params = {
+      //     Bucket:  bucketName(fqn),
+      //     Tagging: { TagSet: [] }
+      //   };
+
+      //   Object.keys(tags).forEach(name => {
+      //     params.Tagging.TagSet.push({
+      //       Key: name,
+      //       Value: tags[name]
+      //     });
+      //   })
+      //   return s3.putBucketTagging(params).promise();
+      // }
+      /**
+       *
+       */
+      findDocuments: (fqn,startsWith,continuationToken) => {
+        const params = {
+          Bucket : bucketName(fqn),
+          FetchOwner: false,
+          MaxKeys: getCollectionConfig(fqn).get('pageSize',100)
+        };
+
+        if(startsWith) params.Prefix = startsWith
+        if(continuationToken) params.ContinuationToken = continuationToken
+
+        return s3.listObjectsV2(params).promise()
+          .then( data => data.Contents )
+          .then( results => results.map( result => result.Key) )
+      },
+
+      /**
+       *
+       */
+      deleteDocument: (fqn,id) => s3.deleteObject({
+        Bucket: bucketName(fqn), Key: id
       }).promise(),
 
-    /*
-     * Tags are used to track what buckets were created by
-     *  s3-db so we know what ones to list out when a list request
-     *  is being made.
-     */
-    setCollectionTags: (name,tags) => {
-      const params = {
-        Bucket: bucketName(name),
-        Tagging: { TagSet: [] }
-      };
+      /**
+       *
+       */
+      getDocumentHead : (fqn,id) => s3.headObject({
+        Bucket: bucketName(fqn), Key: id
+      }).promise(),
 
-      Object.keys(tags).forEach(name => {
-        params.Tagging.TagSet.push({
-          Key: name,
-          Value: tags[name]
-        });
-      })
-      return s3.putBucketTagging(params).promise();
-    },
+      /**
+       *
+       */
+      getDocument : (fqn,id) => s3.getObject({
+        Bucket: bucketName(fqn), Key: id
+      }).promise(),
 
-    /*
-     * Tags are used to track what buckets were created by
-     *  s3-db so we know what ones to list out when a list request
-     *  is being made.
-     */
-    getCollectionTags: name => s3.getBucketTagging({Bucket: bucketName(name)})
-      .promise()
-      .then( tagging => tagging.TagSet.map( tag => {return {[tag.Key]:tag.Value}})),
+      /**
+       *
+       */
+      putDocument : (request) => {
+        const params = {
+          Bucket: bucketName(request.fqn),
+          Key: request.id,
+          ContentType: 'application/json',
+          ContentLength: request.body.length,
+          Body: request.body,
+        };
 
-    /**
-     *
-     */
-    findDocuments: (name,startsWith,continuationToken) => {
-      const params = {
-        Bucket : bucketName(name),
-        FetchOwner: false,
-        MaxKeys: getCollectionConfig(name,'pageSize')
-      };
-
-      if(startsWith) params.Prefix = startsWith
-      if(continuationToken) params.ContinuationToken = continuationToken
-
-      return s3.listObjectsV2(params).promise()
-        .then( data => data.Contents )
-        .then( results => results.map( result => result.Key) )
-    },
-
-    /**
-     *
-     */
-    deleteDocument: (name,id) => s3.deleteObject({
-      Bucket: bucketName(name), Key: id
-    }).promise(),
-
-    /**
-     *
-     */
-    getDocumentHead : (name,id) => s3.headObject({
-      Bucket: bucketName(name), Key: id
-    }).promise(),
-
-    /**
-     *
-     */
-    getDocument : (name,id) => s3.getObject({
-      Bucket: bucketName(name), Key: id
-    }).promise(),
-
-    /**
-     *
-     */
-    putDocument : (request) => {
-      const params = {
-        Bucket: bucketName(request.collection),
-        Key: request.id,
-        ContentType: 'application/json',
-        ContentLength: request.body.length,
-        Body: request.body,
-      };
-
-      if(request.metadata){
-        params.Metadata = request.metadata;
-        if(metadata.md5) {
-          params.ContentMD5 = metadata.md5;
+        if(request.metadata){
+          params.Metadata = request.metadata;
+          if(metadata.md5) {
+            params.ContentMD5 = metadata.md5;
+          }
         }
-      }
 
-      if(getCollectionConfig(name,'encryption')) params.ServerSideEncryption = 'AES256'
+        if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256'
 
-      return s3.putObject(params).promise();
+        return s3.putObject(params).promise().then( response => Object.assign(response,{Body:request.body}));
+      },
+
+      /*
+       * Gets the metadata from the providers attributes.
+       */
+      buildListMetaData: results => {
+        const metadata = {
+          hasMore :          results.IsTruncated,
+          batchSize:         results.MaxKeys,
+          resultCount:       results.KeyCount,
+          continuationToken: results.NextContinuationToken,
+          bucket:            results.Name,
+          commonPrefixes:    results.CommonPrefixes
+        }
+
+        if(results.Prefix) metadata.startsWith = results.Prefix
+
+        return metadata;
+      },
     },
 
-    /*
-     * Gets the metadata from the providers attributes.
-     */
-    buildListMetaData: results => {
-      const metadata = {
-        hasMore :          results.IsTruncated,
-        batchSize:         results.MaxKeys,
-        resultCount:       results.KeyCount,
-        continuationToken: results.NextContinuationToken,
-        bucket:            results.Name,
-        commonPrefixes:    results.CommonPrefixes
+    document: {
+
+      getDocumentBody: file => typeof file.Body === 'string' ? file.Body : file.Body.toString(),
+
+      buildDocumentMetaData: document => {
+        const metadata = document.Metadata || {};
+
+        if(document.Size) metadata.size = document.Size
+        if(document.StorageClass) metadata.storageClass = document.StorageClass
+        if(document.ContentLength) metadata.size = document.ContentLength;
+        if(document.ServerSideEncryption) metadata.encryption = document.ServerSideEncryption
+        if(document.LastModified) metadata.lastModified = new Date(document.LastModified)
+        if(document.ETag) metadata.eTag = document.ETag.replace(/"/g,'') /* Fix the stupid AWS eTag. */
+
+        return metadata;
       }
-
-      if(results.Prefix) metadata.startsWith = results.Prefix
-
-      return metadata;
-    },
-
-    getDocumentBody: file => typeof file.Body === 'string' ? file.Body : file.Body.toString(),
-
-    buildDocumentMetaData: document => {
-      const metadata = document.Metadata || {};
-
-      if(document.Size) metadata.size = document.Size
-      if(document.StorageClass) metadata.storageClass = document.StorageClass
-      if(document.ContentLength) metadata.size = document.ContentLength;
-      if(document.ServerSideEncryption) metadata.encryption = document.ServerSideEncryption
-      if(document.LastModified) metadata.lastModified = new Date(document.LastModified)
-      if(document.ETag) metadata.eTag = document.ETag.replace(/"/g,'') /* Fix the stupid AWS eTag. */
-
-      return metadata;
     }
   }
 }

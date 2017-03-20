@@ -11,18 +11,16 @@ module.exports = function(overrides){
     db: {
       name: process.env['S3DB_NAME'] || 's3-db',
       environment: process.env['STAGE'] || process.env['AWS_LAMBDA_FUNCTION_VERSION'] || 'dev',
-      namePattern: '${db.name}:${db.environment}::${name}'
+      namePattern: '${db.name}.${db.environment}-${name}'
     },
     provider: {
       name: 'aws-s3',
       region: process.env['AWS_DEFAULT_REGION'] || 'us-east-1'
     },
     collections: {
-      default: {
-        pageSize: 100,
-        encryption: true
-      }
-    }
+      default: {}
+    },
+    serializer: {}
   };
   const config = new Config({defaults});
 
@@ -35,10 +33,11 @@ module.exports = function(overrides){
     config.update(overrides);
   }
 
-  const provider   = require('./lib/AWSProvider')(config);
-  const Collection = require('./Collection');
-  const Document   = require('./Document');
-  const Database   = require('./Database');
+  const provider        = require('./lib/AWSProvider')(config);
+  const serializer      = require('./lib/Serializer')(config);
+  const Collection      = require('./Collection');
+  const DocumentFactory = require('./DocumentFactory');
+  const Database        = require('./Database');
 
-  return new Database(config,provider,Collection,Document);
+  return new Database(config,provider,serializer,Collection,DocumentFactory);
 }
