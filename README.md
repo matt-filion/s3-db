@@ -28,23 +28,32 @@ users.get('my-user')
 To setup the [AWS S3](https://aws.amazon.com/s3) permissions for exactly what is needed, here is the policy.
 
 ```javascript
-	{
-        "Action": [
-            "s3:ListBucket",
-            "s3:ListAllMyBuckets",
-            "s3:CreateBucket",
-            "s3:PutBucketTagging",
-            "s3:ListObject",
-            "s3:DeleteObject",
-            "s3:GetObject",
-            "s3:PutObject"
-        ],
-        "Resource": "arn:aws:s3:::s3-db*", //Neesd to change if your db name changes.
-        "Effect": "Allow"
-    }
+  {
+    "Action": [
+      "s3:ListBucket",
+      "s3:ListAllMyBuckets",
+      "s3:CreateBucket",
+      "s3:PutBucketTagging",
+      "s3:ListObject",
+      "s3:DeleteObject",
+      "s3:GetObject",
+      "s3:PutObject"
+    ],
+    "Resource": "arn:aws:s3:::s3-db*", //Neesd to change if your db name changes.
+    "Effect": "Allow"
+  }
 ```
 
 note: _"s3:DeleteBucket" has been omitted because it becomes much easier to delete a bucket with this solution and generally wont be needed in most cases. To delete buckets via this API you must update the Configuration and add the additional permission to the policy._
+
+# Latest (2.0)
+The biggest changes here were under the covers and making the framework more configurable. 
+* Can now configure each collection independently.
+* Can now add custom serializers.
+* Every configuration can be overridden using environment variables (process.env);
+* Much better coverage for Unit tests.
+* Added a dependency on lamcfg, for the configuration capabilities.
+* Added document moving and renaming.
 
 # API
 Dot notation indicates the parent object where you can find the API call. The header of each section indicates the logical starting point for each API call.
