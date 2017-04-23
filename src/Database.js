@@ -32,9 +32,9 @@ module.exports = function(config, provider, serializer, Collection, DocumentFact
 
   const isOwned = collection => collection.startsWith(prefix);
   const nameFromFQN = fqn => fqn.substring(prefix.length,fqn.length);
-  const buildCollection = name => {
+  const buildCollection = (name,overrides) => {
     const fqn = {name,prefix};
-    return new Collection(fqn, Utils.getCollectionConfig(fqn,config), dbProvider.collection, serializer, new DocumentFactory(fqn,provider,serializer), Common);
+    return new Collection(fqn, Utils.getCollectionConfig(fqn,config,overrides), dbProvider.collection, serializer, DocumentFactory, Common);
   }
 
   return {
@@ -46,10 +46,10 @@ module.exports = function(config, provider, serializer, Collection, DocumentFact
       ),
     createCollection: name => dbProvider.createCollection({name,prefix})
       .then( results => buildCollection(name) ),
-    getCollection: name => Promise.resolve( collectionCache.find( collection => collection.name === name) ) 
+    getCollection: (name,overrides) => Promise.resolve( collectionCache.find( collection => collection.name === name) ) 
       .then( collection => {
         if(collection) return collection;
-        collection = buildCollection(name);
+        collection = buildCollection(name,overrides);
         collectionCache.push( collection );
         return collection;
       }),

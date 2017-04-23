@@ -43,7 +43,7 @@ describe('Collection', () => {
     buildListMetaData: () => {return {}}
   };
 
-  const testDocumentFactory = {
+  const testDocumentFactory = function() { return {
     build: data => {
 
       const document = data.Body ? JSON.parse(data.Body) : data;
@@ -56,7 +56,7 @@ describe('Collection', () => {
 
       return document;
     }
-  }
+  } }
 
   describe('#new() Negative Tests', () => {
     it('to throw an exception for a bad fqn',() => expect(Collection)
@@ -86,7 +86,25 @@ describe('Collection', () => {
     const collection = new Collection(fqn, goodConfig, testProvider, testSerializer, testDocumentFactory);
 
     it('Check signature',() => expect(collection)
-      .to.have.all.keys('getName','getDocument','deleteDocument','find','saveDocument'));
+      .to.have.all.keys('getName','getDocument','deleteDocument','find','saveDocument','subCollection'));
+  })
+
+  describe('#subCollection() Positive', () => {
+    const collection    = new Collection(fqn, goodConfig, testProvider, testSerializer, testDocumentFactory);
+    const subCollection = collection.subCollection('child');
+
+    it('Check signature',() => expect(subCollection)
+      .to.have.all.keys('getName','getDocument','deleteDocument','find','saveDocument','subCollection'));
+
+    it('check Name', () => expect(subCollection.getName()).to.equal('test/child'));
+
+    /*
+     * Provider will take care of translating the name to include 
+     *  or exclude the preceeding name segment.
+     */
+    it('has id',() => expect(subCollection.saveDocument({id:'x'}))
+      .to.eventually.be.an('object').with.deep.property('id').that.equals('x'));
+
   })
 
   describe('#getName()', () => {

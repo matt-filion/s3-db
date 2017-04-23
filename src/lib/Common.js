@@ -12,13 +12,14 @@ module.exports.METANAME = '__s3db'
 module.exports.uuid = a =>a?(a^Math.random()*16>>a/4).toString(16):([1e7]+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g,module.exports.uuid);
 
 module.exports.Utils = {
-  getCollectionConfig: (fqn,config) => {
-    let prefix  = `collections.${fqn.name}`;
-    let configs = config.get(prefix);
-    if(configs) {
-      return config.childOf(prefix);
-    }
-    return config.childOf('collections.default');
+  getCollectionConfig: (fqn,config,overrides) => {
+    const prefix  = `collections.${fqn.name}`;
+    const configs = config.get(prefix);
+    let thisCfg;
+    if(configs) thisCfg = config.childOf(prefix);
+    else thisCfg = config.childOf('collections.default');
+    if(overrides) thisCfg.update(overrides);
+    return thisCfg;
   },
   setMetaData:   (target,metadata) => {
     target[module.exports.METANAME] = () => metadata

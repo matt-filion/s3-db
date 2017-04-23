@@ -17,7 +17,8 @@ module.exports = function(config){
   const accessKeyId         = config.get('provider.accessKeyId');
   const secretAccessKey     = config.get('provider.secretAccessKey');
   const s3                  = new AWS.S3({region,accessKeyId,secretAccessKey});
-  const bucketName          = fqn => `${fqn.prefix}${fqn.name}`;
+  const bucketName          = fqn => fqn.name.indexOf('/') === -1 ? `${fqn.prefix}${fqn.name}` : `${fqn.prefix}${fqn.name.substring(0,fqn.name.indexOf('/'))}`;
+  const getId               = (fqn,id) => fqn.name.indexOf('/') === -1 ? id : `${fqn.name.substring(fqn.name.indexOf('/')+1)}/${id}`;
   const getCollectionConfig = fqn => Utils.getCollectionConfig(fqn,config);
 
   return {
@@ -89,8 +90,9 @@ module.exports = function(config){
           MaxKeys: getCollectionConfig(fqn).get('pageSize',100)
         };
 
-        if(startsWith) params.Prefix = startsWith
-        if(continuationToken) params.ContinuationToken = continuationToken
+        if(fqn.name.indexOf('/')!==-1) params.Delimiter = '/';
+        if(startsWith) params.Prefix = fqn.name.indexOf('/')===-1 ? startsWith : `{fqn.name.substring(fqn.name.indexOf('/')+1}/${startsWith}`;
+        if(continuationToken) params.ContinuationToken = continuationToken;
 
         return s3.listObjectsV2(params).promise()
           .then( data => data.Contents )
@@ -101,21 +103,21 @@ module.exports = function(config){
        *
        */
       deleteDocument: (fqn,id) => s3.deleteObject({
-        Bucket: bucketName(fqn), Key: id
+        Bucket: bucketName(fqn), Key: getId(fqn,id)
       }).promise(),
 
       /**
        *
        */
       getDocumentHead : (fqn,id) => s3.headObject({
-        Bucket: bucketName(fqn), Key: id
+        Bucket: bucketName(fqn), Key: getId(fqn,id)
       }).promise(),
 
       /**
        *
        */
       getDocument : (fqn,id) => s3.getObject({
-        Bucket: bucketName(fqn), Key: id
+        Bucket: bucketName(fqn), Key: getId(fqn,id)
       }).promise(),
 
       /**

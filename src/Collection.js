@@ -11,7 +11,7 @@ const Utils  = Common.Utils;
  * @param the provider for the underlying files.
  * @param Document class for wrapping around the files returned form the provider.
  */
-module.exports = function(fqn,config,provider,serializer,documentFactory) {
+const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
 
   if(!Check.exist(fqn) || !Check.exist(fqn.name) || !Check.exist(fqn.prefix)) throw new Error("A valid fqn must be supplied, which should contain a name and prefix attribute.");
   if(!Check.exist(config) || !Check.exist(config.get)) throw new Error("A valid configuration must be supplied.");
@@ -24,7 +24,9 @@ module.exports = function(fqn,config,provider,serializer,documentFactory) {
      !Check.isFunction(provider.setCollectionTags) ||
      !Check.isFunction(provider.getCollectionTags) ) throw new Error("Provider does not have the required functions.");
   if(!Check.isObject(serializer)) throw new Error("A serializer is required.");
-  if(!Check.isObject(documentFactory)) throw new Error("The DocumentFactory Class is required.");
+  if(!Check.isFunction(DocumentFactory)) throw new Error("The DocumentFactory Class is required.");
+
+  const documentFactory = new DocumentFactory(fqn,provider,serializer);
 
   /*
    * Handling of common error scenarios for friendlier messages.
@@ -107,8 +109,10 @@ module.exports = function(fqn,config,provider,serializer,documentFactory) {
 
   const collection = {
     getName: () => fqn.name,
-    // getTags: instance.getTags,
-    // setTags: instance.setTags,
+    subCollection: (name) => {
+      const subFQN = {name: `${fqn.name}/${name}`,prefix:fqn.prefix};
+      return new Collection(subFQN, config, provider, serializer, DocumentFactory, Common);
+    },
     find: startsWith => provider.findDocuments(fqn,startsWith)
       .then( listResponse )
       .catch( handleError ),
@@ -151,3 +155,5 @@ module.exports = function(fqn,config,provider,serializer,documentFactory) {
 
   return collection;
 }
+
+module.exports = Collection;
