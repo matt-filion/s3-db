@@ -48,12 +48,16 @@ note: _"s3:DeleteBucket" has been omitted because it becomes much easier to dele
 
 # Latest (2.0)
 The biggest changes here were under the covers and making the framework more configurable. 
+* A lot more unit testing.
 * Can now configure each collection independently.
 * Can now add custom serializers.
 * Every configuration can be overridden using environment variables (process.env);
 * Much better coverage for Unit tests.
 * Added a dependency on lamcfg, for the configuration capabilities.
-* Added document moving and renaming.
+* Added document copying and renaming.
+* Added subCollection for easier managing of folders within a logical collection/bucket.
+* Can configure your collection at the time it is used by passing in a second argument of collection specific configurations.
+* Hook for validation of documents at the time of saving, updating and copying.
 
 # API
 Dot notation indicates the parent object where you can find the API call. The header of each section indicates the logical starting point for each API call.
@@ -66,9 +70,9 @@ const databse  = new Database();
 ```
 
 * ```database.getName()``` :string - Returns the name of the Database.
-* ```getCollectionNames()``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<Array<string>> - Returns a name of all the [Collection](#markdown-header-collection)s identified in this Databases configured scope.
-* ```getCollection('name-of')``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#markdown-header-collection)> -  Returns a [Collection](#markdown-header-collection) instance you can use to start interacting with the [Document](#markdown-header-document)'s in the [Collection](#markdown-header-collection)
-* ```createCollection('name-of')``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#markdown-header-collection) > - Creates a new collection ([AWS S3](https://aws.amazon.com/s3) bucket) to start storing [Document](#markdown-header-document)s within. 
+* ```getCollectionNames()``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<Array<string>> - Returns a name of all the [Collection](#collection)s identified in this Databases configured scope.
+* ```getCollection('name-of',config:object)``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#collection)> - Returns a [Collection](#collection) instance you can use to start interacting with the [Document](#document)'s in the [Collection](#collection). Optionally, you can provided the configuration specific to this collection such as id genration.
+* ```createCollection('name-of')``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#collection) > - Creates a new collection ([AWS S3](https://aws.amazon.com/s3) bucket) to start storing [Document](#document)s within. 
 *```dropCollection('name-of')``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Assuming the Configuration and aws permissions permit it, it deletes an [AWS S3](https://aws.amazon.com/s3) bucket from the databases view.
 
 
@@ -76,15 +80,18 @@ const databse  = new Database();
 ```:JavaScript
 const Database = require('s3-db');
 const databse  = new Database();
-database.getColletion('x')
+database.getColletion('x',{id:{propertyName:'name'}})
   .then( collection => .... )
 ```
 
-* ```getName()``` :string - Returns the name of the [Collection](#markdown-header-collection).
-* ```find('prefix')``` : [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[DocumentList](#markdown-header-DocumentList)> - Returns all id's where the id start with the prefix provided. If the prefix is omitted then it just returns all document ids. Pagination is required to get through all of the documents as there is a hard AWS limit on 1000 names per request.
-* ```getDocument('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#markdown-header-document)> - Loads the [Document](#markdown-header-document) identified by the id. 
-* ```deleteDocument('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Deletes the [Document](#markdown-header-document) identified by the id. 
-* ```saveDocument([Document](#markdown-header-document) or Object)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#markdown-header-document)> - Saves the state of an existing [Document](#markdown-header-document) or creates a [Document](#markdown-header-document) from an object provided. 
+* ```getName()``` :string - Returns the name of the [Collection](#collection).
+* ```find('prefix')``` : [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[DocumentList](#DocumentList)> - Returns all id's where the id start with the prefix provided. If the prefix is omitted then it just returns all document ids. Pagination is required to get through all of the documents as there is a hard AWS limit on 1000 names per request.
+* ```getDocument('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Loads the [Document](#document) identified by the id. 
+* ```deleteDocument('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Deletes the [Document](#document) identified by the id. 
+* ```saveDocument([Document](#document) or Object)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Saves the state of an existing [Document](#document) or creates a [Document](#document) from an object provided. 
+* ```copy([Document](#document),newId:string)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Creates a copy of the provided document, either with the ID provided, or a new ID generated using the id generator of the collection.
+* ```subCollection([Document](#document),newId:string)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#collection) > - Creates a collection that will logically name itself within the parent collection using S3's folder alias's (IE using slashes "/".)
+
 
 
 ## DocumentList
@@ -96,7 +103,7 @@ database.getColletion('x')
   .then( results => .... )
 ```
 
-* ```results.next()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[DocumentList](#markdown-header-DocumentList)> - The next batch of results. This method will not exist if there is nothing left to iterate through.
+* ```results.next()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[DocumentList](#DocumentList)> - The next batch of results. This method will not exist if there is nothing left to iterate through.
 * ```results.hasMore```:boolean - True, if there is more results to be returned.
 
 ## DocumentRef
@@ -109,7 +116,7 @@ database.getColletion('x')
   .then( documentRef => ... )
 ```
 
-* ```documentRef.getDocument()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#markdown-header-document)> - Loads the corresponding document for this item in the DocumentList.
+* ```documentRef.getDocument()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Loads the corresponding document for this item in the DocumentList.
 * ```documentRef.id```:string - The id of the document.
 
 ## Document
@@ -121,8 +128,10 @@ database.getColletion('x')
   .then( document => .... )
 ```
 
-* ```document.save()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#markdown-header-document)> - Saves the state of the document.
-* ```document.refresh()```: [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#markdown-header-document)> -  Discards any existing changes and reloads the underlying [Document](#markdown-header-document).
+* ```document.save()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Saves the state of the document.
+* ```document.refresh()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> -  Discards any existing changes and reloads the underlying [Document](#document).
 * ```document.delete()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Deletes the underlying [AWS S3](https://aws.amazon.com/s3) document.
+* ```document.copyTo([Collection](#collection),'newId')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Copies the document to the target [Collection](#collection). Optionally, you can specify the new ID of the document that will be created, or when its excluded, it will use the id generation of the target collection.
+* ```document.rename()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Changes the name of the underlying [AWS S3](https://aws.amazon.com/s3) document.
 
 note: _You may notice additional functions on each document instance, it is unwise to use thse as they are used by the framework itself and may change without notice._

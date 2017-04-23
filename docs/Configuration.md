@@ -34,6 +34,7 @@ The configurations are purposely friendly to serverless.com framework, so all va
       pageSize: 100
     },
     users: {
+      validator: document => isOk ? Promise.resolve(document) : Promise.reject("error"),
       id: {
         propertyName: 'mobilePhone'
       },
@@ -100,7 +101,7 @@ To make the configuration a bit easier to read, since tables render so unreliabl
 #### Database
 * **db.name** (process.env: db_name or S3DB_NAME, default: 's3-db') Sets the name for the logical database. 
 * **db.environment** (process.env: db_environment or STAGE or AWS_LAMBDA_FUNCTION_VERSION, default: 'dev'). 
-* **db.namePattern** (process.env: db_namePattern, default: '${db.name}.${db.environment}-${name}') Sets the naming convention for each bucket. _The ${name} variable must always be at the end._ Feeds into the naming of each bucket, and to determine 'ownership' of a bucket for the database. In the case of ownership, the pattern is used with an empty string for name, and bucket name that ```startsWith``` the resulting value, is considered owned by the logical database
+* **db.namePattern** (process.env: db_namePattern, default: '${db.name}.${db.environment}-${name}') Sets the naming convention for each bucket. _The ${name} variable must always be at the end._ Feeds into the naming of each bucket, and to determine 'ownership' of a bucket for the database. In the case of ownership, the pattern is used with an empty string for name, and bucket name that ```startsWith``` the resulting value, is considered owned by the logical database. If you want to use existing buckets, you can simply set this to '' and it will no longer attempt to use naming to group the collections together.
 * **db.allowDrop** (process.env: db_allowDrop, default: false) If true, the code will attempt to execute collection drops (bucket deletes). Additional permissions will likely have to be added to allow this.
 
 #### Provider
@@ -111,6 +112,10 @@ Only allows AWS. Have not seen a request or interest for anything else yet.
 
 #### Collections
 For each of these configurations, the 'default' value can be changed out for the collection name you wish to override the value for. This will give you collection specific configurations. See the above example, the 'users' child underneat 'collections' is an example of a collection specific configuration. The name is the name for the collection, not the bucket name, the name as the logical database instance knows the collection by.
+
+Alternatively, rather than defining the configuration for collections at a global level, when you call document.getCollection('name') you can pass a second argument that will overrides to the defaults.
+
+* **collections.default.validator** (default: document => Promise.resolve(document)) You can specify a function that will take the object and return or rejct the promise as appropriate. This function is invoked when you call collection.saveDocument, collection.copy, document.save and document.rename so that the document always meets the 'scheme' of the target collection.
 * **collections.default.id.propertyName** (process.env: collections_default_id_propertyName, default: 'id') The attribute on the document to use as the key for the document.
 * **collections.default.id.generator** (default: UUID) If no id is populated on a document as its being saved, this is the logic that will be used to generate the id. The function that is used to generate the id will recieve the document as an argument. 
 * **collections.default.onlyUpdateOnMD5Change** (process.env: collections_default_onlyUpdateOnMD5Change, default: true) By default, a requested update to a document, such as a call to document.save() will only invoke a call to S3 if a change to the document is detected. Setting this value to false, will ensure an update is sent to S3 even if the document itself was not determined to be modified.

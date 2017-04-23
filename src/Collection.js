@@ -44,8 +44,9 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
     }
   }
 
-  const idGenerator    = config.get('id.generator',Common.uuid);
-  const idPropertyName = config.get('id.propertyName','id');
+  const idGenerator       = config.get('id.generator',Common.uuid);
+  const idPropertyName    = config.get('id.propertyName','id');
+  const documentValidator = config.get('validator', document => Promise.resolve(document) );
 
   /*
    * Decorates a list of results with some convenience methods.
@@ -114,22 +115,24 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
       const subFQN = {name: `${fqn.name}/${name}`,prefix:fqn.prefix};
       return new Collection(subFQN, config, provider, serializer, DocumentFactory, Common);
     },
-    copy: (sourceDocument,newId) => {
-      const sourceMetadata = Utils.getMetaData(sourceDocument);
-      if(!sourceMetadata) return Promise.reject("Cannot copy a document that has not yet been saved.");
+    copy: (sourceDocument,newId) => documentValidator(document)
+      .then( sourceDocument => {
+        const sourceMetadata = Utils.getMetaData(sourceDocument);
 
-      const sourceCollectionFQN = sourceMetadata.collectionFQN;
-      const sourceId            = sourceDocument.getId();
-      const sourceETag          = sourceMetadata.eTag;
-      const targetId            = newId || idGenerator(sourceDocument);
+        if(!sourceMetadata) return Promise.reject("Cannot copy a document that has not yet been saved.");
 
-      return provider.copyDocument(sourceCollectionFQN,sourceId,sourceETag,fqn,targetId)
-        .then( results => {
-          const copy = Object.assign(sourceDocument,{[idPropertyName]:targetId});
-          const data = {Body:JSON.stringify(copy),Metadata:results.CopyObjectResult};
-          return documentFactory.build(data,idPropertyName,collection);
-        })
-    },
+        const sourceCollectionFQN = sourceMetadata.collectionFQN;
+        const sourceId            = sourceDocument.getId();
+        const sourceETag          = sourceMetadata.eTag;
+        const targetId            = newId || idGenerator(sourceDocument);
+
+        return provider.copyDocument(sourceCollectionFQN,sourceId,sourceETag,fqn,targetId)
+          .then( results => {
+            const copy = Object.assign(sourceDocument,{[idPropertyName]:targetId});
+            const data = {Body:JSON.stringify(copy),Metadata:results.CopyObjectResult};
+            return documentFactory.build(data,idPropertyName,collection);
+          })
+      }),
     find: startsWith => provider.findDocuments(fqn,startsWith)
       .then( listResponse )
       .catch( handleError ),
@@ -139,7 +142,7 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
     deleteDocument: id => provider.deleteDocument(fqn,id).catch( handleError ),
     saveDocument: documentToSave => Promise.resolve(documentToSave)
       .then( document => !document ? Promise.reject("Cannot save undefined or null objects.") : document )
-      // .then( document => document.getId ? Promise.reject("Cannot save a document with a getId attribute or function, it is the only reserved 'keyword' for a document.") : document )
+      .then( document => documentValidator(document) )
       .then( document => {
         if(config.get('onlyUpdateOnMD5Change',true)){
           return !document.isModified || document.isModified() ? document : Promise.reject('not-modified')
