@@ -109,21 +109,36 @@ module.exports = function(config){
       /**
        *
        */
-      getDocumentHead : (fqn,id) => s3.headObject({
+      getDocumentHead: (fqn,id) => s3.headObject({
         Bucket: bucketName(fqn), Key: getId(fqn,id)
       }).promise(),
 
       /**
        *
        */
-      getDocument : (fqn,id) => s3.getObject({
+      getDocument: (fqn,id) => s3.getObject({
         Bucket: bucketName(fqn), Key: getId(fqn,id)
       }).promise(),
 
       /**
        *
        */
-      putDocument : (request) => {
+      copyDocument: (sourceFQN,sourceId,sourceETag,destinationFQN,destinationId) => {
+        const params = {
+          Bucket: bucketName(destinationFQN),
+          Key: getId(destinationFQN,destinationId),
+          CopySource:`${bucketName(sourceFQN)}${getId(sourceFQN,sourceId)}`,
+          MetadataDirective: 'COPY'
+        };
+        if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256'
+        if(sourceETag) params.CopySourceIfMatch = sourceETag;
+        return s3.copyObject(params).promise();
+      },
+
+      /**
+       *
+       */
+      putDocument: (request) => {
         const params = {
           Bucket: bucketName(request.fqn),
           Key: request.id,

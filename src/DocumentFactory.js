@@ -22,6 +22,7 @@ const Document = function(document,idPropertyName,collection) {
   document.save       = () => collection.saveDocument(document);
   document.delete     = () => collection.deleteDocument(document.getId());
   document.refresh    = () => collection.getDocument(document.getId());
+  document.copyTo     = (targetCollection,newId) => targetCollection.copy(document,newId);
 
   return document;
 }

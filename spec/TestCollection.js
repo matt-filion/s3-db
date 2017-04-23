@@ -8,6 +8,8 @@ chai.should()
 chai.use(chaiAsPromised)
 
 const Collection = require('../src/Collection.js');
+const Common     = require('../src/lib/Common');
+const Utils      = Common.Utils;
 
 const Config   = function(config) {
   const instance = {
@@ -34,9 +36,17 @@ describe('Collection', () => {
     deleteDocument: (name,id) => Promise.resolve(),
     putDocument: request => {
       return Promise.resolve({
-        ETag:"'asdfasdfasdf'",
+        ETag: "'asdfasdfasdf'",
         Body: request.body
       })
+    },
+    copyDocument: (source,newId) => {
+      return Promise.resolve({
+        CopyObjectResult: {
+          ETag: '12345678990',
+          LastModified: ''
+        }
+      });
     },
     setCollectionTags: () => Promise.resolve(),
     getCollectionTags: () => Promise.resolve(),
@@ -48,11 +58,13 @@ describe('Collection', () => {
 
       const document = data.Body ? JSON.parse(data.Body) : data;
     
-      document.getDocumentId = () => 'x';
+      document.getId      = () => 'x';
       document.isModified = () => true;
-      document.isCollided = () => false;
-      document.signature = () =>'x';
-      document.serialize = document => JSON.stringify(document);
+      document.save       = () => document;
+      document.refresh    = () => document;
+      document.copyTo     = (collection,id) => document;
+
+      Utils.setMetaData(document,{eTag:'1234567890',collectionFQN:'x'});
 
       return document;
     }
@@ -86,7 +98,7 @@ describe('Collection', () => {
     const collection = new Collection(fqn, goodConfig, testProvider, testSerializer, testDocumentFactory);
 
     it('Check signature',() => expect(collection)
-      .to.have.all.keys('getName','getDocument','deleteDocument','find','saveDocument','subCollection'));
+      .to.have.all.keys('getName','getFQN','getDocument','deleteDocument','find','saveDocument','subCollection','copy'));
   })
 
   describe('#subCollection() Positive', () => {
@@ -94,9 +106,10 @@ describe('Collection', () => {
     const subCollection = collection.subCollection('child');
 
     it('Check signature',() => expect(subCollection)
-      .to.have.all.keys('getName','getDocument','deleteDocument','find','saveDocument','subCollection'));
+      .to.have.all.keys('getName','getFQN','getDocument','deleteDocument','find','saveDocument','subCollection','copy'));
 
     it('check Name', () => expect(subCollection.getName()).to.equal('test/child'));
+    it('check FQN', () => expect(subCollection.getFQN()).to.have.property('name').that.equals('test/child'));
 
     /*
      * Provider will take care of translating the name to include 
@@ -144,25 +157,24 @@ describe('Collection', () => {
       .to.eventually.be.an('object').with.property('id').that.equals('x'));
   });
 
-  describe('#getDocument()', () => {
+  describe('#deleteDocument()', () => {
     const collection = new Collection(fqn,goodConfig, testProvider, testSerializer, testDocumentFactory);
     it('Delete document named x',() => expect(collection.deleteDocument('x'))
       .to.eventually.be.undefined);
   })
 
-  describe('#saveDocument() with ID.', () => {
-    const collection = new Collection(fqn,goodConfig, testProvider, testSerializer, testDocumentFactory);
+  
+  describe('#saveDocument()', () => {
+
+    let collection = new Collection(fqn,goodConfig, testProvider, testSerializer, testDocumentFactory);
 
     it('invalid object',() => expect(collection.saveDocument(null))
       .to.eventually.be.rejectedWith('Cannot save undefined or null objects.'));
 
     it('has id',() => expect(collection.saveDocument({id:'x'}))
       .to.eventually.be.an('object').with.deep.property('id').that.equals('x'));
-  })
-  
-  describe('#saveDocument() with no id', () => {
 
-    const collection = new Collection(fqn,goodConfig, testProvider, testSerializer, testDocumentFactory);
+
     const noIdSave = collection.saveDocument({name:'poo'});
     it('id populated',() => expect(noIdSave)
       .to.eventually.be.an('object').with.deep.property('id'));
@@ -170,19 +182,60 @@ describe('Collection', () => {
     it('name set',() => expect(noIdSave)
       .to.eventually.be.an('object').with.deep.property('name').that.equals('poo'));
 
-  })
-  
-  describe('#saveDocument() with tricky id', () => {
-
-    const collection = new Collection(fqn,goodConfig, testProvider, testSerializer, testDocumentFactory);
     const trickyId = collection.saveDocument({getId:'x',name:'poo'});
-    it('id populated',() => expect(trickyId)
+
+    it('tricky id populated',() => expect(trickyId)
       .to.eventually.be.an('object').with.deep.property('id'));
 
-    it('name set',() => expect(trickyId)
+    it('tricky name set',() => expect(trickyId)
       .to.eventually.be.an('object').with.deep.property('name').that.equals('poo'));
 
-    it('getId still set',() => expect(trickyId)
-      .to.eventually.be.an('object').with.deep.property('getId').that.equals('x'));
+    it('tricky getId set to function',() => expect(trickyId)
+      .to.eventually.be.an('object').with.deep.property('getId').that.is.a('function'));
+
+    const config = new Config({
+      'id.propertyName': 'x',
+      'id.generator': document => {
+        return `x_${document.name}-z`;
+      }
+    })
+
+    collection = new Collection(fqn, config, testProvider, testSerializer, testDocumentFactory);
+
+    it('generate an id for the copied document to a custom attribute',() => expect(collection.saveDocument({name:'y'}))
+      .to.eventually.be.an('object').with.deep.property('x').that.equals('x_y-z'));
+
+  })
+
+  describe('#copy()', () => {
+
+    const updatedName = new Config({
+      'id.propertyName': 'x',
+      'id.generator': document => {
+        return `x_${document.name}-z`;
+      }
+    })
+    const thatFQN = {name:'other',prefix:'test.dev-'};
+    const thatCollection = new Collection(thatFQN, goodConfig, testProvider, testSerializer, testDocumentFactory);
+    const thisCollection = new Collection(fqn, updatedName, testProvider, testSerializer, testDocumentFactory);
+
+    /*
+     * The ID of the document should be updated based on the configuration of the new
+     *  target collection the document is being copied into.
+     */
+    it('Generated ID ',() => {
+
+      const copiedDocument = thatCollection.saveDocument({name:'y'}).then( newDocument => thisCollection.copy(newDocument) )
+
+      return expect(copiedDocument).to.eventually.be.an('object').with.deep.property('x').that.equals('x_y-z')
+    });
+    /*
+     * The ID of the document should be updated based on the configuration of the new
+     *  target collection the document is being copied into.
+     */
+    it('Provided ID',() => {
+      const copiedDocument = thatCollection.saveDocument({name:'y'}).then( newDocument => thisCollection.copy(newDocument,'SuperDoo') )
+      return expect(copiedDocument).to.eventually.be.an('object').with.deep.property('x').that.equals('SuperDoo')
+    });
   })
 })
