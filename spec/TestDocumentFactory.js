@@ -10,12 +10,14 @@ chai.use(chaiAsPromised)
 const DocumentFactory = require('../src/DocumentFactory.js');
 const Common = require('../src/lib/Common');
 const testProvider = {
-  getDocumentBody: data => data.Body,
-  buildDocumentMetaData: () => {
-    return {
-      x:'y'
+  document: {
+    getDocumentBody: data => data.Body,
+    buildDocumentMetaData: () => {
+      return {
+        x:'y'
+      }
     }
-  },
+  }
 }
 const testSerializer = {
   serialize: toSerialize => JSON.stringify(toSerialize),
@@ -28,13 +30,13 @@ describe('#new()', () => {
     .to.throw("A valid collectionFQN must be supplied, which should contain a name and prefix attribute."));
 
   it('Valid fqn',() => expect( () => new DocumentFactory({name:'x',prefix:'test.dev'}))
-    .to.throw("A valid provider must be supplied."));
+    .to.throw("No provider was supplied, this object will have nothing to act upon."));
 
   it('Valid fqn, invalid provider',() => expect( () => new DocumentFactory({name:'x',prefix:'test.dev'},{}))
-    .to.throw("A valid provider must be supplied."));
+    .to.throw("No provider was supplied, this object will have nothing to act upon."));
 
   it('Valid fqn, partial provider',() => expect( () => new DocumentFactory({name:'x',prefix:'test.dev'},{buildDocumentMetaData:()=>{}}))
-    .to.throw("A valid provider must be supplied."));
+    .to.throw("No provider was supplied, this object will have nothing to act upon."));
 
   it('Valid fqn, valid provider',() => expect( () => new DocumentFactory({name:'x',prefix:'test.dev'},testProvider))
     .to.throw("A serializer is required."));

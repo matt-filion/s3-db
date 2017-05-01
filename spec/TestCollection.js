@@ -31,26 +31,26 @@ describe('Collection', () => {
   }
 
   const testProvider = {
-    findDocuments: () => Promise.resolve(findDocumentsResponse),
-    getDocument: (name,id) => Promise.resolve({id:id}),
-    deleteDocument: (name,id) => Promise.resolve(),
-    putDocument: request => {
-      return Promise.resolve({
-        ETag: "'asdfasdfasdf'",
-        Body: request.body
-      })
-    },
-    copyDocument: (source,newId) => {
-      return Promise.resolve({
-        CopyObjectResult: {
-          ETag: '12345678990',
-          LastModified: ''
-        }
-      });
-    },
-    setCollectionTags: () => Promise.resolve(),
-    getCollectionTags: () => Promise.resolve(),
-    buildListMetaData: () => {return {}}
+    collection: {
+      findDocuments: () => Promise.resolve(findDocumentsResponse),
+      getDocument: (name,id) => Promise.resolve({id:id}),
+      deleteDocument: (name,id) => Promise.resolve(),
+      putDocument: request => {
+        return Promise.resolve({
+          ETag: "'asdfasdfasdf'",
+          Body: request.body
+        })
+      },
+      copyDocument: (source,newId) => {
+        return Promise.resolve({
+          CopyObjectResult: {
+            ETag: '12345678990',
+            LastModified: ''
+          }
+        });
+      },
+      buildListMetaData: () => {return {}}
+    }
   };
 
   const testDocumentFactory = function() { return {
@@ -84,6 +84,9 @@ describe('Collection', () => {
       .to.throw("No provider was supplied, this object will have nothing to act upon."));
 
     it('to throw an exception for the provider being invalid.',() => expect(() => new Collection(fqn,goodConfig,{}))
+      .to.throw("No provider was supplied, this object will have nothing to act upon."));
+
+    it('to throw an exception for the provider being invalid.',() => expect(() => new Collection(fqn,goodConfig,{collection:{}}))
       .to.throw("Provider does not have the required functions."));
 
     it('to throw an exception for missing the Document class.',() => expect(() => new Collection(fqn,goodConfig,testProvider))

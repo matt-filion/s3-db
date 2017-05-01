@@ -34,7 +34,7 @@ module.exports = function(config, provider, serializer, Collection, DocumentFact
   const nameFromFQN = fqn => fqn.substring(prefix.length,fqn.length);
   const buildCollection = (name,overrides) => {
     const fqn = {name,prefix};
-    return new Collection(fqn, Utils.getCollectionConfig(fqn,config,overrides), dbProvider.collection, serializer, DocumentFactory, Common);
+    return new Collection(fqn, Utils.getCollectionConfig(fqn,config,overrides), provider, serializer, DocumentFactory, Common);
   }
 
   return {

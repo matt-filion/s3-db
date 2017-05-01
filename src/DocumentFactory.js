@@ -30,14 +30,20 @@ const Document = function(document,idPropertyName,collection) {
 
 const DocumentFactory = function(collectionFQN,provider,serializer){
   
+
   if(!Check.exist(collectionFQN) || !Check.exist(collectionFQN.name) || !Check.exist(collectionFQN.prefix)) throw new Error("A valid collectionFQN must be supplied, which should contain a name and prefix attribute.");
-  if(!Check.exist(provider) || !Check.isFunction(provider.getDocumentBody) || !Check.isFunction(provider.buildDocumentMetaData)) throw new Error("A valid provider must be supplied.");
+  if(!Check.exist(provider) || !Check.exist(provider.document)) throw new Error("No provider was supplied, this object will have nothing to act upon.");
+
+  const documentProvider = provider.document;
+  
+  if(!Check.isFunction(documentProvider.getDocumentBody) || 
+    !Check.isFunction(documentProvider.buildDocumentMetaData)) throw new Error("A valid provider must be supplied.");
   if(!Check.isObject(serializer)) throw new Error("A serializer is required.");
 
   return {
     build: (data,idPropertyName,colletion) => {
-      const body      = provider.getDocumentBody(data);
-      const metadata  = provider.buildDocumentMetaData(data);
+      const body      = documentProvider.getDocumentBody(data);
+      const metadata  = documentProvider.buildDocumentMetaData(data);
       const document  = serializer.deserialize(body);
 
       metadata.md5           = Utils.signature(body);

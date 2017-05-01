@@ -52,7 +52,7 @@ module.exports = function(config){
         }).promise()
     },
 
-    colleciton: {
+    collection: {
       // /*
       //  * Tags are used to track what buckets were created by
       //  *  s3-db so we know what ones to list out when a list request
@@ -141,7 +141,7 @@ module.exports = function(config){
       putDocument: (request) => {
         const params = {
           Bucket: bucketName(request.fqn),
-          Key: request.id,
+          Key: getId(request.fqn,request.id),
           ContentType: 'application/json',
           ContentLength: request.body.length,
           Body: request.body,

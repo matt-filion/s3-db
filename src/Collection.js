@@ -15,14 +15,16 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
 
   if(!Check.exist(fqn) || !Check.exist(fqn.name) || !Check.exist(fqn.prefix)) throw new Error("A valid fqn must be supplied, which should contain a name and prefix attribute.");
   if(!Check.exist(config) || !Check.exist(config.get)) throw new Error("A valid configuration must be supplied.");
-  if(!Check.exist(provider)) throw new Error("No provider was supplied, this object will have nothing to act upon.");
-  if(!Check.isFunction(provider.findDocuments) ||
-     !Check.isFunction(provider.getDocument) ||
-     !Check.isFunction(provider.buildListMetaData) ||
-     !Check.isFunction(provider.deleteDocument) ||
-     !Check.isFunction(provider.putDocument) ||
-     !Check.isFunction(provider.setCollectionTags) ||
-     !Check.isFunction(provider.getCollectionTags) ) throw new Error("Provider does not have the required functions.");
+
+  if(!Check.exist(provider) || !Check.exist(provider.collection)) throw new Error("No provider was supplied, this object will have nothing to act upon.");
+
+  const collectionProvider = provider.collection;
+
+  if(!Check.isFunction(collectionProvider.findDocuments) ||
+     !Check.isFunction(collectionProvider.getDocument) ||
+     !Check.isFunction(collectionProvider.buildListMetaData) ||
+     !Check.isFunction(collectionProvider.deleteDocument) ||
+     !Check.isFunction(collectionProvider.putDocument) ) throw new Error("Provider does not have the required functions.");
   if(!Check.isObject(serializer)) throw new Error("A serializer is required.");
   if(!Check.isFunction(DocumentFactory)) throw new Error("The DocumentFactory Class is required.");
 
@@ -44,7 +46,7 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
     }
   }
 
-  const idGenerator       = config.get('id.generator',Common.uuid);
+  const idGenerator       = config.get('id.generator',() => Common.uuid());
   const idPropertyName    = config.get('id.propertyName','id');
   const documentValidator = config.get('validator', document => Promise.resolve(document) );
 
@@ -59,14 +61,14 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
       .map( id => { return { id: id } } )
       .map( record => { record.getDocument = () => collection.getDocument(record.id); return record} );
 
-    const metadata = provider.buildListMetaData(documents);
+    const metadata = collectionProvider.buildListMetaData(documents);
 
     Utils.setMetaData(documents,metadata);
 
     if(metadata.hasMore){
       results.hasMore = metadata.hasMore;
       results.next    = () => Promise.resolve( Utils.getMetaData(documents) )
-        .then( metadata => provider.listDocuments(fqn, metadata.startsWith, metadata.continuationToken) )
+        .then( metadata => collectionProvider.listDocuments(fqn, metadata.startsWith, metadata.continuationToken) )
         .then( listResponse )
     }
 
@@ -76,10 +78,10 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
   const isCollided = (document) => {
     if(document.getId){
       const metadata = Utils.getMetaData(document);
-      return provider.getDocumentHead(fqn,document.getId())
+      return collectionProvider.getDocumentHead(fqn,document.getId())
         .then( head => {
 
-          const targetMetaData = provider.buildDocumentMetaData(head);
+          const targetMetaData = collectionProvider.buildDocumentMetaData(head);
           let   hasChanged     = false;
 
           /*
@@ -111,11 +113,11 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
   const collection = {
     getName: () => fqn.name,
     getFQN: () => fqn,
-    subCollection: (name) => {
+    subCollection: name => {
       const subFQN = {name: `${fqn.name}/${name}`,prefix:fqn.prefix};
       return new Collection(subFQN, config, provider, serializer, DocumentFactory, Common);
     },
-    copy: (sourceDocument,newId) => documentValidator(document)
+    copy: (sourceDocument,newId) => documentValidator(sourceDocument)
       .then( sourceDocument => {
         const sourceMetadata = Utils.getMetaData(sourceDocument);
 
@@ -126,20 +128,20 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
         const sourceETag          = sourceMetadata.eTag;
         const targetId            = newId || idGenerator(sourceDocument);
 
-        return provider.copyDocument(sourceCollectionFQN,sourceId,sourceETag,fqn,targetId)
+        return collectionProvider.copyDocument(sourceCollectionFQN,sourceId,sourceETag,fqn,targetId)
           .then( results => {
             const copy = Object.assign(sourceDocument,{[idPropertyName]:targetId});
             const data = {Body:JSON.stringify(copy),Metadata:results.CopyObjectResult};
             return documentFactory.build(data,idPropertyName,collection);
           })
       }),
-    find: startsWith => provider.findDocuments(fqn,startsWith)
+    find: startsWith => collectionProvider.findDocuments(fqn,startsWith)
       .then( listResponse )
       .catch( handleError ),
-    getDocument: id => provider.getDocument(fqn,id)
+    getDocument: id => collectionProvider.getDocument(fqn,id)
       .then( data => documentFactory.build(data,idPropertyName,collection))
       .catch( handleError ),
-    deleteDocument: id => provider.deleteDocument(fqn,id).catch( handleError ),
+    deleteDocument: id => collectionProvider.deleteDocument(fqn,id).catch( handleError ),
     saveDocument: documentToSave => Promise.resolve(documentToSave)
       .then( document => !document ? Promise.reject("Cannot save undefined or null objects.") : document )
       .then( document => documentValidator(document) )
@@ -169,7 +171,7 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
           }
         }
       })
-      .then( provider.putDocument )
+      .then( collectionProvider.putDocument )
       .then( data =>  documentFactory.build(data,idPropertyName,collection) )
       .catch( error => 'not-modified' === error ? Promise.resolve(documentToSave) : handleError(error) ),
   }
