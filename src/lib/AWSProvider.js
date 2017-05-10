@@ -150,6 +150,8 @@ module.exports = function(config){
         if(request.metadata){
           params.Metadata = request.metadata;
           if(metadata.md5) {
+            console.log("Utils.signature(toWrite)",Utils.signature(request.body));
+            console.log("params.ContentMD5",params.ContentMD5);
             params.ContentMD5 = metadata.md5;
           }
         }
