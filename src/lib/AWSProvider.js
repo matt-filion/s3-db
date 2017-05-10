@@ -145,7 +145,7 @@ module.exports = function(config){
           ContentType: 'application/json',
           ContentLength: request.body.length,
           Body: request.body,
-          ContentMD5, Utils.signature(request.body)
+          ContentMD5: Utils.signature(request.body)
         };
         
         console.log("request",request);
