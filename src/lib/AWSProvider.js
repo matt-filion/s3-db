@@ -148,16 +148,8 @@ module.exports = function(config){
           ContentMD5: Utils.signature(request.body)
         };
         
-        console.log("request",request);
-        console.log("params",params);
-        
-        console.log("Utils.signature(toWrite)",Utils.signature(request.body));
-
         if(request.metadata){
           params.Metadata = request.metadata;
-          // if(metadata.md5) {
-          //   params.ContentMD5 = metadata.md5;
-          // }
         }
 
         if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256'
