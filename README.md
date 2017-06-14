@@ -15,8 +15,8 @@ Assuming your execution environment is [Lambda](https://aws.amazon.com/lambda/),
 ```javascript
 const Database = require('s3-db');
 const database = new Database();
-const users    = database.getCollection('users');
-users.get('my-user')
+database.getCollection('users')
+  .then( users => users.getDocument('my-user') )
   .then( user => {user.age = 32; return user} )
   .then( user => user.save() );
 ```
@@ -78,7 +78,7 @@ const databse  = new Database();
 ```:JavaScript
 const Database = require('s3-db');
 const databse  = new Database();
-database.getColletion('x',{id:{propertyName:'name'}})
+database.getCollection('x',{id:{propertyName:'name'}})
   .then( collection => .... )
 ```
 
@@ -111,7 +111,11 @@ const databse  = new Database();
 database.getColletion('x')
   .then( collection => collection.find() )
   .then( results => results[0] )
-  .then( documentRef => ... )
+  .then( documentRef => documentRef.getDocument() )
+  .then( document => {
+    document.value = 'change';
+    return document.save();
+  })
 ```
 
 * ```documentRef.getDocument()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Loads the corresponding document for this item in the DocumentList.
@@ -123,7 +127,10 @@ const Database = require('s3-db');
 const databse  = new Database();
 database.getColletion('x')
   .then( collection => collection.getDocument('x') )
-  .then( document => .... )
+  .then( document => {
+    document.value = 'change';
+    return document.save();
+  })
 ```
 
 * ```document.save()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Saves the state of the document.

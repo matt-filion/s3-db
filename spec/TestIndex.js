@@ -45,7 +45,7 @@ describe('Index.js', () => {
           encryption: false,
           id: {
             propertyName: 'id',
-            generator: collectionName => `${configuration.db}-${collectionName}-${new Date().getTime()}`
+            generator: document => `${configuration.db.name}-${document.name}-${new Date().getTime()}`
           }
         }
       }

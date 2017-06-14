@@ -4,8 +4,8 @@
  * When creating an MD5 hash, S3 seems to do things a touch different with escaping quotes
  *  this keeps quotes from showing up at all.
  */
-const to = (key, value) => typeof value == "string" ? escape(value) : value;
-const from = (key, value) => typeof value == "string" ? unescape(value) : value;
+const to = (key, value) => typeof value === "string" && (value.includes("\'") || value.includes('\"')) ? escape(value) : value;
+const from = (key, value) => typeof value === "string" ? unescape(value) : value;
 
 module.exports = function(config){
 
@@ -17,3 +17,4 @@ module.exports = function(config){
     deserialize: config.get('serializer.deserialize',deserializeFromJSON)
   }
 }
+  
