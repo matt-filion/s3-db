@@ -143,7 +143,7 @@ module.exports = function(config){
           Bucket: bucketName(request.fqn),
           Key: getId(request.fqn,request.id),
           ContentType: 'application/json',
-          ContentLength: request.body.length,
+          ContentLength: Buffer.byteLength(request.body, 'utf8'),
           Body: request.body,
           ContentMD5: Utils.signature(request.body)
         };
