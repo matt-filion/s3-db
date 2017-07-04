@@ -1,5 +1,6 @@
 'use strict'
 
+
 const Common = require('./Common');
 const Check  = Common.Check;
 const Utils  = Common.Utils;
@@ -130,7 +131,7 @@ module.exports = function(config){
           CopySource:`${bucketName(sourceFQN)}${getId(sourceFQN,sourceId)}`,
           MetadataDirective: 'COPY'
         };
-        if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256'
+        if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256';
         if(sourceETag) params.CopySourceIfMatch = sourceETag;
         return s3.copyObject(params).promise();
       },
@@ -147,14 +148,14 @@ module.exports = function(config){
           Body: request.body,
           ContentMD5: Utils.signature(request.body)
         };
-        
+
         if(request.metadata){
           params.Metadata = request.metadata;
         }
 
-        if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256'
+        if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256';
 
-        return s3.putObject(params).promise().then( response => Object.assign(response,{Body:request.body}));
+        return s3.putObject(params).promise().then( response => Object.assign(response,{Body:request.body,Metadata:params.Metadata}));
       },
 
       /*

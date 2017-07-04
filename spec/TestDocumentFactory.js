@@ -42,15 +42,14 @@ describe('#new()', () => {
     .to.throw("A serializer is required."));
 
   const dbf = new DocumentFactory({name:'x',prefix:'test.dev'},testProvider,testSerializer);
-  it('All Valid',() => expect( dbf )
-    .to.have.all.keys('build'));  
+  it('All Valid',() => expect( dbf ).to.have.all.keys('build'));  
 
 })
 
 describe('#build()', () => {
   const dbf = new DocumentFactory({name:'x',prefix:'test.dev'},testProvider,testSerializer);
   const document = dbf.build({Body:{id:'1',abc:'123'}},'id',testCollection);
-  it('Make sure all keys exist.',() => expect( document ).to.have.all.keys(Common.METANAME,'abc','rename','delete','getId','id','isModified','refresh','save','copyTo'));
+  it('Make sure all keys exist.',() => expect( document ).to.have.all.keys(Common.METANAME,'abc','rename','delete','getId','id','isModified','refresh','save','copyTo','getMetadata'));
   it('has a refresh()',() => expect( document ).to.have.property('refresh').that.is.an('function'));
   it('has a isModified()',() => expect( document ).to.have.property('isModified').that.is.an('function'));
   it('has a save()',() => expect( document ).to.have.property('save').that.is.an('function'));
@@ -58,6 +57,7 @@ describe('#build()', () => {
   it('has a getId()',() => expect( document ).to.have.property('getId').that.is.an('function'));
   it('has a rename()',() => expect( document ).to.have.property('rename').that.is.an('function'));
   it('has a copyTo()',() => expect( document ).to.have.property('copyTo').that.is.an('function'));
+  it('has a metadata function',() => expect( document ).to.have.property('getMetadata').that.is.an('function'));
   it('has a metadata function',() => expect( document ).to.have.property(Common.METANAME).that.is.an('function'));
   it('has property id', () => expect( document ).to.have.property('abc').that.equals('123') )
   it('has property id', () => expect( document ).to.have.property('id').that.equals('1') )

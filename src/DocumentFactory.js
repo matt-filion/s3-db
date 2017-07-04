@@ -5,7 +5,7 @@ const Check  = Common.Check;
 const Utils  = Common.Utils;
 
 const isModified = document => {
-  const metadata = Utils.getMetaData(document);
+  const metadata = document.getMetaData(document);
   const currentMD5 = Utils.signature(document);
   return !metadata || metadata.md5 !== currentMD5;
 }
@@ -17,13 +17,14 @@ const isModified = document => {
  */
 const Document = function(document,idPropertyName,collection) {
 
-  document.getId      = () => document[idPropertyName];
-  document.isModified = () => isModified(document);
-  document.save       = () => collection.saveDocument(document);
-  document.delete     = () => collection.deleteDocument(document.getId());
-  document.refresh    = () => collection.getDocument(document.getId());
-  document.rename     = (newName) => collection.copy(document,newName).then( newDocument => collection.deleteDocument(document.getId()).then( () => newDocument ) )
-  document.copyTo     = (targetCollection,newId) => targetCollection.copy(document,newId);
+  document.getId       = () => document[idPropertyName];
+  document.isModified  = () => isModified(document);
+  document.getMetadata = () => Utils.getMetaData(document);
+  document.save        = () => collection.saveDocument(document);
+  document.delete      = () => collection.deleteDocument(document.getId());
+  document.refresh     = () => collection.getDocument(document.getId());
+  document.rename      = (newName) => collection.copy(document,newName).then( newDocument => collection.deleteDocument(document.getId()).then( () => newDocument ) )
+  document.copyTo      = (targetCollection,newId) => targetCollection.copy(document,newId);
 
   return document;
 }
@@ -42,6 +43,7 @@ const DocumentFactory = function(collectionFQN,provider,serializer){
 
   return {
     build: (data,idPropertyName,colletion) => {
+
       const body      = documentProvider.getDocumentBody(data);
       const metadata  = documentProvider.buildDocumentMetaData(data);
       const document  = serializer.deserialize(body);
