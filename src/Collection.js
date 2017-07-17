@@ -82,13 +82,13 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
 
   const isCollided = (document) => {
 
-    if(document.getId){
+    if(document.getId || document.id){
 
+      const id       = document.getId ? document.getId() : document.id;
       const metadata = Utils.getMetaData(document);
-      return collectionProvider.getDocumentHead(fqn,document.getId())
-        .then( head => {
 
-          console.log("got the head");
+      return collectionProvider.getDocumentHead(fqn,id)
+        .then( head => {
 
           const targetMetaData = collectionProvider.buildDocumentMetaData(head);
           let   hasChanged     = false;
