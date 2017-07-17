@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Document database API wrapped around Amazon S3.",
   "main": "src/index.js",
   "homepage": "https://www.npmjs.com/package/s3-db",

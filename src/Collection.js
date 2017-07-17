@@ -82,9 +82,9 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
 
   const isCollided = (document) => {
 
-    if(document.getId || document.id){
+    if(document.getId || document[idPropertyName]){
 
-      const id       = document.getId ? document.getId() : document.id;
+      const id       = document.getId ? document.getId() : document[idPropertyName];
       const metadata = Utils.getMetaData(document);
 
       return collectionProvider.getDocumentHead(fqn,id)
