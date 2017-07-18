@@ -22,6 +22,22 @@ module.exports = function(config){
   const getId               = (fqn,id) => fqn.name.indexOf('/') === -1 ? id : `${fqn.name.substring(fqn.name.indexOf('/')+1)}/${id}`;
   const getCollectionConfig = fqn => Utils.getCollectionConfig(fqn,config);
 
+
+  const buildDocumentMetaData = document => {
+    const metadata = document.Metadata || {};
+
+    Object.keys(metadata).forEach( key => metadata[key] = JSON.parse(metadata[key]) )
+
+    if(document.Size) metadata.size = document.Size
+    if(document.StorageClass) metadata.storageClass = document.StorageClass
+    if(document.ContentLength) metadata.size = document.ContentLength;
+    if(document.ServerSideEncryption) metadata.encryption = document.ServerSideEncryption
+    if(document.LastModified) metadata.lastModified = new Date(document.LastModified)
+    if(document.ETag) metadata.eTag = document.ETag.replace(/"/g,'') /* Fix the stupid AWS eTag. */
+
+    return metadata;
+  }
+
   return {
     database: {
 
@@ -111,8 +127,10 @@ module.exports = function(config){
        *
        */
       getDocumentHead: (fqn,id) => s3.headObject({
-        Bucket: bucketName(fqn), Key: getId(fqn,id)
-      }).promise(),
+          Bucket: bucketName(fqn), Key: getId(fqn,id)
+        })
+        .promise()
+        .catch(error => error.code === 'NotFound' ? null : Promise.reject( error ) ),
 
       /**
        *
@@ -175,24 +193,15 @@ module.exports = function(config){
 
         return metadata;
       },
+
+      buildDocumentMetaData: buildDocumentMetaData
     },
 
     document: {
 
       getDocumentBody: file => typeof file.Body === 'string' ? file.Body : file.Body.toString(),
 
-      buildDocumentMetaData: document => {
-        const metadata = document.Metadata || {};
-
-        if(document.Size) metadata.size = document.Size
-        if(document.StorageClass) metadata.storageClass = document.StorageClass
-        if(document.ContentLength) metadata.size = document.ContentLength;
-        if(document.ServerSideEncryption) metadata.encryption = document.ServerSideEncryption
-        if(document.LastModified) metadata.lastModified = new Date(document.LastModified)
-        if(document.ETag) metadata.eTag = document.ETag.replace(/"/g,'') /* Fix the stupid AWS eTag. */
-
-        return metadata;
-      }
+      buildDocumentMetaData: buildDocumentMetaData
     }
   }
 }

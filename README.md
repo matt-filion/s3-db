@@ -86,10 +86,11 @@ database.getCollection('x',{id:{propertyName:'name'}})
 * ```find('prefix')``` : [Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[DocumentList](#DocumentList)> - Returns all id's where the id start with the prefix provided. If the prefix is omitted then it just returns all document ids. Pagination is required to get through all of the documents as there is a hard AWS limit on 1000 names per request.
 * ```getDocument('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Loads the [Document](#document) identified by the id. 
 * ```deleteDocument('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Deletes the [Document](#document) identified by the id. 
-* ```saveDocument([Document](#document) or Object)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Saves the state of an existing [Document](#document) or creates a [Document](#document) from an object provided. 
+* ```saveDocument([Document](#document) or Object, Object )```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Saves the state of an existing [Document](#document) or creates a [Document](#document) from an object provided. The second argument is a single level document of the metadata to attach to the document.
 * ```copy([Document](#document),newId:string)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Creates a copy of the provided document, either with the ID provided, or a new ID generated using the id generator of the collection.
 * ```subCollection([Document](#document),newId:string)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#collection) > - Creates a collection that will logically name itself within the parent collection using S3's folder alias's (IE using slashes "/".)
-
+* ```getHead('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<Object> - Returns the metadata of the object without returning the document.
+* ```exists('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<boolean> - Checks to see if the document exists in S3, without loading the document.
 
 
 ## DocumentList
@@ -138,5 +139,7 @@ database.getColletion('x')
 * ```document.delete()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Deletes the underlying [AWS S3](https://aws.amazon.com/s3) document.
 * ```document.copyTo([Collection](#collection),'newId')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Copies the document to the target [Collection](#collection). Optionally, you can specify the new ID of the document that will be created, or when its excluded, it will use the id generation of the target collection.
 * ```document.rename()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Changes the name of the underlying [AWS S3](https://aws.amazon.com/s3) document.
+* ```document.getHead()```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<Object> - Gets the underlying metadata for the document, from S3.
+* ```document.getMetadata()```:<Object> - Gets the 'current' metadata of the object. Does not do a check against S3.
 
 note: _You may notice additional functions on each document instance, it is unwise to use thse as they are used by the framework itself and may change without notice._

@@ -50,9 +50,14 @@ describe('Collection', () => {
           }
         });
       },
-      buildDocumentMetaData: () => {return {
-        'ETag':"'1234567890'"
-      }},
+      buildDocumentMetaData: document => {
+       const metadata = document.Metadata || {};
+        
+        Object.keys(metadata).forEach( key => metadata[key] = JSON.parse(metadata[key]) );
+        metadata['ETag']  = "'1234567890'";
+
+        return metadata;
+      },
       buildListMetaData: () => {return {}}
     }
   };
@@ -106,7 +111,7 @@ describe('Collection', () => {
     const collection = new Collection(fqn, goodConfig, testProvider, testSerializer, testDocumentFactory);
 
     it('Check signature',() => expect(collection)
-      .to.have.all.keys('getName','getFQN','getDocument','deleteDocument','find','saveDocument','subCollection','copy'));
+      .to.have.all.keys('getName','getFQN','getDocument','deleteDocument','find','saveDocument','subCollection','copy','exists','getHead'));
   })
 
   describe('#subCollection() Positive', () => {
@@ -114,7 +119,7 @@ describe('Collection', () => {
     const subCollection = collection.subCollection('child');
 
     it('Check signature',() => expect(subCollection)
-      .to.have.all.keys('getName','getFQN','getDocument','deleteDocument','find','saveDocument','subCollection','copy'));
+      .to.have.all.keys('getName','getFQN','getDocument','deleteDocument','find','saveDocument','subCollection','copy','exists','getHead'));
 
     it('check Name', () => expect(subCollection.getName()).to.equal('test/child'));
     it('check FQN', () => expect(subCollection.getFQN()).to.have.property('name').that.equals('test/child'));
@@ -200,7 +205,7 @@ describe('Collection', () => {
         }
       }), testProvider, testSerializer, testDocumentFactory);
       return manipulatorCollection.saveDocument({name:'poo',id:'100'},{foo:'bar'}).then( result => {
-        return expect(result.getMetadata()).to.have.property('added').that.equals(true);
+        return expect(result.getMetadata()).to.have.property('added').that.equals('true');
       })
     });
 
@@ -242,7 +247,7 @@ describe('Collection', () => {
 
     it('add metadata to item',() => {
       return collection.saveDocument({name:'poo',id:'100'},{foo:'bar'}).then( result => {
-        return expect(result.getMetadata()).to.have.property('foo').that.equals('bar');
+        return expect(result.getMetadata()).to.have.property('foo').that.equals('"bar"');
       })
     });
   })

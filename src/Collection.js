@@ -90,37 +90,37 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
       return collectionProvider.getDocumentHead(fqn,id)
         .then( head => {
 
-          const targetMetaData = collectionProvider.buildDocumentMetaData(head);
+          const targetMetaData = head ? collectionProvider.buildDocumentMetaData(head) : null;
           let   hasChanged     = false;
 
           /*
-           * Extension point that allows additional checking on the metadata of the document
-           *  and the corresponding documentHeader.
-           **/
+          * Extension point that allows additional checking on the metadata of the document
+          *  and the corresponding documentHeader.
+          **/
           if(collisionValidator){
             hasChanged = collisionValidator(metadata,targetMetaData,document);
           }
 
           /*
-           * The targetMetaData comes from a headCheck on the object being
-           *  overwritten. So if the MD5 on the __meta of the current record
-           *  matches the target MD5, the underlying object is likely not
-           *  modified.
-           *
-           * Md5 does not always get returned.
-           */
-          if(!hasChanged && targetMetaData.md5 && targetMetaData.md5 !== metadata.md5){
+          * The targetMetaData comes from a headCheck on the object being
+          *  overwritten. So if the MD5 on the __meta of the current record
+          *  matches the target MD5, the underlying object is likely not
+          *  modified.
+          *
+          * Md5 does not always get returned.
+          */
+          if(!hasChanged && targetMetaData && targetMetaData.md5 && targetMetaData.md5 !== metadata.md5){
             hasChanged = true;
           }
 
-          if(!hasChanged && targetMetaData.eTag !== metadata.eTag){
+          if(!hasChanged && targetMetaData && targetMetaData.eTag !== metadata.eTag){
             hasChanged = true;
           }
 
           if(hasChanged){
             return Promise.reject('Collision, the document has been modified.');
           }
-
+          
           return document;
         })
     }
@@ -155,6 +155,10 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
     find: startsWith => collectionProvider.findDocuments(fqn,startsWith)
       .then( listResponse )
       .catch( handleError ),
+    exists: id => collectionProvider.getDocumentHead(fqn,id)
+      .then( head => head ? true : false ),
+    getHead: id => collectionProvider.getDocumentHead(fqn,id)
+      .then( head => head ? collectionProvider.buildDocumentMetaData(head) : null ) ,
     getDocument: id => collectionProvider.getDocument(fqn,id)
       .then( data => documentFactory.build(data,idPropertyName,collection))
       .catch( handleError ),
@@ -190,6 +194,12 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
       .then( document => {
         if(updateMetadata){
           document.metadata = updateMetadata(document.metadata);
+        }
+        /*
+         * Stringify all metadata
+         */
+        if(document.metadata){
+          Object.keys(document.metadata).forEach( key => document.metadata[key] = JSON.stringify(document.metadata[key]) )
         }
         return document;
       })
