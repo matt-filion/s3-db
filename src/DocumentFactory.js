@@ -5,7 +5,7 @@ const Check  = Common.Check;
 const Utils  = Common.Utils;
 
 const isModified = document => {
-  const metadata = document.getMetaData(document);
+  const metadata = document.getMetadata(document);
   const currentMD5 = Utils.signature(document);
   return !metadata || metadata.md5 !== currentMD5;
 }
