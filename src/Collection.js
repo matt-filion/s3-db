@@ -195,12 +195,6 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
         if(updateMetadata){
           document.metadata = updateMetadata(document.metadata);
         }
-        /*
-         * Stringify all metadata
-         */
-        if(document.metadata){
-          Object.keys(document.metadata).forEach( key => document.metadata[key] = JSON.stringify(document.metadata[key]) )
-        }
         return document;
       })
       .then( collectionProvider.putDocument )

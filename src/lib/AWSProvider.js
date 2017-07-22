@@ -166,13 +166,25 @@ module.exports = function(config){
           Body: request.body,
           ContentMD5: Utils.signature(request.body)
         };
-
+        if(request.metadata) 
+        
         if(request.metadata){
+          /*
+           * Stringify all metadata and remove special characters. Special characters
+           *  cause issues in creating the object signature and only string values
+           *  are valid for metadata (for S3.)
+           * @see https://github.com/aws/aws-sdk-js/issues/86
+           */
+          Object.keys(document.metadata).forEach( key => {
+            let value = document.metadata[key];
+            value = typeof value === "string" ? value : JSON.stringify(value);
+            value = module.exports.Utils.removeDiacritics( value )
+            document.metadata[key] = value;
+          });
           params.Metadata = request.metadata;
         }
-
+       
         if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256';
-
         return s3.putObject(params).promise().then( response => Object.assign(response,{Body:request.body,Metadata:params.Metadata}));
       },
 
