@@ -53,7 +53,7 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
   const idPropertyName     = config.get('id.propertyName','id');
   const documentValidator  = config.get('validator', document => Promise.resolve(document) );
   const collisionValidator = config.get('collisionValidator');
-  const updateMetadata     = config.get('metadataUpdate');
+  const updateMetadata     = config.get('metadataUpdate', metadata => metadata);
 
   /*
    * Decorates a list of results with some convenience methods.
@@ -183,19 +183,12 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
           document[idPropertyName] = idGenerator(document);
         }
         const toWrite = serializer.serialize(document);
-        Object.assign(argMetadata, {md5: Utils.signature(toWrite)});
         return {
           fqn,
           id: document[idPropertyName],
           body: toWrite,
-          metadata: argMetadata
+          metadata: updateMetadata(argMetadata)
         }
-      })
-      .then( document => {
-        if(updateMetadata){
-          document.metadata = updateMetadata(document.metadata);
-        }
-        return document;
       })
       .then( collectionProvider.putDocument )
       .then( data => documentFactory.build(data,idPropertyName,collection) )

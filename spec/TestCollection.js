@@ -205,7 +205,7 @@ describe('Collection', () => {
         }
       }), testProvider, testSerializer, testDocumentFactory);
       return manipulatorCollection.saveDocument({name:'poo',id:'100'},{foo:'bar'}).then( result => {
-        return expect(result.getMetadata()).to.have.property('added').that.equals('true');
+        return expect(result.getMetadata()).to.have.property('added').that.equals(true);
       })
     });
 
@@ -247,7 +247,7 @@ describe('Collection', () => {
 
     it('add metadata to item',() => {
       return collection.saveDocument({name:'poo',id:'100'},{foo:'bar'}).then( result => {
-        return expect(result.getMetadata()).to.have.property('foo').that.equals('"bar"');
+        return expect(result.getMetadata()).to.have.property('foo').that.equals('bar');
       })
     });
   })

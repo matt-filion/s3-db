@@ -13,30 +13,43 @@ const Utils  = Common.Utils;
  */
 module.exports = function(config){
 
-  const AWS                 = require('aws-sdk');
-  const region              = config.get('provider.region');
-  const accessKeyId         = config.get('provider.accessKeyId');
-  const secretAccessKey     = config.get('provider.secretAccessKey');
-  const s3                  = new AWS.S3({region,accessKeyId,secretAccessKey});
-  const bucketName          = fqn => fqn.name.indexOf('/') === -1 ? `${fqn.prefix}${fqn.name}` : `${fqn.prefix}${fqn.name.substring(0,fqn.name.indexOf('/'))}`;
-  const getId               = (fqn,id) => fqn.name.indexOf('/') === -1 ? id : `${fqn.name.substring(fqn.name.indexOf('/')+1)}/${id}`;
-  const getCollectionConfig = fqn => Utils.getCollectionConfig(fqn,config);
-
-
+  const AWS                   = require('aws-sdk');
+  const region                = config.get('provider.region');
+  const accessKeyId           = config.get('provider.accessKeyId');
+  const secretAccessKey       = config.get('provider.secretAccessKey');
+  const s3                    = new AWS.S3({region,accessKeyId,secretAccessKey});
+  const bucketName            = fqn => fqn.name.indexOf('/') === -1 ? `${fqn.prefix}${fqn.name}` : `${fqn.prefix}${fqn.name.substring(0,fqn.name.indexOf('/'))}`;
+  const getId                 = (fqn,id) => fqn.name.indexOf('/') === -1 ? id : `${fqn.name.substring(fqn.name.indexOf('/')+1)}/${id}`;
+  const getCollectionConfig   = fqn => Utils.getCollectionConfig(fqn,config);
   const buildDocumentMetaData = document => {
     const metadata = document.Metadata || {};
 
-    Object.keys(metadata).forEach( key => metadata[key] = JSON.parse(metadata[key]) )
+    Object.keys(metadata).forEach( key => metadata[key] = metadata[key].startsWith('"') ? JSON.parse(metadata[key]) : metadata[key] );
 
     if(document.Size) metadata.size = document.Size
     if(document.StorageClass) metadata.storageClass = document.StorageClass
     if(document.ContentLength) metadata.size = document.ContentLength;
     if(document.ServerSideEncryption) metadata.encryption = document.ServerSideEncryption
     if(document.LastModified) metadata.lastModified = new Date(document.LastModified)
-    if(document.ETag) metadata.eTag = document.ETag.replace(/"/g,'') /* Fix the stupid AWS eTag. */
+    if(document.ETag) metadata.eTag = JSON.parse(document.ETag) /* Fix the stupid AWS eTag. */
 
     return metadata;
   }
+
+  const cleanDocumentMetadata = metadata => Object.keys(metadata)
+    .filter( key => !['MD5','md5','ContentMD5','Size','StorageClass','ContentLength','ServerSideEncryption','LastModified','ETag'].indexOf(key) )
+    .reduce( (newMetadata,key) => {
+      /*
+       * Stringify all metadata and remove special characters. Special characters
+       *  cause issues in creating the object signature and only string values
+       *  are valid for metadata (for S3.)
+       * @see https://github.com/aws/aws-sdk-js/issues/86
+       */
+      newMetadata[key] = metadata[key];
+      newMetadata[key] = typeof value === "string" ? newMetadata[key] : JSON.stringify(newMetadata[key]);
+      newMetadata[key] = Utils.removeDiacritics( newMetadata[key] )
+      return newMetadata;
+    },{} )
 
   return {
     database: {
@@ -163,25 +176,13 @@ module.exports = function(config){
           Key: getId(request.fqn,request.id),
           ContentType: 'application/json',
           ContentLength: Buffer.byteLength(request.body, 'utf8'),
-          Body: request.body,
-          ContentMD5: Utils.signature(request.body)
+          Body: request.body
         };
-        if(request.metadata) 
         
         if(request.metadata){
-          /*
-           * Stringify all metadata and remove special characters. Special characters
-           *  cause issues in creating the object signature and only string values
-           *  are valid for metadata (for S3.)
-           * @see https://github.com/aws/aws-sdk-js/issues/86
-           */
-          Object.keys(document.metadata).forEach( key => {
-            let value = document.metadata[key];
-            value = typeof value === "string" ? value : JSON.stringify(value);
-            value = module.exports.Utils.removeDiacritics( value )
-            document.metadata[key] = value;
-          });
-          params.Metadata = request.metadata;
+          params.Metadata = cleanDocumentMetadata(request.metadata);
+        } else {
+          params.ContentMD5 = Utils.signature(request.body);
         }
        
         if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256';
@@ -210,9 +211,7 @@ module.exports = function(config){
     },
 
     document: {
-
       getDocumentBody: file => typeof file.Body === 'string' ? file.Body : file.Body.toString(),
-
       buildDocumentMetaData: buildDocumentMetaData
     }
   }
