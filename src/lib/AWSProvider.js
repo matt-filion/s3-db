@@ -37,7 +37,7 @@ module.exports = function(config){
   }
 
   const cleanDocumentMetadata = metadata => Object.keys(metadata)
-    .filter( key => !['MD5','md5','ContentMD5','Size','StorageClass','ContentLength','ServerSideEncryption','LastModified','ETag'].indexOf(key) )
+    .filter( key => !['MD5','md5','ContentMD5','Size','StorageClass','ContentLength','ServerSideEncryption','LastModified','ETag'].includes(key) )
     .reduce( (newMetadata,key) => {
       /*
        * Stringify all metadata and remove special characters. Special characters
