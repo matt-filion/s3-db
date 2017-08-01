@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "2.2.10",
+  "version": "2.2.14",
   "description": "Document database API wrapped around Amazon S3.",
   "main": "src/index.js",
   "homepage": "https://www.npmjs.com/package/s3-db",
@@ -9,6 +9,7 @@
     "test": "mocha spec"
   },
   "dependencies": {
+    "iconv-lite": "^0.4.18",
     "lamcfg": "^1.3.4"
   },
   "devDependencies": {
