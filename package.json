@@ -41,6 +41,7 @@
     "src/lib/Serializer.js",
     "src/lib/Common.js"
   ],
+  "typings": "index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/matt-filion/s3-db.git"
