@@ -27,18 +27,26 @@ To setup the [AWS S3](https://aws.amazon.com/s3) permissions for exactly what is
 
 ```javascript
   {
-    "Action": [
-      "s3:ListBucket",
-      "s3:ListAllMyBuckets",
-      "s3:CreateBucket",
-      "s3:PutBucketTagging",
-      "s3:ListObject",
-      "s3:DeleteObject",
-      "s3:GetObject",
-      "s3:PutObject"
-    ],
-    "Resource": "arn:aws:s3:::s3-db*", //Neesd to change if your db name changes.
-    "Effect": "Allow"
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "Stmt1506028208000",
+            "Effect": "Allow",
+            "Action": [
+                "s3:ListBucket",
+                "s3:ListAllMyBuckets",
+                "s3:CreateBucket",
+                "s3:PutBucketTagging",
+                "s3:ListObject",
+                "s3:DeleteObject",
+                "s3:GetObject",
+                "s3:PutObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::s3-db*" //Needs to change if your db name changes.
+            ]
+        }
+    ]
   }
 ```
 
@@ -88,7 +96,7 @@ database.getCollection('x',{id:{propertyName:'name'}})
 * ```deleteDocument('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Deletes the [Document](#document) identified by the id. 
 * ```saveDocument([Document](#document) or Object, Object )```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Saves the state of an existing [Document](#document) or creates a [Document](#document) from an object provided. The second argument is a single level document of the metadata to attach to the document.
 * ```copy([Document](#document),newId:string)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Document](#document)> - Creates a copy of the provided document, either with the ID provided, or a new ID generated using the id generator of the collection.
-* ```subCollection([Document](#document),newId:string)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#collection) > - Creates a collection that will logically name itself within the parent collection using S3's folder alias's (IE using slashes "/".)
+* ```subCollection(name:string)```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#collection) > - Creates a collection that will logically name itself within the parent collection using S3's folder alias's (IE using slashes "/".)
 * ```getHead('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<Object> - Returns the metadata of the object without returning the document.
 * ```exists('id')```:[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<boolean> - Checks to see if the document exists in S3, without loading the document.
 
