@@ -25,7 +25,16 @@ const fqn = {name:'test',prefix:'test.dev-'}
 
 describe('Collection', () => {
 
-  const findDocumentsResponse = [];
+  const findDocumentsResponse = {
+    Contents:[],
+    Name: 'test.dev-test',
+    Prefix: '',
+    MaxKeys: 100,
+    CommonPrefixes: [],
+    KeyCount: 100,
+    ContinuationToken: '135ipUQ/7EDv+SyiVx753bm/eUa/dNOEGML+XqmdRmq8sJhAYsnQ5KIE0mMnCX46rzvdgQ7iwkMG6kh70j9eqcQjx00aa+QxWM+ekP6wy71MXMN0Xg7toeA==',
+    NextContinuationToken: '1uVBr1bO2L5yAGuDXA5q9wZg1U/SjLP8je9V4QeAOgsZgssgB4NT88Mio1kxIjdjMqAxmktzej+y5mkddWTUd+SaA6ezF+JZRMPN78hMmeKgTOwtPoTLogw==' 
+  };
   const testSerializer        = {
     serialize: toSerialize => JSON.stringify(toSerialize),
     deserialize: toDeserialize => JSON.parse(toDeserialize),
@@ -140,7 +149,8 @@ describe('Collection', () => {
 
   describe('#find()', () => {
     const collection = new Collection(fqn,goodConfig, testProvider, testSerializer, testDocumentFactory);
-    findDocumentsResponse.push('x');
+
+    findDocumentsResponse.Contents.push({Key:'x',LastModified:JSON.stringify(new Date())});
 
     let found = collection.find();
     it('List ONE document',() => expect(found)
@@ -149,7 +159,7 @@ describe('Collection', () => {
       .with.deep.property('id')
       .that.equals('x'));
 
-    findDocumentsResponse.push('y');
+    findDocumentsResponse.Contents.push({Key:'y',LastModified:JSON.stringify(new Date())});
 
     found = collection.find();
     it('List TWO documents, x',() => expect(found)

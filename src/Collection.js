@@ -62,19 +62,28 @@ const Collection = function(fqn,config,provider,serializer,DocumentFactory) {
    */
   const listResponse = results => {
 
-    const documents = results
-      .map( id => { return { id: id } } )
+
+    const documents = results.Contents
+      .map( ref => {
+        return {
+          id: ref.Key,
+          lastUpdated: new Date(ref.LastModified),
+          eTag: ref.ETag,
+          size: ref.Size
+        }
+      })
       .map( record => { record.getDocument = () => collection.getDocument(record.id); return record} );
 
-    const metadata = collectionProvider.buildListMetaData(documents);
+    const metadata = collectionProvider.buildListMetaData(results);
 
     Utils.setMetaData(documents,metadata);
 
     if(metadata.hasMore){
-      results.hasMore = metadata.hasMore;
-      results.next    = () => Promise.resolve( Utils.getMetaData(documents) )
-        .then( metadata => collectionProvider.listDocuments(fqn, metadata.startsWith, metadata.continuationToken) )
-        .then( listResponse )
+      documents.hasMore = metadata.hasMore;
+      documents.next    = () => {
+        const metadata = Utils.getMetaData(documents);
+        return collectionProvider.findDocuments(fqn, metadata.startsWith, metadata.continuationToken).then( listResponse )
+      }
     }
 
     return documents;

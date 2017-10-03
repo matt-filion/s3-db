@@ -124,9 +124,7 @@ module.exports = function(config){
         if(startsWith) params.Prefix = fqn.name.indexOf('/')===-1 ? startsWith : `{fqn.name.substring(fqn.name.indexOf('/')+1}/${startsWith}`;
         if(continuationToken) params.ContinuationToken = continuationToken;
 
-        return s3.listObjectsV2(params).promise()
-          .then( data => data.Contents )
-          .then( results => results.map( result => result.Key) )
+        return s3.listObjectsV2(params).promise();
       },
 
       /**
