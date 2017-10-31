@@ -82,14 +82,14 @@ declare module "s3-db" {
 
     class Collection {
       getName(): string;
-      find(prefix: string): Promise<DocumentList>
+      find(prefix?: string): Promise<DocumentList>
       getDocument<T>(documentId: string): Promise<Document & T>
       deleteDocument(documentId: string): Promise<void>
-      saveDocument<T>(document: (Document & T) | T, metadata?: Metadata): Promise<void>
+      saveDocument<T>(document: (Document & T) | T, metadata?: Metadata): Promise<Document & T>
       copy<T>(document: Document & T, newId: string): Promise<Document & T>
       subCollection(collectionName: string): Promise<Collection>
       getHead(documentId: string): Promise<Metadata>
-      exists(documentId: string): Promise<void>
+      exists(documentId: string): Promise<boolean>
     }
   }
   export = Database;
