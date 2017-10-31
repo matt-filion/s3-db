@@ -61,11 +61,11 @@ declare module "s3-db" {
     }
 
     class Document {
-      save(): Promise<Document>
-      refresh(): Promise<Document>
+      save<T>(): Promise<Document & T>
+      refresh<T>(): Promise<Document & T>
       delete(): Promise<void>
-      copyTo(collection: Collection, newId?: string): Promise<Document>
-      rename(): Promise<Document>
+      copyTo<T>(collection: Collection, newId?: string): Promise<Document & T>
+      rename<T>(): Promise<Document & T>
       getHead(): Promise<Metadata>
       getMetadata(): Metadata
     }
