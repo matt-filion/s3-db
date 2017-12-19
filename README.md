@@ -71,7 +71,7 @@ Dot notation indicates the parent object where you can find the API call. The he
 ## Database
 ```:JavaScript
 const Database = require('s3-db');
-const databse  = new Database();
+const database  = new Database();
 ....
 ```
 
