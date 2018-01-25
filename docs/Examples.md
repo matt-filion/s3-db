@@ -60,7 +60,7 @@ resources:
    UserS3Bucket:
      Type: AWS::S3::Bucket
      Properties:
-       BucketName: ${self:provider.environment.S3DB_NAME}.${self:provider.environment.STAGE}.userProfile
+       BucketName: ${self:provider.environment.S3DB_NAME}.${self:provider.environment.STAGE}-userProfile
 ```
 
 **5. Declare Your Functions **
@@ -75,7 +75,7 @@ functions:
     handler: handler.trigger
     events:
       - s3:
-          bucket: ${self:provider.environment.APP_NAME}.${self:provider.environment.STAGE}.users
+          bucket: ${self:provider.environment.APP_NAME}.${self:provider.environment.STAGE}-users
           event: s3:ObjectCreated:*
 ```
 
