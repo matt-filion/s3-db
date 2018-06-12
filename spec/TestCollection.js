@@ -155,8 +155,8 @@ describe('Collection', () => {
     let found = collection.find();
     it('List ONE document',() => expect(found)
       .to.eventually.be.an('array')
-      .with.deep.property('[0]')
-      .with.deep.property('id')
+      .with.deep.nested.property('[0]')
+      .with.deep.nested.property('id')
       .that.equals('x'));
 
     findDocumentsResponse.Contents.push({Key:'y',LastModified:JSON.stringify(new Date())});
@@ -164,13 +164,13 @@ describe('Collection', () => {
     found = collection.find();
     it('List TWO documents, x',() => expect(found)
       .to.eventually.be.an('array')
-      .with.deep.property('[0]')
-      .with.deep.property('id')
+      .with.deep.nested.property('[0]')
+      .with.deep.nested.property('id')
       .that.equals('x'));
     it('List TWO documents, y',() => expect(found)
       .to.eventually.be.an('array')
-      .with.deep.property('[1]')
-      .with.deep.property('id')
+      .with.deep.nested.property('[1]')
+      .with.deep.nested.property('id')
       .that.equals('y'));
   });
 
