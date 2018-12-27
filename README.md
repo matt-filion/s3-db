@@ -1,72 +1,79 @@
-# Document DB API wrapper for AWS S3.
+# Looking for Opinions!
+This has been in reasonable use and helped a lot of projects but I have seen a shift, and myself have taken part in that shift, over to TypeScript. That, in combination with new knowledge based on experience, has me thinking about this projects future. I'd like to reduce or remove many of the manual points of intervention as being required and propose a more simplified API. However, I dont know everyones use cases, so please, share your opinion with me.
 
+# Proposal
+1. TypeScript first implementation.
+1. Well communicated and reasonable defaults. Environment variable overrides for all values. Default module will be @s3-db/configuration-default, but should have additional modules such as @s3-db/configuration-secrets-manager and @s3-db/configuration-parameter-store that would have a cascading lookup strategy. A reasonable default will be established with each of these but it will be modifiable.
+1. Modularized components to make it easier to override key aspects. All under the parent @s3-db/\*. For each child module, they will register themselves with the global s3-db instance. This should keep the work being done by the core @s3-db module minimized. All it has to do is look for all modules prefixed with @s3-db. Modules would look something like the following. **(still need to validate the viability of this)**
+    ```
+    import { ConfigurationFactory, ConfigurationProvider } from 's3-db';
+    class DefaultS3DBConfiguration implements ConfigurationProvider {
+       ...stuff
+       init()
+    }
+    ConfigurationFactory.register(new DefaultS3DBConfiguration());
+    ```
+1. Utilize async/await to remove the 'necessity' of promises.
+1. Decorators for the global definition of the s3-db instance.
+    ```
+    import { s3db, collection, Collection } from 's3-db';
+    @s3db({
+        config: 'values',
+        go: 'here'
+    })
+
+    class SomeObject {
+        private users:Collection<User>;
+        constructor(@collection('users') collection:Collection){
+            this.users = collection;
+        }
+        doAThing(event:APIGatewayEvent<User>,context:Context,callback:Callback): void{
+            this.logger.debug('create() - ',event);
+            const user:User = users.save(event.body)
+            callback(null,{
+                statusCode: 200,
+                body: user
+            });
+        }
+    }
+    ```
+1. A primitive simple validator (that can be easily overridden) to validate objects. @s3-db/validator
+    ```
+    import { key, required, } from 's3-db';
+
+    class interface {
+        @key
+        key:string;
+        
+        @required
+        name:string;
+    }
+    ```
+1. Similarly for validation have a couple of serialization options. Each one with a default priority so that if multiple are included you end up with a chain @s3-db/serializer-json, @s3-db/serializer-zip, @s3-db/serializer-aes-256. Only @s3-db/serializer.json would be default. However, if you then included @s3-db/serializer-zip your files would be zipped before being persisted, rather than being flat JSON. If you added @s3-db/serializer-aes-256 it would sit between json and zip, to encrypt the file before it is saved. Will need to define a public interface so that it is easy to extend with additional options.
+1. Move some of the 'bucket' type functions off of the document and onto the Collection.
+1. Module for logging @s3-db/logging that will use a customized version of lamlog, but allow for a very easy updating of logging to an external framework with a simple wrapper.
+1. A serverless plugin that would include the right modules, and include extra functionality to create s3 buckets appropriately and s3 permissions rather than having to update the serverless.yaml file. 
+1. Modules for search @s3-db/search-default will use the s3 default pagination behavior. @s3-db/search-elastic-search would use an elastic search instance to lookup documenst and would not be limited to just startswith type searching. Maybe a @s3-db/search-s3-index would have some simplistic index it would maintain for low volume scenarios (10,000 or less docs), which would maintain an index that would be capable of regex based search. **Sorting?**
+   ```
+   interface DocumentSearch {
+      find(query:string | RegExp, pageSize:number = 10, pageKey?:string, fields?:Array<string>):DocumentList<extends Document<any>>;
+   }
+   class DocumentReference{
+      ...
+   }
+   class DocumentList extends Array<DocumentReference>{
+      public readonly count:number;
+      public readonly pageSize:number;
+      public readonly pageKey:string;
+   }
+   ```
+
+
+# Document DB API wrapper for AWS S3.
 [AWS S3](https://aws.amazon.com/s3) is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, triggers via [AWS Lambda](https://aws.amazon.com/lambda/), cross region replication, versioning and pretty decent [Performance](./docs/Performance.md). Its a pretty compelling database solution for a lot of scenarios. A few other people agree, see [Pet Warden's blog](https://petewarden.com/2010/10/01/how-i-ended-up-using-s3-as-my-database/) and [this interesting solution](http://www.s3nosql.com.s3.amazonaws.com/infinitedata.html).
 
-# Getting Started
-Install dependencies and the s3-db module.
-
-```
-npm install aws-sdk --save-dev
-npm install s3-db --save
-```
-
-Assuming your execution environment is [Lambda](https://aws.amazon.com/lambda/), or you have [AWS CLI](https://aws.amazon.com/cli/) configured locally (with all [AWS S3](https://aws.amazon.com/s3) permissions), just use it! Quick example of getting a user and setting the age on it. 
-
-```javascript
-const Database = require('s3-db');
-const database = new Database();
-database.getCollection('users')
-  .then( users => users.getDocument('my-user') )
-  .then( user => {user.age = 32; return user} )
-  .then( user => user.save() );
-```
-
-# Permissions
-
-To setup the [AWS S3](https://aws.amazon.com/s3) permissions for exactly what is needed, here is the policy.
-
-```javascript
-  {
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "Stmt1506028208000",
-            "Effect": "Allow",
-            "Action": [
-                "s3:ListBucket",
-                "s3:ListAllMyBuckets",
-                "s3:CreateBucket",
-                "s3:PutBucketTagging",
-                "s3:ListObject",
-                "s3:DeleteObject",
-                "s3:GetObject",
-                "s3:PutObject"
-            ],
-            "Resource": [
-                "arn:aws:s3:::s3-db*" //Needs to change if your db name changes.
-            ]
-        }
-    ]
-  }
-```
-
-note: _"s3:DeleteBucket" has been omitted because it becomes much easier to delete a bucket with this solution and generally wont be needed in most cases. To delete buckets via this API you must update the Configuration and add the additional permission to the policy._
-
-# Latest (2.0)
-The biggest changes here were under the covers and making the framework more configurable. 
-* A lot more unit testing.
-* Can now configure each collection independently.
-* Can now add custom serializers.
-* Every configuration can be overridden using environment variables (process.env);
-* Much better coverage for Unit tests.
-* Added a dependency on lamcfg, for the configuration capabilities.
-* Added document copying and renaming.
-* Added subCollection for easier managing of folders within a logical collection/bucket.
-* Can configure your collection at the time it is used by passing in a second argument of collection specific configurations.
-* Hook for validation of documents at the time of saving, updating and copying.
-
-# API
-Dot notation indicates the parent object where you can find the API call. The header of each section indicates the logical starting point for each API call.
+# REFERENCE OF PREVIOUS API's BELOW HERE
+------
 
 ## Database
 ```:JavaScript
