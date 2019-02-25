@@ -105,7 +105,7 @@ database.getCollection('x',{id:{propertyName:'name'}})
 ```:JavaScript
 const Database = require('s3-db');
 const databse  = new Database();
-database.getColletion('x')
+database.getCollection('x')
   .then( collection => collection.find() )
   .then( results => .... )
 ```
@@ -117,7 +117,7 @@ database.getColletion('x')
 ```:JavaScript
 const Database = require('s3-db');
 const databse  = new Database();
-database.getColletion('x')
+database.getCollection('x')
   .then( collection => collection.find() )
   .then( results => results[0] )
   .then( documentRef => documentRef.getDocument() )
@@ -134,7 +134,7 @@ database.getColletion('x')
 ```:JavaScript
 const Database = require('s3-db');
 const databse  = new Database();
-database.getColletion('x')
+database.getCollection('x')
   .then( collection => collection.getDocument('x') )
   .then( document => {
     document.value = 'change';
