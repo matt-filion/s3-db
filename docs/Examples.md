@@ -63,7 +63,7 @@ resources:
        BucketName: ${self:provider.environment.S3DB_NAME}.${self:provider.environment.STAGE}-userProfile
 ```
 
-**5. Declare Your Functions **
+**5. Declare Your Functions**
 
 We will have two functions. One that will act as the primary application. It could be invoked by another [AWS Lambda](https://aws.amazon.com/lambda/) function, respond to an  [AWS SNS](https://aws.amazon.com/sns/) topic or an API gateway call. However, all of these examples will be omitted in an effort towards simplification.
 
@@ -125,6 +125,7 @@ module.exports.trigger = (event, context, callback) => {
 
 # Code Examples
 List the current collections, choose one, and list its contents. You wouldn't want to do this with a collection that has a ton of documents. It would likely overload the stack or event queue.
+
 ```javascript
 const Database = require('s3-db');
 const database = new Database();
