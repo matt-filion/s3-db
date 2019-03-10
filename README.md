@@ -79,7 +79,7 @@ const database  = new Database();
 * ```getCollectionNames()``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<Array<string>> - Returns a name of all the [Collection](#collection)s identified in this Databases configured scope.
 * ```getCollection('name-of',config:object)``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#collection)> - Returns a [Collection](#collection) instance you can use to start interacting with the [Document](#document)'s in the [Collection](#collection). Optionally, you can provided the configuration specific to this collection such as id genration.
 * ```createCollection('name-of')``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)<[Collection](#collection) > - Creates a new collection ([AWS S3](https://aws.amazon.com/s3) bucket) to start storing [Document](#document)s within. 
-*```dropCollection('name-of')``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Assuming the Configuration and aws permissions permit it, it deletes an [AWS S3](https://aws.amazon.com/s3) bucket from the databases view.
+* ```dropCollection('name-of')``` :[Promise](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise) - Assuming the Configuration and aws permissions permit it, it deletes an [AWS S3](https://aws.amazon.com/s3) bucket from the databases view.
 
 
 ## Collection
