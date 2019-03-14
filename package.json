@@ -1,22 +1,24 @@
 {
-  "name": "s3-db",
-  "version": "2.3.1",
-  "description": "Document DB API wrapper for AWS S3.",
-  "main": "src/index.js",
+  "name": "@s3db/core",
+  "version": "2.0",
+  "description": "Document DB wrapper for AWS S3.",
+  "main": "dist/index.js",
   "homepage": "https://www.npmjs.com/package/s3-db",
   "author": "Matt Filion <matt.filion@gmail.com>",
   "scripts": {
-    "test": "mocha spec"
+    "lint": "tslint 'src/**/*.ts'",
+    "start": "npm run build:live",
+    "build": "tsc -p .",
+    "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
   },
-  "dependencies": {
-    "lamcfg": "^1.4.1"
-  },
+  "dependencies": {},
   "devDependencies": {
-    "aws-sdk": "^2.255.1",
-    "chai": "^4.1.2",
-    "chai-as-promised": "^7.1.1",
-    "mocha": "^5.2.0",
-    "sinon": "^6.0.0"
+    "@types/aws-sdk": "^2.7.0",
+    "@types/node": "^11.11.3",
+    "aws-sdk": "^2.421.0",
+    "reflect-metadata": "^0.1.13",
+    "tslint": "^5.14.0",
+    "typescript": "^3.3.3333"
   },
   "maintainers": [
     {
@@ -30,18 +32,7 @@
       "email": "matt.filion@gmail.com"
     }
   ],
-  "files": [
-    "README.md",
-    "index.d.ts",
-    "src/index.js",
-    "src/Collection.js",
-    "src/Database.js",
-    "src/DocumentFactory.js",
-    "src/lib/AWSProvider.js",
-    "src/lib/Serializer.js",
-    "src/lib/Common.js"
-  ],
-  "typings": "index.d.ts",
+  "typings": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/matt-filion/s3-db.git"

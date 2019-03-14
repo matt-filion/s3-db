@@ -2,19 +2,19 @@
 This has been in reasonable use and helped a lot of projects but I have seen a shift, and myself have taken part in that shift, over to TypeScript. That, in combination with new knowledge based on experience, has me thinking about this projects future. I'd like to reduce or remove many of the manual points of intervention as being required and propose a more simplified API. However, I dont know everyones use cases, so please, share your opinion with me.
 
 # Proposal
+1. One right way to do things.
 1. TypeScript first implementation.
-1. Well communicated and reasonable defaults. Environment variable overrides for all values. Default module will be @s3-db/configuration-default, but should have additional modules such as @s3-db/configuration-secrets-manager and @s3-db/configuration-parameter-store that would have a cascading lookup strategy. A reasonable default will be established with each of these but it will be modifiable.
-1. Modularized components to make it easier to override key aspects. All under the parent @s3-db/\*. For each child module, they will register themselves with the global s3-db instance. This should keep the work being done by the core @s3-db module minimized. All it has to do is look for all modules prefixed with @s3-db. Modules would look something like the following. **(still need to validate the viability of this)**
-    ```
-    import { ConfigurationFactory, ConfigurationProvider } from 's3-db';
-    class DefaultS3DBConfiguration implements ConfigurationProvider {
-       ...stuff
-       init()
-    }
-    ConfigurationFactory.register(new DefaultS3DBConfiguration());
-    ```
-1. Utilize async/await to remove the 'necessity' of promises.
-1. Decorators for the global definition of the s3-db instance.
+1. Make use of decorators to make configuration easier.
+1. Well communicated and reasonable defaults, with easy overrides.
+1. Maintain all functionality of previous version.
+1. Easier extensability
+    1. Validation (https://github.com/typestack/class-validator)
+    1. Serialization
+    1. Logging
+    1. Search
+    1. Configuration (from secrets)
+
+### Examples
     ```
     import { s3db, collection, Collection } from 's3-db';
     @s3db({
@@ -37,12 +37,16 @@ This has been in reasonable use and helped a lot of projects but I have seen a s
         }
     }
     ```
+
+
+Nice to Have
+1. A serverless plugin that would include the right modules, and include extra functionality to create s3 buckets appropriately and s3 permissions rather than having to update the serverless.yaml file. 
 1. A primitive simple validator (that can be easily overridden) to validate objects. @s3-db/validator
     ```
     import { key, required, } from 's3-db';
 
-    class interface {
-        @key
+    export class User {
+        @id
         key:string;
         
         @required
@@ -50,10 +54,8 @@ This has been in reasonable use and helped a lot of projects but I have seen a s
     }
     ```
 1. Similarly for validation have a couple of serialization options. Each one with a default priority so that if multiple are included you end up with a chain @s3-db/serializer-json, @s3-db/serializer-zip, @s3-db/serializer-aes-256. Only @s3-db/serializer.json would be default. However, if you then included @s3-db/serializer-zip your files would be zipped before being persisted, rather than being flat JSON. If you added @s3-db/serializer-aes-256 it would sit between json and zip, to encrypt the file before it is saved. Will need to define a public interface so that it is easy to extend with additional options.
-1. Move some of the 'bucket' type functions off of the document and onto the Collection.
-1. Module for logging @s3-db/logging that will use a customized version of lamlog, but allow for a very easy updating of logging to an external framework with a simple wrapper.
-1. A serverless plugin that would include the right modules, and include extra functionality to create s3 buckets appropriately and s3 permissions rather than having to update the serverless.yaml file. 
-1. Modules for search @s3-db/search-default will use the s3 default pagination behavior. @s3-db/search-elastic-search would use an elastic search instance to lookup documenst and would not be limited to just startswith type searching. Maybe a @s3-db/search-s3-index would have some simplistic index it would maintain for low volume scenarios (10,000 or less docs), which would maintain an index that would be capable of regex based search. **Sorting?**
+1. Modules for search @s3-db/search-default will use the s3 default pagination behavior. @s3-db/search-elastic-search would use an elastic search instance to 
+lookup documenst and would not be limited to just startswith type searching. Maybe a @s3-db/search-s3-index would have some simplistic index it would maintain for low volume scenarios (10,000 or less docs), which would maintain an index that would be capable of regex based search. **Sorting?**
    ```
    interface DocumentSearch {
       find(query:string | RegExp, pageSize:number = 10, pageKey?:string, fields?:Array<string>):DocumentList<extends Document<any>>;
