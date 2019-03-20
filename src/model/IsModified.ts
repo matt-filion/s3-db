@@ -11,7 +11,7 @@ export interface IsModified {
  * Checks MD5 and eTags on the head of the currently persisted document, if it
  * exists. If they match, modified returns false. If they dont, it returns true.
  */
-export class DefaultIsModified implements IsModified {
+export class MD5AndETagIsModified implements IsModified {
   constructor() {
 
   }

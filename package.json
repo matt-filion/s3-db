@@ -11,12 +11,13 @@
     "build": "tsc -p .",
     "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
   },
-  "dependencies": {},
+  "dependencies": {
+    "reflect-metadata": "^0.1.13"
+  },
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
     "@types/node": "^11.11.3",
     "aws-sdk": "^2.421.0",
-    "reflect-metadata": "^0.1.13",
     "tslint": "^5.14.0",
     "typescript": "^3.3.3333"
   },
