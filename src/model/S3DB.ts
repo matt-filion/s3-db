@@ -64,6 +64,10 @@ export class S3DB {
     //TODO Fill guts
   }
 
+  public static getRegion(): string{
+    return S3DB.configuration.region || 'us-west-2';
+  }
+
   /**
    * Default configurations when no configuration is provided. 
    * 

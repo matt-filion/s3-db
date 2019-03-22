@@ -26,6 +26,11 @@ export class CollectionConfiguration {
   validator?: Validation;
 
   /**
+   * Sets server side ecnryption enabled for saved documents.
+   */
+  serversideencryption: boolean = true;
+
+  /**
    * Disables checking if an object is modified before persisting it.
    * 
    * Defaults to true.
@@ -105,7 +110,7 @@ export class Collection<Of> {
     this.generator = metadata.generator;
     this.fullBucketName = S3DB.getCollectionFQN(this.getBucketName());
 
-    this.s3Client = new S3Client(); //TODO?
+    this.s3Client = new S3Client(this.configuration);
   }
 
   /**
@@ -150,7 +155,7 @@ export class Collection<Of> {
       .s3Client
       .getObject(this.fullBucketName, id)
       .then((s3Object: S3Object | S3DBError) => {
-        if (!s3Object instanceof S3Object) return Promise.reject(s3Object);
+        if (!s3Object instanceof S3DBError) return Promise.reject(s3Object);
         const object: Of = this.configuration.serialization.deserialize(s3Object.getBody())
         /**
          * is ID null, reject.
@@ -160,6 +165,9 @@ export class Collection<Of> {
         //TODO deserialize.
         return object;
       })
+      // .catch( (error:S3DBError) => {
+        
+      // })
   }
 
   /**
