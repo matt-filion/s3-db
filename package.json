@@ -12,11 +12,13 @@
     "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
   },
   "dependencies": {
-    "reflect-metadata": "^0.1.13"
+    "reflect-metadata": "^0.1.13",
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
-    "@types/node": "^11.11.3",
+    "@types/node": "^11.11.6",
+    "@types/uuid": "^3.4.4",
     "aws-sdk": "^2.426.0",
     "tslint": "^5.14.0",
     "typescript": "^3.3.3333"

@@ -9,13 +9,13 @@ export interface Serialization {
 /**
  * Out of the box JSON Serialization of objects.
  */
-export class JSONSerialization implements Serialization {
+export class JSONSerialization<T> implements Serialization {
 
   public serialize(objectToSerialize: any): string {
     return JSON.stringify(objectToSerialize)
   }
 
-  public deserialize(documentToDeserialize: string): any {
+  public deserialize<T>(documentToDeserialize: string): T {
     return JSON.parse(documentToDeserialize)
   }
 }

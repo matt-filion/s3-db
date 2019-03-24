@@ -1,28 +1,28 @@
 /**
  * Possible points of configuration for the entirety of S3DB.
  */
-export interface S3DBConfiguration {
+export class S3DBConfiguration {
 
   /**
    * Root name, used to distinguish s3db buckets names from other bucket names.
    */
-  baseName?: string;
+  baseName: string = process.env['S3DB_ROOTNAME'] || 's3db';
 
   /**
    * Logical stage that the runtime is executing within.
    */
-  stage?: string;
+  stage: string = process.env['S3DB_STAGE'] || 'dev';
 
   /**
    * Pattern used to create or look for the corresponding s3 bucket when
    * persisting an object.
    */
-  bucketPattern?: string;
+  bucketPattern: string = process.env['S3DB_BUCKETPATTERN'] || '${stage}.${region}.${baseName}-${bucketName}';
 
   /**
    * Region to look for buckets.
    */
-  region?: string;
+  region: string = process.env['S3DB_REGION'] || process.env['AWS_DEFAULT_REGION'] || 'us-west-2';
 }
 
 export class S3DBError extends Error {
@@ -52,7 +52,7 @@ export function s3db(configuration: S3DBConfiguration) {
  */
 export class S3DB {
 
-  private static configuration: S3DBConfiguration = S3DB.getDefault();
+  private static configuration: S3DBConfiguration = new S3DBConfiguration();
 
   private constructor() { }
 
@@ -60,25 +60,22 @@ export class S3DB {
     Object.assign(S3DB.configuration, configuration);
   }
 
+  /**
+   * 
+   * @param name Of the collection to generate the FQN (Bucket name) for.
+   */
   public static getCollectionFQN(name: string): string {
-    //TODO Fill guts
-  }
-
-  public static getRegion(): string{
-    return S3DB.configuration.region || 'us-west-2';
+    return this.configuration.bucketPattern
+      .replace('${stage}', this.configuration.stage)
+      .replace('${region}', this.getRegion())
+      .replace('${baseName}', this.configuration.baseName)
+      .replace('${bucketName}', name)
   }
 
   /**
-   * Default configurations when no configuration is provided. 
    * 
-   * Values are pulled from the environment if they are available.
    */
-  public static getDefault(): S3DBConfiguration {
-    return {
-      baseName: process.env['S3DB_ROOTNAME'] || 's3db',
-      stage: process.env['S3DB_STAGE'] || 'dev',
-      bucketPattern: process.env['S3DB_BUCKETPATTERN'] || '${stage}.${region}.${baseName}-${bucketName}',
-      region: process.env['S3DB_REGION'] || process.env['AWS_DEFAULT_REGION'] || 'us-west-2'
-    }
+  public static getRegion(): string {
+    return S3DB.configuration.region || 'us-west-2';
   }
 }

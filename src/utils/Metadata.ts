@@ -21,3 +21,24 @@ export function updateMetadata(toTarget: any, values: any): void {
 export function getMetadata(target: any): any {
   return Reflect.getMetadata(METADATA_KEY, target.constructor ? target.constructor : target);
 }
+
+interface BasicObject {
+  [key: string]: any;
+}
+
+/**
+ * Helper for getting a value on a target object.
+ */
+export function getValue(target: any, propertyName: string): any {
+  return (<BasicObject>target)[propertyName];
+}
+
+/**
+ * 
+ * @param target object containing the property.
+ * @param propertyName to set the value on.
+ * @param value to set.
+ */
+export function setValue(target: any, propertyName: string, value: any): void {
+  (<BasicObject>target)[propertyName] = value;
+}
