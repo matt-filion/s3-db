@@ -258,7 +258,6 @@ export class Collection<Of extends any> {
         metadata
       )
       .then((s3Object: S3Object) => {
-        console.log("metadata",s3Object.getMetadata());
         updateMetadata(toSave, s3Object.getMetadata());
         return toSave;
       })
