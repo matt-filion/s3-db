@@ -18,11 +18,11 @@ export function updateMetadata(toTarget: any, values: any): void {
  * 
  * @param target instance to return the metadata from.
  */
-export function getMetadata(target: any): any {
+export function getMetadata(target: any): BasicObject {
   return Reflect.getMetadata(METADATA_KEY, target.constructor ? target.constructor : target);
 }
 
-interface BasicObject {
+export interface BasicObject {
   [key: string]: any;
 }
 

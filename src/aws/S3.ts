@@ -18,11 +18,11 @@ export class S3Metadata {
   ContentMD5?: string;
   ContentType?: string;
   ServerSideEncryption?: string;
-  ContentLength?: string;
+  ContentLength?: number;
   LastModified?: Date;
   ETag?: string;
   Key?: string;
-  [key: string]: string | Date | undefined;
+  [key: string]: number | string | Date | undefined;
 }
 
 export class S3MetadataList extends Array<S3Metadata> {
@@ -196,12 +196,9 @@ export class S3Client {
       ContentType: contentType,
       ContentLength: conentLength,
       ContentMD5: MD5IsModified.md5Hash(body),
+      Metadata: this.toAWSMetadata(metadata),
       Body: body
     };
-
-    if (metadata) {
-      params.Metadata = this.toAWSMetadata(metadata);
-    }
 
     if (this.configuration.serversideencryption) params.ServerSideEncryption = 'AES256';
 
@@ -209,10 +206,13 @@ export class S3Client {
       .promise()
       .then((response: PutObjectResponse) => {
         if (response) {
-          metadata.ContentMD5 = response.ContentSHA256;
-          metadata.StorageClass = response.StorageClass;
-          metadata.ETag = response.ETag;
-          return new S3Object(body, this.buildS3Metadata(response))
+          const responseMetadata: S3Metadata = Object.assign(this.buildS3Metadata(response),this.toAWSMetadata(metadata));
+          responseMetadata.ContentMD5 = response.ContentSHA256;
+          responseMetadata.StorageClass = response.StorageClass;
+          responseMetadata.ETag = JSON.parse(response.ETag || '');
+          responseMetadata.ContentMD5 = MD5IsModified.md5Hash(body);
+          responseMetadata.ContentLength = conentLength;
+          return new S3Object(body, responseMetadata);
         }
         else throw this.handleError(response, bucket, key);
       })
@@ -228,12 +228,11 @@ export class S3Client {
    * @param metadata to clean.
    */
   private toAWSMetadata(metadata: S3Metadata): Metadata {
+    if(!metadata) return {};
     return Object.keys(metadata)
       .filter((key: string) => metadata[key] !== undefined)
       .reduce((newMetadata: Metadata, key: string) => {
-        if (newMetadata[key] !== undefined) {
-          newMetadata[key] = Diacritics.remove('' + newMetadata[key]);
-        }
+        newMetadata[key] = Diacritics.remove(''+metadata[key]);
         return newMetadata;
       }, {});
   }
@@ -248,9 +247,9 @@ export class S3Client {
 
     const metadata: S3Metadata = {
       StorageClass: source.StorageClass,
-      ContentLength: "" + source.ContentLength,
+      ContentLength: source.ContentLength,
       LastModified: source.LastModified,
-      ETag: source.ETag,
+      ETag: JSON.parse(source.ETag || ''),
       ServerSideEncryption: source.ServerSideEncryption,
       VersionId: source.VersionId
     };
@@ -262,6 +261,19 @@ export class S3Client {
 
     return metadata;
   }
+
+  //TODO Implement COPY
+  // copyDocument: (sourceFQN,sourceId,sourceETag,destinationFQN,destinationId) => {
+  //   const params = {
+  //     Bucket: bucketName(destinationFQN),
+  //     Key: getId(destinationFQN,destinationId),
+  //     CopySource:`${bucketName(sourceFQN)}${getId(sourceFQN,sourceId)}`,
+  //     MetadataDirective: 'COPY'
+  //   };
+  //   if(getCollectionConfig(request.fqn).get('encryption',true)) params.ServerSideEncryption = 'AES256';
+  //   if(sourceETag) params.CopySourceIfMatch = sourceETag;
+  //   return s3.copyObject(params).promise();
+  // },
 
   /**
    * 

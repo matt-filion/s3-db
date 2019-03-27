@@ -3,7 +3,7 @@
  */
 export interface Serialization {
   serialize(objectToSerialize: any): string;
-  deserialize(documentToDeserialize: string): object;
+  deserialize<T>(documentToDeserialize: string): T;
 }
 
 /**

@@ -1,11 +1,12 @@
 import * as crypto from 'crypto';
+import { BasicObject, getMetadata } from '../utils/Metadata';
 
 export interface IsModified {
   /**
    * 
    * @param documentToCheck if the difference is different from the head metadata.
    */
-  isModified(documentToCheck: any): boolean;
+  isModified(documentToCheck: BasicObject, body: string): boolean {
 }
 
 /**
@@ -17,10 +18,15 @@ export class MD5IsModified implements IsModified {
 
   }
 
-  public isModified(documentToCheck: any): boolean {
-    //TODO IMPLEMENT CHECKS
-    //TODO Get metadata vai reflection.
-    return false;
+  /**
+   * 
+   * @param documentToCheck The document that will be saved.
+   * @param body serialization of the documentToCheck.
+   */
+  public isModified(documentToCheck: BasicObject, body: string): boolean {
+    const md5ToCheck:string = MD5IsModified.md5Hash(body);
+    const md5Before:string = getMetadata(documentToCheck).ContentMD5;
+    return md5ToCheck !== md5Before;
   }
 
   /**

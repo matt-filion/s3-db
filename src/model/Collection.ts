@@ -1,7 +1,7 @@
 import { Serialization, JSONSerialization } from "./Serializers";
 import { IsModified, MD5IsModified } from "./IsModified";
 import { Validation } from "./Validation";
-import { getMetadata, updateMetadata, setValue, getValue } from "../utils/Metadata";
+import { getMetadata, updateMetadata, setValue, getValue, BasicObject } from "../utils/Metadata";
 import { S3Client, S3Metadata, S3Object, S3MetadataList } from "../aws/S3";
 import { S3DB, S3DBError } from "./S3DB";
 import { IDGenerator, defaultIDGenerator } from "./IDGenerator";
@@ -90,6 +90,12 @@ export class CollectionConfiguration {
   isModified: IsModified = new MD5IsModified();
 
   /**
+   * If MD5 check is true, and isModified is true, then this will also do a 
+   * head check and make sure the eTag matches.
+   */
+  // checkCollision: boolean = true;
+
+  /**
    * How to serialize and de-seraialize objects when persisting them to S3 Buckets.
    */
   serialization: Serialization = new JSONSerialization();
@@ -97,7 +103,7 @@ export class CollectionConfiguration {
   /**
    * Default ID generator, if its not defined on the decorator.
    */
-  defaultIdGenerator: IDGenerator<any> = defaultIDGenerator;
+  defaultIdGenerator: IDGenerator = defaultIDGenerator;
 
 }
 
@@ -108,12 +114,12 @@ export class CollectionConfiguration {
  * @param route for this function.
  */
 export function collection(name?: string | CollectionConfiguration): any {
-  return function (target: any, constructor: Function) {
+  return function (target: any) {
 
     let metadata = name || target.name.toLowerCase();
 
     if (typeof metadata === 'string') {
-      metadata = { name: metadata };
+      metadata = Object.assign(new CollectionConfiguration(), { name: metadata });
     }
 
     updateMetadata(target, metadata);
@@ -127,9 +133,9 @@ export function collection(name?: string | CollectionConfiguration): any {
  * 
  * @param route for this function.
  */
-export function id<Type>(generator?: IDGenerator<Type>) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    updateMetadata(target, {
+export function id(generator: IDGenerator = defaultIDGenerator): any {
+  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
+    updateMetadata(target.constructor, {
       keyName: propertyKey,
       generator: generator
     });
@@ -141,35 +147,21 @@ export function id<Type>(generator?: IDGenerator<Type>) {
  * Provides the logical interfaces of a collection and translates it into the 
  * appropriate S3 calls.
  */
-export class Collection<Of> {
+export class Collection<Of extends any> {
 
   private type: Of;
   private configuration: CollectionConfiguration;
-  private keyName: string;
   private fullBucketName: string;
-  private generator: IDGenerator<Of>;
   private s3Client: S3Client;
   private name: string;
 
   constructor(type: Of) {
     let metadata: any = getMetadata(type);
-
     this.type = type;
     this.name = metadata.name || `${type}`;
     this.configuration = metadata;
-    this.keyName = metadata.keyName;
-    this.generator = metadata.generator;
     this.fullBucketName = S3DB.getCollectionFQN(this.name);
-
     this.s3Client = new S3Client(this.configuration);
-  }
-
-  /**
-   * 
-   * @param type of collection to create.
-   */
-  public static of<Of>(type: Of): Collection<Of> {
-    return new Collection(type);
   }
 
   /**
@@ -197,6 +189,7 @@ export class Collection<Of> {
   }
 
   /**
+   * Load an object from the database.
    * 
    * @param id of document to load.
    * @param type of document to load.
@@ -205,7 +198,9 @@ export class Collection<Of> {
     return this
       .s3Client
       .getObject(this.fullBucketName, id)
-      .then((s3Object: S3Object) => ((this.configuration.serialization.deserialize(s3Object.getBody()) as any) as Of));
+      .then( (s3Object: S3Object) => 
+        this.configuration.serialization.deserialize<Of>(s3Object.getBody()) 
+      );
   }
 
   /**
@@ -213,7 +208,7 @@ export class Collection<Of> {
    * @param toSave to database.
    * @param type of document to save.
    */
-  public save<Of>(toSave: Of): Promise<Of> {
+  public save(toSave: Of): Promise<Of> {
 
     /*
      * Cannot do anything with an undefined document.
@@ -230,26 +225,30 @@ export class Collection<Of> {
      * If the object is not modified and checkIsModified is set to true, then just return
      * the object as is. There is nothing to do.
      */
-    const isModified = this.configuration.checkIsModified ? this.configuration.isModified.isModified(toSave) : true;
+    const body: string = this.configuration.serialization.serialize(toSave);
+    const isModified = this.configuration.checkIsModified ? this.configuration.isModified.isModified(toSave,body) : true;
     if (!isModified) return Promise.resolve(toSave);
 
     /*
      * If the object does not have an key to be saved as then it must be
      * created.
      */
-    let keyValue = getValue(toSave, this.keyName);
+    const keyName = this.getKeyName(toSave);
+    let keyValue = getValue(toSave, keyName);
     if (!keyValue) {
-      keyValue = this.generator ? this.generator(toSave) : this.configuration.defaultIdGenerator(toSave);
-      setValue(toSave, this.keyName, keyValue);
+      keyValue = this.generateKey(toSave);
+      setValue(toSave, keyName, keyValue);
+    } else {
+      //TODO head lookup of metadata, make sure eTag matches.
     }
 
     /*
      * Serialize the object using the configured serialization strategy.
      */
-    const body: string = this.configuration.serialization.serialize(toSave);
+    
     const metadata: S3Metadata = {
       collection: `${this.name}`
-    }
+    };
 
     return this.s3Client
       .saveObject(
@@ -259,6 +258,7 @@ export class Collection<Of> {
         metadata
       )
       .then((s3Object: S3Object) => {
+        console.log("metadata",s3Object.getMetadata());
         updateMetadata(toSave, s3Object.getMetadata());
         return toSave;
       })
@@ -307,5 +307,23 @@ export class Collection<Of> {
 
         return referenceList;
       })
+  }
+
+  /**
+   * 
+   * @param toSave object to find the generator on.
+   */
+  private generateKey(toSave: Of): IDGenerator {
+    let metadata: BasicObject = getMetadata(toSave.constructor);
+    return metadata.generator(toSave);
+  }
+
+  /**
+   * 
+   * @param toSave object to generate a key for.
+   */
+  private getKeyName(toSave: Of): string {
+    let metadata: BasicObject = getMetadata(toSave.constructor);
+    return metadata.keyName;
   }
 }

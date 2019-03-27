@@ -1,6 +1,6 @@
 {
   "name": "@s3db/core",
-  "version": "2.0",
+  "version": "2.0.0",
   "description": "Document DB wrapper for AWS S3.",
   "main": "dist/index.js",
   "homepage": "https://www.npmjs.com/package/s3-db",
@@ -12,6 +12,7 @@
     "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
   },
   "dependencies": {
+    "aws": "0.0.3-2",
     "reflect-metadata": "^0.1.13",
     "uuid": "^3.3.2"
   },
