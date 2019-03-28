@@ -1,11 +1,3 @@
-# TODO
-1. Add Unit tests Spec
-1. Docs for configurations
-1. Docs for extending validation.
-1. Docs for extending serialization
-1. Docs for ID generator
-1. Docs for isModified and collission detection.
-
 # Document DB API for AWS S3
 
 [AWS S3](https://aws.amazon.com/s3) is incredibly cheap, has 2 9's of availability, 12 9s of resiliency, triggers via [AWS Lambda](https://aws.amazon.com/lambda/), cross region replication, versioning and pretty decent [Performance](./docs/Performance.md). Its a pretty compelling database solution for a lot of scenarios. A few other people agree, see [Pet Warden's blog](https://petewarden.com/2010/10/01/how-i-ended-up-using-s3-as-my-database/) and [this interesting solution](http://www.s3nosql.com.s3.amazonaws.com/infinitedata.html).
@@ -181,5 +173,3 @@ Removes an object from an S3 bucket for the corresponding id.
 ### find(prefix, pageSize, continuationToken): Promise<ReferenceList>
 
 Returns a list of `S3Metadata` objects for all objects in the corresponding S3 bucket htat start with the prefix value provided. If continuationToken is passed in then the list  will be a 'continuation' of a previous find operation.
-
-

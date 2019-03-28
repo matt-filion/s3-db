@@ -1,5 +1,5 @@
 {
-  "name": "@s3db/core",
+  "name": "s3-db",
   "version": "2.0.0",
   "description": "Document DB wrapper for AWS S3.",
   "main": "dist/index.js",
