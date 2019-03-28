@@ -25,25 +25,10 @@ export class S3DBConfiguration {
   region: string = process.env['S3DB_REGION'] || process.env['AWS_DEFAULT_REGION'] || 'us-west-2';
 }
 
-export class S3DBError extends Error {
-}
-
 /**
- * Simple decorator for feeding in a non default S3DB configuration.
- * 
- * Example:
- *    s3db({
- *       baseName: 'HappyCompanyDB',
- *       region: 'us-west-1',
- *       bucketPattern: '${stage}.${region}.${baseName}--${bucketName}'
- *    })
- * 
- * @param route for this function.
+ * All exceptions thrown by this library are reported under this type.
  */
-export function s3db(configuration: S3DBConfiguration) {
-  return function (target: any, propertyKey: string, descriptor: PropertyDescriptor) {
-    return S3DB.update(configuration);
-  }
+export class S3DBError extends Error {
 }
 
 /**
@@ -56,6 +41,10 @@ export class S3DB {
 
   private constructor() { }
 
+  /**
+   * 
+   * @param configuration to update he default values with.
+   */
   public static update(configuration: S3DBConfiguration): void {
     Object.assign(S3DB.configuration, configuration);
   }
@@ -73,7 +62,7 @@ export class S3DB {
   }
 
   /**
-   * 
+   * The currently configured region.
    */
   public static getRegion(): string {
     return S3DB.configuration.region || 'us-west-2';

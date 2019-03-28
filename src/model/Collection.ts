@@ -72,7 +72,7 @@ export class CollectionConfiguration {
   /**
    * Sets server side ecnryption enabled for saved documents.
    */
-  serversideencryption: boolean = true;
+  serversideEncryption: boolean = true;
 
   /**
    * Disables checking if an object is modified before persisting it.
@@ -131,7 +131,9 @@ export function collection(name?: string | CollectionConfiguration): any {
 /**
  * Tells the collection what attribute is to be used as the id for the documents.
  * 
- * @param route for this function.
+ * Usage: On an attribute @id() and optionally provide a generator to create the ID's if the default of UUID4 is not desired.
+ * 
+ * @param generator for the ID if nothing is provided.
  */
 export function id(generator: IDGenerator = defaultIDGenerator): any {
   return function (target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
@@ -146,6 +148,11 @@ export function id(generator: IDGenerator = defaultIDGenerator): any {
 /**
  * Provides the logical interfaces of a collection and translates it into the 
  * appropriate S3 calls.
+ * 
+ * Usage: const myCollection: Collection<SomeType> = new Collection(SomeType);
+ * 
+ * The 'SomeType' definition needs to have [prop: string]: any; on it to avoid
+ * a TypeScript collission issue when it interprets the 'two types'.
  */
 export class Collection<Of extends any> {
 
@@ -169,51 +176,63 @@ export class Collection<Of extends any> {
    * which is often times much faster and contains enough information
    * to determine if it has been modified.
    * 
+   * Usage: collection.head(id)
+   * 
    * @param id of the document to get the head from.
    */
-  public head(id: string): Promise<S3Metadata> {
-    return this
-      .s3Client
-      .getObjectHead(this.fullBucketName, id);
+  public async head(id: string): Promise<S3Metadata> {
+    const metadata: S3Metadata = await this.s3Client.getObjectHead(this.fullBucketName, id);
+    return metadata;
   }
 
   /**
+   * Checks if an object exists by seeing if metadata exists for the
+   * object.
+   * 
+   * Usage: collection.exists(id)
    * 
    * @param id of object to check existance of.
    * @param type of document to check existance of.
    */
-  public exists(id: string): Promise<boolean> {
-    return this
-      .head(id)
-      .then((metadata: S3Metadata) => metadata ? true : false);
+  public async exists(id: string): Promise<boolean> {
+    const metadata: S3Metadata = await this.head(id);
+    return metadata ? true : false;
   }
 
   /**
-   * Load an object from the database.
+   * Load an object from the collection.
+   * 
+   * Usage: collection.load('some_id');
    * 
    * @param id of document to load.
    * @param type of document to load.
    */
-  public load(id: string): Promise<Of> {
-    return this
-      .s3Client
-      .getObject(this.fullBucketName, id)
-      .then( (s3Object: S3Object) => 
-        this.configuration.serialization.deserialize<Of>(s3Object.getBody()) 
-      );
+  public async load(id: string): Promise<Of> {
+    const s3Object: S3Object = await this.s3Client.getObject(this.fullBucketName, id);
+    return this.configuration.serialization.deserialize<Of>(s3Object.getBody());
   }
 
   /**
+   * Creates or updates an object in the collection. If the object was loaded by
+   * S3, and is not modified, this method will not attempt to Save. See the checkIsModified
+   * configuration value for more details.
+   * 
+   * It is expected that the object provided is the same type of the object that the
+   * collection was created with.
+   * 
+   * Usage: collection.save({some:'object'})
    * 
    * @param toSave to database.
    * @param type of document to save.
    */
-  public save(toSave: Of): Promise<Of> {
+  public async save(toSave: Of): Promise<Of> {
 
     /*
      * Cannot do anything with an undefined document.
      */
     if (!toSave) return Promise.reject(new S3DBError('Attempted to save undefined or null.'));
+
+    //TODO check if the toSave value has metadata, if it does, check the type and make sure it matches this.type
 
     /*
      * If validation is configured, run it against the object.
@@ -250,25 +269,27 @@ export class Collection<Of extends any> {
       collection: `${this.name}`
     };
 
-    return this.s3Client
-      .saveObject(
-        this.fullBucketName,
-        keyValue,
-        body,
-        metadata
-      )
-      .then((s3Object: S3Object) => {
-        updateMetadata(toSave, s3Object.getMetadata());
-        return toSave;
-      })
+    const s3Object: S3Object = await this.s3Client.saveObject(
+      this.fullBucketName,
+      keyValue,
+      body,
+      metadata
+    );
+
+    updateMetadata(toSave, s3Object.getMetadata());
+    
+    return toSave;
   }
 
   /**
+   * Removes an object from the collection.
+   * 
+   * Usage: collection.remove('some_id');
    * 
    * @param id of document to delete
    * @param type of document to delete
    */
-  public delete(id: string): Promise<boolean> {
+  public async delete(id: string): Promise<boolean> {
     return this.s3Client
       .deleteObject(this.fullBucketName, id)
       .then(() => true)
@@ -279,36 +300,35 @@ export class Collection<Of extends any> {
    * you paginate through documents, which works fine if order does not matter and there are not
    * a lot of results. So basically almost no business situation ever.
    * 
+   * Usage: collection.find('prefix/',500);
+   * 
    * @param prefix of documents to load.
    * @param pageSize for the number of documetns to return per page (1000 max).
    * @param continuationToken to return results in pages. The continuation token from one 
    *        ReferenceList will allow the next to return the following results.
    */
-  public find(prefix: string, pageSize?: number, continuationToken?: string): Promise<ReferenceList> {
-    return this.s3Client
-      .listObjects(this.fullBucketName, prefix, pageSize, continuationToken)
-      .then((list: S3MetadataList) => {
+  public async find(prefix: string, pageSize?: number, continuationToken?: string): Promise<ReferenceList> {
+    const list: S3MetadataList = await this.s3Client.listObjects(this.fullBucketName, prefix, pageSize, continuationToken);
+    const referenceList: ReferenceList = new ReferenceList(
+      list.getConinuationToken(),
+      list.getHasMore(),
+      list.getPageSize(),
+      list.getTotalCount()
+    );
 
-        const referenceList: ReferenceList = new ReferenceList(
-          list.getConinuationToken(),
-          list.getHasMore(),
-          list.getPageSize(),
-          list.getTotalCount()
-        );
+    list.forEach((object: S3Metadata) => referenceList.addReference(<Reference>{
+      type: `${this.type}`,
+      key: object.Key,
+      lastUpdated: object.LastModified,
+      eTag: object.ETag,
+      contentLength: object.ContentLength
+    }));
 
-        list.forEach((object: S3Metadata) => referenceList.addReference(<Reference>{
-          type: `${this.type}`,
-          key: object.Key,
-          lastUpdated: object.LastModified,
-          eTag: object.ETag,
-          contentLength: object.ContentLength
-        }));
-
-        return referenceList;
-      })
+    return referenceList;
   }
 
   /**
+   * Generates a new ID/Key for the object being saved.
    * 
    * @param toSave object to find the generator on.
    */
@@ -318,11 +338,14 @@ export class Collection<Of extends any> {
   }
 
   /**
+   * Looks up what the name of the attribute is that will be used
+   * to store the key. This is indicated with the @id decorator
+   * on the object's class definition being saved.
    * 
    * @param toSave object to generate a key for.
    */
   private getKeyName(toSave: Of): string {
     let metadata: BasicObject = getMetadata(toSave.constructor);
-    return metadata.keyName;
+    return metadata.keyName || 'id';
   }
 }

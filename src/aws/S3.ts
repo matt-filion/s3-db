@@ -1,12 +1,12 @@
 import * as AWS from 'aws-sdk';
 import { Diacritics } from '../utils/Diacritics';
-import { AWSError } from 'aws-sdk';
 import { HeadObjectOutput, HeadObjectRequest, GetObjectRequest, GetObjectOutput, PutObjectRequest, ListObjectsV2Request, ListObjectsV2Output, Object } from 'aws-sdk/clients/s3';
 import { Metadata } from 'aws-sdk/clients/appstream';
 import { S3DBError, S3DB } from '../model/S3DB';
 import { DeleteObjectResponse, PutObjectResponse } from 'aws-sdk/clients/mediastoredata';
 import { CollectionConfiguration } from '../model/Collection';
 import { MD5IsModified } from '../model/IsModified';
+import { AWSError } from 'aws-sdk';
 
 /**
  * S3 object metadata to be attached to each object.
@@ -25,6 +25,9 @@ export class S3Metadata {
   [key: string]: number | string | Date | undefined;
 }
 
+/**
+ * Wrapper around a list of object metadata.
+ */
 export class S3MetadataList extends Array<S3Metadata> {
   private continuationToken?: string;
   private hasMore: boolean;
@@ -51,6 +54,9 @@ export class S3MetadataList extends Array<S3Metadata> {
   }
 }
 
+/**
+ * Wrapper around an object stored in S3.
+ */
 export class S3Object {
   private metadata: S3Metadata;
   private body: string;
@@ -90,17 +96,19 @@ export class S3Client {
    * @param bucket to load the object head from.
    * @param key to of the object to load t he head of.
    */
-  public getObjectHead(bucket: string, key: string): Promise<S3Metadata> {
-    const parameters: HeadObjectRequest = {
-      Bucket: bucket,
-      Key: key
+  public async getObjectHead(bucket: string, key: string): Promise<S3Metadata> {
+    try {
+      
+      const parameters: HeadObjectRequest = {
+        Bucket: bucket,
+        Key: key
+      };
+      const response: HeadObjectOutput = await this.s3.headObject(parameters).promise();
+      return this.buildS3Metadata(response);
+
+    } catch(error) {
+      throw this.handleError(error, bucket, key);
     }
-    return this.s3.headObject(parameters)
-      .promise()
-      .then((response: HeadObjectOutput) => this.buildS3Metadata(response))
-      .catch((error: AWSError) => {
-        throw this.handleError(error, bucket, key);
-      });
   }
 
   /**
@@ -112,29 +120,36 @@ export class S3Client {
    * @param pageSize for each page of documents.
    * @param continuationToken to continue from, if this is not the first page of documents.
    */
-  public listObjects(bucket: string, prefix?: string, pageSize?: number, continuationToken?: string): Promise<S3MetadataList> {
-    const parameters: ListObjectsV2Request = {
-      Bucket: bucket,
-      Prefix: prefix,
-      MaxKeys: pageSize || 100,
-      FetchOwner: false,
-      ContinuationToken: continuationToken
-    };
-    return this.s3.listObjectsV2(parameters)
-      .promise()
-      .then((response: ListObjectsV2Output) => {
+  public async listObjects(bucket: string, prefix?: string, pageSize?: number, continuationToken?: string): Promise<S3MetadataList> {
+    try {
 
-        const list: S3MetadataList = new S3MetadataList(response.NextContinuationToken, response.IsTruncated, response.MaxKeys, response.KeyCount);
+      const parameters: ListObjectsV2Request = {
+        Bucket: bucket,
+        Prefix: prefix,
+        MaxKeys: pageSize || 100,
+        FetchOwner: false,
+        ContinuationToken: continuationToken
+      };
+      const response: ListObjectsV2Output = await this.s3.listObjectsV2(parameters).promise();
+      const list: S3MetadataList = new S3MetadataList(
+        response.NextContinuationToken, 
+        response.IsTruncated, 
+        response.MaxKeys, 
+        response.KeyCount
+      );
 
-        if (response.Contents) response.Contents.forEach((s3Object: Object) => list.push(<S3Metadata>{
-          Key: s3Object.Key,
-          LastModified: s3Object.LastModified,
-          ETag: s3Object.ETag,
-          ContentLength: s3Object.Size
-        }));
+      if (response.Contents) response.Contents.forEach((s3Object: Object) => list.push(<S3Metadata>{
+        Key: s3Object.Key,
+        LastModified: s3Object.LastModified,
+        ETag: s3Object.ETag,
+        ContentLength: s3Object.Size
+      }));
 
-        return list;
-      });
+      return list;
+
+    } catch(error) {
+      throw this.handleError(error, bucket);
+    }
   }
 
   /**
@@ -142,20 +157,21 @@ export class S3Client {
    * @param bucket to load the object from.
    * @param key of the object to load, within the bucket.
    */
-  public getObject(bucket: string, key: string): Promise<S3Object> {
-    const parameters: GetObjectRequest = {
-      Bucket: bucket,
-      Key: key
+  public async getObject(bucket: string, key: string): Promise<S3Object> {
+    try {
+      const parameters: GetObjectRequest = {
+        Bucket: bucket,
+        Key: key
+      };
+      const response: GetObjectOutput = await this.s3.getObject(parameters).promise();
+
+      if (!response.Body) throw new S3DBError('not-found');
+      
+      return new S3Object(response.Body.toString('utf-8'), this.buildS3Metadata(response));
+
+    } catch(error ) {
+      throw this.handleError(error, bucket, key);
     };
-    return this.s3.getObject(parameters)
-      .promise()
-      .then((response: GetObjectOutput) => {
-        if (response.Body) return new S3Object(response.Body.toString('utf-8'), this.buildS3Metadata(response));
-        else throw new S3DBError('not-found');
-      })
-      .catch((error: AWSError) => {
-        throw this.handleError(error, bucket, key);
-      });
   }
 
   /**
@@ -163,20 +179,20 @@ export class S3Client {
    * @param bucket to delete the object from.
    * @param key of the object to delete.
    */
-  public deleteObject(bucket: string, key: string): Promise<undefined> {
-    const parameters: GetObjectRequest = {
-      Bucket: bucket,
-      Key: key
+  public async deleteObject(bucket: string, key: string): Promise<undefined> {
+    try {
+
+      const parameters: GetObjectRequest = {
+        Bucket: bucket,
+        Key: key
+      };
+      const response: DeleteObjectResponse = await this.s3.deleteObject(parameters).promise();
+
+      return undefined;
+
+    } catch(error) {
+      throw this.handleError(error, bucket, key);
     };
-    return this.s3.deleteObject(parameters)
-      .promise()
-      .then((response: DeleteObjectResponse) => {
-        if (response) return undefined;
-        else throw this.handleError(response, bucket, key);
-      })
-      .catch((error: AWSError) => {
-        throw this.handleError(error, bucket, key);
-      });
   }
 
   /**
@@ -186,39 +202,40 @@ export class S3Client {
    * @param body of the document to save.
    * @param metadata of the document.
    */
-  public saveObject(bucket: string, key: string, body: string, metadata: S3Metadata): Promise<S3Object> {
-    const conentLength: number = Buffer.byteLength(body, 'utf8');
-    const contentType: string = metadata.ContentType ? '' + metadata.ContentType : 'application/json';
-    const params: PutObjectRequest = {
-      Bucket: bucket,
-      Key: key,
-      StorageClass: metadata.StorageClass,
-      ContentType: contentType,
-      ContentLength: conentLength,
-      ContentMD5: MD5IsModified.md5Hash(body),
-      Metadata: this.toAWSMetadata(metadata),
-      Body: body
+  public async saveObject(bucket: string, key: string, body: string, metadata: S3Metadata): Promise<S3Object> {
+    try {
+      const conentLength: number = Buffer.byteLength(body, 'utf8');
+      const contentType: string = metadata.ContentType ? '' + metadata.ContentType : 'application/json';
+      const params: PutObjectRequest = {
+        Bucket: bucket,
+        Key: key,
+        StorageClass: metadata.StorageClass,
+        ContentType: contentType,
+        ContentLength: conentLength,
+        ContentMD5: MD5IsModified.md5Hash(body),
+        Metadata: this.toAWSMetadata(metadata),
+        Body: body
+      };
+
+      if (this.configuration.serversideEncryption) params.ServerSideEncryption = 'AES256';
+
+      const response: PutObjectResponse = await this.s3.putObject(params).promise();
+      
+      if (!response) throw this.handleError(response, bucket, key);
+
+      const responseMetadata: S3Metadata = Object.assign(this.buildS3Metadata(response),this.toAWSMetadata(metadata));
+      
+      responseMetadata.ContentMD5 = response.ContentSHA256;
+      responseMetadata.StorageClass = response.StorageClass;
+      responseMetadata.ETag = JSON.parse(response.ETag || '');
+      responseMetadata.ContentMD5 = MD5IsModified.md5Hash(body);
+      responseMetadata.ContentLength = conentLength;
+
+      return new S3Object(body, responseMetadata);
+
+    } catch( error ) {
+      throw this.handleError(error, bucket, key);
     };
-
-    if (this.configuration.serversideencryption) params.ServerSideEncryption = 'AES256';
-
-    return this.s3.putObject(params)
-      .promise()
-      .then((response: PutObjectResponse) => {
-        if (response) {
-          const responseMetadata: S3Metadata = Object.assign(this.buildS3Metadata(response),this.toAWSMetadata(metadata));
-          responseMetadata.ContentMD5 = response.ContentSHA256;
-          responseMetadata.StorageClass = response.StorageClass;
-          responseMetadata.ETag = JSON.parse(response.ETag || '');
-          responseMetadata.ContentMD5 = MD5IsModified.md5Hash(body);
-          responseMetadata.ContentLength = conentLength;
-          return new S3Object(body, responseMetadata);
-        }
-        else throw this.handleError(response, bucket, key);
-      })
-      .catch((error: AWSError) => {
-        throw this.handleError(error, bucket, key);
-      });
   }
 
   /**
@@ -281,7 +298,7 @@ export class S3Client {
    * @param bucket Being interacted with when the error was thrown.
    * @param key of the object being interacted with when the error was thrown.
    */
-  private handleError(error: AWSError, bucket: string, key: string): S3DBError {
+  private handleError(error: AWSError, bucket: string, key?: string): S3DBError {
     switch (error.code) {
 
       case 'NoSuchBucket':
