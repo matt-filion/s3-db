@@ -64,15 +64,12 @@ export class User {
 }
 ```
 
-## CRUD Operationas
-
 So once you have your model decorated, you can create an instance of a `Collection` and begin creating/updating/deleting objects in a Bucket. Function on `Collection` is async/promisified so you can use either pattern.
 
 Async Example.
 
 ```
 const collection: Collection<User> = new Collection(User);
-
 function async doStuff(){
     const user: User = await collection.save({name:'Testing',age:21});
     const checkedUser: User = await collection.load(user.id);
@@ -89,8 +86,6 @@ const collection: Collection<User> = new Collection(User);
 collection.save({name:'Testing',age:21})
     .then( (user: User) => collection.load(user.id) )
     .then( (user: User) => collection.delete(user.id) );
-
-
 ```
 
 # Configuration
