@@ -1,8 +1,16 @@
 {
   "name": "s3-db",
-  "version": "3.0.0",
+  "version": "3.0.2",
   "description": "Document DB wrapper for AWS S3.",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "typescript": {
+    "definition": "Reflect.d.ts"
+  },
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
   "homepage": "https://www.npmjs.com/package/s3-db",
   "author": "Matt Filion <matt.filion@gmail.com>",
   "scripts": {

@@ -1,4 +1,5 @@
 import 'reflect-metadata';
+import { BasicObject } from '../db';
 
 const METADATA_KEY = Symbol('__s3db');
 
@@ -20,10 +21,6 @@ export function updateMetadata(toTarget: any, values: any): void {
  */
 export function getMetadata(target: any): BasicObject {
   return Reflect.getMetadata(METADATA_KEY, target.constructor ? target.constructor : target);
-}
-
-export interface BasicObject {
-  [key: string]: any;
 }
 
 /**

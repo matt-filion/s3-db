@@ -17,6 +17,9 @@ This library has been changed drastically from the 1.x.x version as this was wri
 - eTag verification on save, for collission detection.
 - Logging via @mu-ts/logger
 - Carry over 'copy'
+- Iterator pattern on ResourceList, or instead of.
+- Performance docs on Lambda @ 128mb, 512mb, 1024mb. 2024mb, 3036mb.
+- Bug: MD5 does not appear to be persisting or returning when doing .head() check on a document.
 
 # Usage
 

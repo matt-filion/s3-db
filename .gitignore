@@ -1,2 +1,6 @@
 node_modules/lodash/chain/wrapperValue.js
 node_modules/
+
+dist/
+
+*.tgz
