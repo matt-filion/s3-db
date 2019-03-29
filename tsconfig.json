@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "dist",
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "ES6",
+    "target": "es2017",
     "allowJs": false,
     "strict": true,
     "alwaysStrict": true,
@@ -13,7 +15,12 @@
     "removeComments": true,
     "preserveConstEnums": true,
     "types": [
-      "node"
+      "node",
+      "aws-sdk"
     ]
-  }
+  },
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
