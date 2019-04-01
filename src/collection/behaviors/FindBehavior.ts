@@ -27,6 +27,8 @@ export class FindBehavior<Of> extends CollectionBehavior<Of> {
       };
       const response: ListObjectsV2Output = await this.s3Client.s3.listObjectsV2(parameters).promise();
       const referenceList: ReferenceList = new ReferenceList(
+        this,
+        prefix,
         response.NextContinuationToken,
         response.IsTruncated,
         response.MaxKeys,
