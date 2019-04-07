@@ -2,7 +2,6 @@
  * Possible points of configuration for the entirety of S3DB.
  */
 export class S3DBConfiguration {
-
   /**
    * Root name, used to distinguish s3db buckets names from other bucket names.
    */
@@ -17,7 +16,7 @@ export class S3DBConfiguration {
    * Pattern used to create or look for the corresponding s3 bucket when
    * persisting an object.
    */
-  bucketPattern: string = process.env['S3DB_BUCKETPATTERN'] || '${stage}.${region}.${baseName}-${bucketName}';
+  bucketPattern: string = process.env['S3DB_BUCKETPATTERN'] || '{{stage}}.{{region}}.{{baseName}}-{{bucketName}}';
 
   /**
    * Region to look for buckets.
