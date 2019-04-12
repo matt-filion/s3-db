@@ -11,21 +11,22 @@ import { Logger } from '@mu-ts/logger';
  *
  * @param route for this function.
  */
-export function collection(name?: string | CollectionConfiguration): any {
-  const logger: Logger = S3DB.getRootLogger().child('collection');
-  return function(target: any) {
+export function collection(name?: string | CollectionConfiguration): Function {
+  const logger: Logger = S3DB.getRootLogger().child(`collection(${name})`);
+  return function<TFunction extends Function>(target: TFunction): TFunction | void {
     let metadata = name || target.name.toLowerCase();
+    const original: TFunction = target;
 
     if (typeof metadata === 'string') {
       logger.debug('collection metadata is a string, converting to an object.', { metadata });
       metadata = Object.assign(new CollectionConfiguration(), { name: metadata });
     }
 
-    updateMetadata(target, metadata);
+    updateMetadata(original, metadata);
 
     logger.debug('collection setting metadata to', { metadata });
 
-    return target;
+    return original;
   };
 }
 

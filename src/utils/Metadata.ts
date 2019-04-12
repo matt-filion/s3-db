@@ -4,23 +4,26 @@ import { BasicObject } from '../db';
 const METADATA_KEY = Symbol('__s3db');
 
 /**
- * 
+ *
  * @param target to attach metadata to.
  * @param values to attach or update.
  */
 export function updateMetadata(toTarget: any, values: any): void {
-  let target = toTarget.constructor ? toTarget.constructor : toTarget
+  let target = toTarget.constructor ? toTarget.constructor : toTarget;
+  let keyName: string = toTarget.name.toLowerCase();
   let metadata = Reflect.getMetadata(METADATA_KEY, target) || {};
-  metadata = Object.assign(metadata, values);
+  metadata = Object.assign(metadata, { [keyName]: values });
   Reflect.defineMetadata(METADATA_KEY, metadata, target);
 }
 
 /**
- * 
+ *
  * @param target instance to return the metadata from.
  */
 export function getMetadata(target: any): BasicObject {
-  return Reflect.getMetadata(METADATA_KEY, target.constructor ? target.constructor : target);
+  let keyName: string = target.name.toLowerCase();
+  let metadata = Reflect.getOwnMetadata(METADATA_KEY, target.constructor ? target.constructor : target);
+  return metadata[keyName];
 }
 
 /**
@@ -31,7 +34,7 @@ export function getValue(target: any, propertyName: string): any {
 }
 
 /**
- * 
+ *
  * @param target object containing the property.
  * @param propertyName to set the value on.
  * @param value to set.

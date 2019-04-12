@@ -75,6 +75,11 @@ export class S3Client {
       case 'NoSuchBucket':
         return new S3DBError(`${bucket} is not a valid bucket or is not visible/accssible.`);
 
+      case 'Forbidden':
+        return new S3DBError(
+          `The user or role does not have permission to access the bucket (${bucket}) or key (${key}) within the bucket.`
+        );
+
       case 'NoSuchKey':
         return new S3DBError(`not-found`);
 

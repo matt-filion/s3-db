@@ -32,17 +32,18 @@ export class Collection<Of> {
   private headBehavior: HeadBehavior<Of>;
 
   constructor(type: Of, idPrefix?: string) {
-    this.logger = S3DB.getRootLogger().child(`Collection(${type})`);
     this.type = type;
     this.idPrefix = idPrefix;
 
-    this.logger.info(`init() of ${this.type}`, { prefix: idPrefix });
-
     let metadata: any = getMetadata(type);
+    if (!metadata) throw TypeError(`The type provided was not properly decorated with @collection('a-name'). Type: ${type}`);
 
+    const name: string = metadata.name;
+
+    this.logger = S3DB.getRootLogger().child(`Collection(${name})`);
+    this.logger.info(`init() of ${this.type}`, { prefix: idPrefix });
     this.logger.trace('init() metadata', metadata);
 
-    const name: string = metadata.name || `${this.type}`;
     const configuration: CollectionConfiguration = metadata;
     const fullBucketName = S3DB.getCollectionFQN(name);
     const s3Client = new S3Client(this.logger);
@@ -79,26 +80,26 @@ export class Collection<Of> {
   }
 
   public async head(id: string): Promise<S3Metadata | undefined> {
-    return this.headBehavior.head(id);
+    return await this.headBehavior.head(id);
   }
 
   public async exists(id: string): Promise<boolean> {
-    return this.existsBehavior.exists(id);
+    return await this.existsBehavior.exists(id);
   }
 
   public async load(id: string): Promise<Of> {
-    return this.loadBehavior.load(id);
+    return await this.loadBehavior.load(id);
   }
 
   public async save(toSave: Of): Promise<Of> {
-    return this.saveBheavior.save(toSave);
+    return await this.saveBheavior.save(toSave);
   }
 
   public async delete(id: string): Promise<boolean> {
-    return this.deleteBehavior.delete(id);
+    return await this.deleteBehavior.delete(id);
   }
 
   public async find(prefix: string, pageSize?: number, continuationToken?: string): Promise<ReferenceList> {
-    return this.findBehavior.find(prefix, pageSize, continuationToken);
+    return await this.findBehavior.find(prefix, pageSize, continuationToken);
   }
 }
