@@ -31,7 +31,7 @@ export class S3DB {
    *
    * @param level to set the default log level for all logging instances.
    */
-  public setLogLevel(level: LogLevel): void {
+  public static setLogLevel(level: LogLevel): void {
     S3DB.logger.setLevel(level);
   }
 
