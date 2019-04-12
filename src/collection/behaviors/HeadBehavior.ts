@@ -12,15 +12,18 @@ export class HeadBehavior<Of> extends CollectionBehavior<Of> {
    *
    * @param id of the document to get the head from.
    */
-  public async head(id: string): Promise<S3Metadata> {
+  public async head(id: string): Promise<S3Metadata | undefined> {
     try {
       const parameters: HeadObjectRequest = {
         Bucket: this.fullBucketName,
         Key: this.adjustId(id),
       };
-      const response: HeadObjectOutput = await this.s3Client.s3.headObject(parameters).promise();
+      const response: HeadObjectOutput = await this.s3Client.s3
+        .headObject(parameters)
+        .promise();
       return this.s3Client.buildS3Metadata(response);
     } catch (error) {
+      if (error.code && error.code === 'NotFound') return undefined;
       throw this.s3Client.handleError(error, this.fullBucketName, id);
     }
   }

@@ -1,11 +1,11 @@
 {
   "name": "s3-db",
-  "version": "3.0.3",
+  "version": "3.1.0",
   "description": "Document DB wrapper for AWS S3.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "typescript": {
-    "definition": "Reflect.d.ts"
+    "definition": "dist/index.d.ts"
   },
   "files": [
     "dist/**/*",
@@ -24,7 +24,6 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "aws": "0.0.3-2",
     "@types/aws-sdk": "^2.7.0",
     "@types/node": "^11.11.6",
     "@types/uuid": "^3.4.4",
