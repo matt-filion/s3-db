@@ -12,7 +12,7 @@ export class ExistsBehavior<Of> extends HeadBehavior<Of> {
    * @param type of document to check existance of.
    */
   public async exists(id: string): Promise<boolean> {
-    const metadata: S3Metadata = await this.head(this.adjustId(id));
+    const metadata: S3Metadata | undefined = await this.head(id);
     return metadata ? true : false;
   }
 }

@@ -20,13 +20,6 @@ import { ReferenceList } from './ReferenceList';
  * a TypeScript collission issue when it interprets the 'two types'.
  */
 export class Collection<Of extends any> {
-  private type: Of;
-  private name: string;
-  private idPrefix?: string;
-  private fullBucketName: string;
-  private configuration: CollectionConfiguration;
-  private s3Client: S3Client;
-
   private saveBheavior: SaveBehavior<Of>;
   private existsBehavior: ExistsBehavior<Of>;
   private loadBehavior: LoadBehavior<Of>;
@@ -108,7 +101,7 @@ export class Collection<Of extends any> {
     return new Collection<Of>(this.type, `${this.idPrefix}${prefix}`);
   }
 
-  public async head(id: string): Promise<S3Metadata> {
+  public async head(id: string): Promise<S3Metadata | undefined> {
     return this.headBehavior.head(id);
   }
 
