@@ -53,12 +53,4 @@ export class S3DB {
   public static getRegion(): string {
     return S3DB.configuration.region || 'us-west-2';
   }
-
-  /**
-   *
-   * @param level to set logging to.
-   */
-  public static setLogLevel(level: LogLevel) {
-    S3DB.logger.setLevel(level);
-  }
 }
