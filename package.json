@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "3.1.2",
+  "version": "3.1.6",
   "description": "Document DB wrapper for AWS S3.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,17 +20,17 @@
     "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
   },
   "dependencies": {
-    "@mu-ts/logger": "^1.0.4",
+    "@mu-ts/logger": "^1.1.0",
     "reflect-metadata": "^0.1.13",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
-    "@types/node": "^11.11.6",
+    "@types/node": "^11.13.4",
     "@types/uuid": "^3.4.4",
-    "aws-sdk": "^2.426.0",
-    "tslint": "^5.14.0",
-    "typescript": "^3.3.3333"
+    "aws-sdk": "^2.437.0",
+    "tslint": "^5.15.0",
+    "typescript": "^3.4.3"
   },
   "maintainers": [
     {

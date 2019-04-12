@@ -18,13 +18,25 @@ export class HeadBehavior<Of> extends CollectionBehavior<Of> {
         Bucket: this.fullBucketName,
         Key: this.adjustId(id),
       };
-      const response: HeadObjectOutput = await this.s3Client.s3
-        .headObject(parameters)
-        .promise();
+
+      this.logger.debug(`head() check for ${id}`, parameters);
+      this.logger.startTimer('headObject');
+
+      const response: HeadObjectOutput = await this.s3Client.s3.headObject(parameters).promise();
+
+      this.logger.endTimer('headObject');
+      this.logger.resetTimer('headObject');
+      this.logger.debug(`head() response`, response);
+
       return this.s3Client.buildS3Metadata(response);
     } catch (error) {
-      if (error.code && error.code === 'NotFound') return undefined;
-      throw this.s3Client.handleError(error, this.fullBucketName, id);
+      if (error.code && error.code === 'NotFound') {
+        this.logger.debug('head() response from s3 was NotFound', error);
+        return undefined;
+      } else {
+        this.logger.error(`head() error response from s3 for ${id}`, error);
+        throw this.s3Client.handleError(error, this.fullBucketName, id);
+      }
     }
   }
 }

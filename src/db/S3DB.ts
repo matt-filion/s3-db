@@ -1,4 +1,5 @@
 import { S3DBConfiguration } from './Configuration';
+import { Logger, ConsoleLogger, LogLevel } from '@mu-ts/logger';
 
 /**
  * All configurations are referenced from here. It is the record of truth for
@@ -6,20 +7,32 @@ import { S3DBConfiguration } from './Configuration';
  */
 export class S3DB {
   private static configuration: S3DBConfiguration = new S3DBConfiguration();
-
+  private static logger: Logger = new ConsoleLogger('S3DB');
   private constructor() {}
 
   /**
    *
    * @param configuration to update he default values with.
    */
-  public static update(configuration: {
-    baseName?: string;
-    stage?: string;
-    bucketPattern?: string;
-    region?: string;
-  }): void {
+  public static update(configuration: { baseName?: string; stage?: string; bucketPattern?: string; region?: string }): void {
+    S3DB.logger.info('update() configuration with -->', configuration);
     Object.assign(S3DB.configuration, configuration);
+    S3DB.logger.info('update()ed configuration is-->', S3DB.configuration);
+  }
+
+  /**
+   * Returns the root logger, namespaced with 'S3DB'.
+   */
+  public static getRootLogger(): Logger {
+    return S3DB.logger;
+  }
+
+  /**
+   *
+   * @param level to set the default log level for all logging instances.
+   */
+  public static setLogLevel(level: LogLevel): void {
+    S3DB.logger.setLevel(level);
   }
 
   /**
