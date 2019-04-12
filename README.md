@@ -14,6 +14,7 @@ This library has been changed drastically from the 1.x.x version as this was wri
 
 ## Next?
 
+- TODO Add logging.
 - JavaScript Examples
 - eTag verification on save, for collission detection.
 - Logging via @mu-ts/logger
