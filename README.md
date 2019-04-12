@@ -39,7 +39,7 @@ S3DB.update({
     baseName: 'myapp',
     stage: 'quality',
     region: 'us-east-2',
-    bucketPattern: '${stage}-${region}-${baseName}-${bucketName}'
+    bucketPattern: '{{stage}}-{{region}}-{{baseName}}-{{bucketName}}'
 });
 ```
 
@@ -100,12 +100,12 @@ A complete list of all the configuration points and what values you can use.
 
 Configurations that are applied across all collections.
 
-| Name          | Default                                        | Description                                                                                                                                                                                                                                    |
-| ------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| baseName      | `s3db`                                         | Used in the bucketPattern and logging as a namespace.                                                                                                                                                                                          |
-| stage         | `dev`                                          | The logical environment. Used in the bucketPattern.                                                                                                                                                                                            |
-| region        | `us-west-2`                                    | Used in the AWS configuration to target a specific region. Also used in the bucketpattern.                                                                                                                                                     |
-| bucketPattern | `${stage}.${region}.${baseName}-${bucketName}` | The name that is used to lookup the bucket for a collection. Must use valid S3 bucket name characters. The replacement values for `${stage}`, `${region}`, `${baseName}` and `${bucketName}` are all case sensitive. You can omit any of them. |
+| Name          | Default                                            | Description                                                                                                                                                                                                                                        |
+| ------------- | -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| baseName      | `s3db`                                             | Used in the bucketPattern and logging as a namespace.                                                                                                                                                                                              |
+| stage         | `dev`                                              | The logical environment. Used in the bucketPattern.                                                                                                                                                                                                |
+| region        | `us-west-2`                                        | Used in the AWS configuration to target a specific region. Also used in the bucketpattern.                                                                                                                                                         |
+| bucketPattern | `{{stage}}-{{region}}-{{baseName}}-{{bucketName}}` | The name that is used to lookup the bucket for a collection. Must use valid S3 bucket name characters. The replacement values for `{{stage}}`, `{{region}}`, `{{baseName}}` and `{{bucketName}}` are all case sensitive. You can omit any of them. |
 
 ## Collection
 
