@@ -31,6 +31,7 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
      * If validation is configured, run it against the object.
      */
     const isValid = this.configuration.validator ? this.configuration.validator.validate(toSave) : true;
+    this.logger.debug(`save() isValid = ${isValid}`);
     if (!isValid) return Promise.reject(new S3DBError('Object did not pass validation.'));
 
     /*
@@ -43,7 +44,10 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
     const keyName = this.getKeyName(toSave);
     let keyValue = getValue(toSave, keyName);
 
+    this.logger.debug(`save() key (id)`, { keyName, keyValue });
+
     if (!keyValue) {
+      this.logger.debug(`save() generating key (id)`);
       keyValue = this.generateKey(toSave);
       keyValue = this.adjustId(keyValue);
       setValue(toSave, keyName, keyValue);
@@ -53,6 +57,7 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
        * with the prefix, add it.
        */
       if (this.idPrefix && !keyValue.startsWith(this, this.idPrefix)) {
+        this.logger.debug(`save() adding prefix to key, ${this.idPrefix}`);
         keyValue = this.adjustId(keyValue);
       }
       //TODO head lookup of metadata, make sure eTag matches.
@@ -63,10 +68,14 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
      * the object as is. There is nothing to do.
      */
     const body: string = this.configuration.serialization.serialize(toSave);
-    const isModified = this.configuration.checkIsModified
-      ? this.configuration.isModified.isModified(toSave, body)
-      : true;
-    if (!isModified) return Promise.resolve(toSave);
+
+    this.logger.debug(`save() serializing body to`, body);
+
+    const isModified = this.configuration.checkIsModified ? this.configuration.isModified.isModified(toSave, body) : true;
+    if (!isModified) {
+      this.logger.debug(`save() Object was not modified, so returning object as is.`);
+      return Promise.resolve(toSave);
+    }
 
     /*
      * Serialize the object using the configured serialization strategy.
@@ -79,6 +88,8 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
     const s3Object: S3Object = await this.putObject(keyValue, body, metadata);
 
     updateMetadata(toSave, s3Object.getMetadata());
+
+    this.logger.debug(`save() attach, or update, metadata on object.`, s3Object);
 
     return toSave;
   }
@@ -100,14 +111,18 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
 
       if (this.configuration.serversideEncryption) params.ServerSideEncryption = 'AES256';
 
+      this.logger.debug(`save() request to send to S3`, params);
+      this.logger.startTimer('putObject');
+
       const response: PutObjectOutput = await this.s3Client.s3.putObject(params).promise();
+
+      this.logger.endTimer('putObject');
+      this.logger.resetTimer('putObject');
+      this.logger.debug(`save() response from s3`, response);
 
       if (!response) throw this.s3Client.handleError(response, this.fullBucketName, id);
 
-      const responseMetadata: S3Metadata = Object.assign(
-        this.s3Client.buildS3Metadata(response),
-        this.s3Client.toAWSMetadata(metadata)
-      );
+      const responseMetadata: S3Metadata = Object.assign(this.s3Client.buildS3Metadata(response), this.s3Client.toAWSMetadata(metadata));
 
       responseMetadata.StorageClass = params.StorageClass;
       responseMetadata.ETag = JSON.parse(response.ETag || '');

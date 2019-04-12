@@ -18,7 +18,15 @@ export class LoadBehavior<Of> extends CollectionBehavior<Of> {
         Bucket: this.fullBucketName,
         Key: this.adjustId(id),
       };
+
+      this.logger.debug(`load() for ${id} -->`, parameters);
+      this.logger.startTimer('load');
+
       const response: GetObjectOutput = await this.s3Client.s3.getObject(parameters).promise();
+
+      this.logger.endTimer('load');
+      this.logger.resetTimer('load');
+      this.logger.debug(`load() response from s3 for ${id} -->`, response);
 
       if (!response.Body) throw new S3DBError('not-found');
 
@@ -26,6 +34,7 @@ export class LoadBehavior<Of> extends CollectionBehavior<Of> {
 
       return this.configuration.serialization.deserialize<Of>(s3Object.getBody());
     } catch (error) {
+      this.logger.error('load() error loading ${id}', error);
       throw this.s3Client.handleError(error, this.fullBucketName, id);
     }
   }

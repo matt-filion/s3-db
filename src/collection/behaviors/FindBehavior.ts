@@ -25,7 +25,15 @@ export class FindBehavior<Of> extends CollectionBehavior<Of> {
         FetchOwner: false,
         ContinuationToken: continuationToken,
       };
+
+      this.logger.debug(`find() with prefix ${prefix} -->`, parameters);
+      this.logger.startTimer('listObjects');
+
       const response: ListObjectsV2Output = await this.s3Client.s3.listObjectsV2(parameters).promise();
+
+      this.logger.endTimer('listObjects');
+      this.logger.debug(`find() response from s3`, response);
+
       const referenceList: ReferenceList = new ReferenceList(
         this,
         prefix,
@@ -35,14 +43,20 @@ export class FindBehavior<Of> extends CollectionBehavior<Of> {
         response.KeyCount
       );
 
-      if (response.Contents)
+      if (response.Contents) {
         response.Contents.forEach((object: Object) => {
           const s3Metadata: S3Metadata = <S3Metadata>object;
           referenceList.addReference(s3Metadata);
         });
+      }
+
+      this.logger.debug(`find() referenceList`, referenceList);
+      this.logger.endTimer('listObjects');
+      this.logger.resetTimer('listObjects');
 
       return referenceList;
     } catch (error) {
+      this.logger.error(`find() error for prefix ${prefix}`, error);
       throw this.s3Client.handleError(error, this.fullBucketName);
     }
   }

@@ -33,26 +33,26 @@ export class ReferenceList {
 
     while (hasMoreNow) {
       /* Return each value in the references */
-      if (this.references) this.references.forEach((s3Metadata: S3Metadata) => yield s3Metadata);
-      else return;
+      if (this.references) {
+        for (let s3Metadata of this.references) {
+          yield s3Metadata;
+        }
+        // this.references.forEach((s3Metadata: S3Metadata) => yield s3Metadata);
+        // else return;
+      }
 
       /*
        * If there are more in the bucket to return, then refresh the reference list using
        * The continuation token.
        */
       if (this.hasMore) {
-        const referenceList: ReferenceList = await this.findBehavior.find(
-          this.prefix,
-          this.pageSize,
-          this.continuationToken
-        );
+        const referenceList: ReferenceList = await this.findBehavior.find(this.prefix, this.pageSize, this.continuationToken);
         this.hasMore = referenceList.hasMore;
         this.continuationToken = referenceList.continuationToken;
       } else {
         hasMoreNow = false;
       }
     }
-    return;
   }
   public getConinuationToken(): string | undefined {
     return this.continuationToken;

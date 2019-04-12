@@ -3,6 +3,7 @@ import { IDGenerator } from '../exposed/IDGenerator';
 import { CollectionConfiguration } from './Configuration';
 import { S3Client } from '../s3';
 import { BasicObject } from '../db';
+import { Logger } from '@mu-ts/logger';
 
 export abstract class CollectionBehavior<Of> {
   protected type: Of;
@@ -10,6 +11,7 @@ export abstract class CollectionBehavior<Of> {
   protected fullBucketName: string;
   protected name: string;
   protected s3Client: S3Client;
+  protected logger: Logger;
   protected idPrefix?: string;
 
   constructor(
@@ -18,6 +20,7 @@ export abstract class CollectionBehavior<Of> {
     s3Client: S3Client,
     fullBucketName: string,
     name: string,
+    parentLogger: Logger,
     idPrefix?: string
   ) {
     this.type = type;
@@ -26,6 +29,7 @@ export abstract class CollectionBehavior<Of> {
     this.s3Client = s3Client;
     this.name = name;
     this.idPrefix = idPrefix;
+    this.logger = parentLogger.child(this.toString());
   }
 
   /**
