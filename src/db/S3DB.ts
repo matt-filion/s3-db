@@ -29,6 +29,14 @@ export class S3DB {
 
   /**
    *
+   * @param level to set the default log level for all logging instances.
+   */
+  public setLogLevel(level: LogLevel): void {
+    S3DB.logger.setLevel(level);
+  }
+
+  /**
+   *
    * @param name Of the collection to generate the FQN (Bucket name) for.
    */
   public static getCollectionFQN(name: string): string {
