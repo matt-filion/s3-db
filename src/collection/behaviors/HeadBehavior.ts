@@ -16,7 +16,7 @@ export class HeadBehavior<Of> extends CollectionBehavior<Of> {
     try {
       const parameters: HeadObjectRequest = {
         Bucket: this.fullBucketName,
-        Key: id,
+        Key: this.adjustId(id),
       };
       const response: HeadObjectOutput = await this.s3Client.s3
         .headObject(parameters)

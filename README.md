@@ -6,13 +6,14 @@
 
 This library has been changed drastically from the 1.x.x version as this was written to be TypeScript first. Also:
 
-- It makes use of async/await patterns. 
-- TypeScript decorators signficantly improved/reduced configuration. 
+- It makes use of async/await patterns.
+- TypeScript decorators signficantly improved/reduced configuration.
 - Model classes are no longer decorated with convenience functions (just metadata.)
 - A new collection instance is no longer async/promisified.
 - No need to create a 'Database' object.
 
 ## Next?
+
 - JavaScript Examples
 - eTag verification on save, for collission detection.
 - Logging via @mu-ts/logger
@@ -46,7 +47,7 @@ Note: Below in the configuration section each of these values is explained in de
 
 ## Decorate Model/Types
 
-Create your model class and decorate it with `@collection()` and `@id()` appropriately. So that when an instance of that class type is passed into the appropriate `Collection` instance, it will know how it should be configured. 
+Create your model class and decorate it with `@collection()` and `@id()` appropriately. So that when an instance of that class type is passed into the appropriate `Collection` instance, it will know how it should be configured.
 
 If you do not specify an argument for `@collection()` then the class type will be lower cased, and used as the name and all collection configuration defaults used.
 
@@ -99,26 +100,26 @@ A complete list of all the configuration points and what values you can use.
 
 Configurations that are applied across all collections.
 
-| Name | Default | Description  |
-| ---- | ------ | ------------ |
-| baseName | `s3db` | Used in the bucketPattern and logging as a namespace. |
-| stage | `dev` | The logical environment. Used in the bucketPattern. |
-| region | `us-west-2` | Used in the AWS configuration to target a specific region. Also used in the bucketpattern. |
+| Name          | Default                                        | Description                                                                                                                                                                                                                                    |
+| ------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| baseName      | `s3db`                                         | Used in the bucketPattern and logging as a namespace.                                                                                                                                                                                          |
+| stage         | `dev`                                          | The logical environment. Used in the bucketPattern.                                                                                                                                                                                            |
+| region        | `us-west-2`                                    | Used in the AWS configuration to target a specific region. Also used in the bucketpattern.                                                                                                                                                     |
 | bucketPattern | `${stage}.${region}.${baseName}-${bucketName}` | The name that is used to lookup the bucket for a collection. Must use valid S3 bucket name characters. The replacement values for `${stage}`, `${region}`, `${baseName}` and `${bucketName}` are all case sensitive. You can omit any of them. |
 
 ## Collection
 
 Configurations specific to a collection.
 
-| Name | Default | Description  |
-| ---- | ------ | ------------ |
-| pageSize | `100` | Maximum of 1000. How many documents to return when doing a `.find()` operation. |
-| serversideEncryption | `true` | If S3 server side encryption is enabled (encryption at rest.) |
-| checkIsMOdified | `true` | If enabled, `save()` operations will check if the object provided has been modified before being saved. If it is not modified it returns without attempting to save to S3. |
-| isModified | `MD5IsModified` | A function that is used to check if an object is modified. If you override it, implement the `IsModified` interface. |
-| serialization | `JSONSerialization` | How objects are serialized to a string before they are perstisted to S3. |
-| defaultIdGenerator | `defaultIDGenerator` | Default generation is UUID v4. This is called when no generator is provided on the `@id()` annotation. |
-| validator | `undefined` | A function that can be used to check if the object being saved is valid. |
+| Name                 | Default              | Description                                                                                                                                                                |
+| -------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pageSize             | `100`                | Maximum of 1000. How many documents to return when doing a `.find()` operation.                                                                                            |
+| serversideEncryption | `true`               | If S3 server side encryption is enabled (encryption at rest.)                                                                                                              |
+| checkIsMOdified      | `true`               | If enabled, `save()` operations will check if the object provided has been modified before being saved. If it is not modified it returns without attempting to save to S3. |
+| isModified           | `MD5IsModified`      | A function that is used to check if an object is modified. If you override it, implement the `IsModified` interface.                                                       |
+| serialization        | `JSONSerialization`  | How objects are serialized to a string before they are perstisted to S3.                                                                                                   |
+| defaultIdGenerator   | `defaultIDGenerator` | Default generation is UUID v4. This is called when no generator is provided on the `@id()` annotation.                                                                     |
+| validator            | `undefined`          | A function that can be used to check if the object being saved is valid.                                                                                                   |
 
 # API's
 
@@ -128,7 +129,7 @@ The available objects, decorators and functions.
 
 ### @collection(string? | CollectionConfiguration?)
 
-Annotation indicates that a specific class corresponds to an S3 Bucket. 
+Annotation indicates that a specific class corresponds to an S3 Bucket.
 
 ### @id(generator?)
 
@@ -170,4 +171,8 @@ Removes an object from an S3 bucket for the corresponding id.
 
 ### find(prefix, pageSize, continuationToken): Promise<ReferenceList>
 
-Returns a list of `S3Metadata` objects for all objects in the corresponding S3 bucket htat start with the prefix value provided. If continuationToken is passed in then the list  will be a 'continuation' of a previous find operation.
+Returns a list of `S3Metadata` objects for all objects in the corresponding S3 bucket htat start with the prefix value provided. If continuationToken is passed in then the list will be a 'continuation' of a previous find operation.
+
+### subCollection(prefix): Collection<SomeClass>
+
+Creates a new collection where all operations will execute with the prefix in front of the id's used. So if the prefix is `/users/` then when `.load('1234')` is called the request will result in an ID lookup for `/users/1234`. Similarly, all objects saved will have the prefix applied when the ID is generated by the save operation, or, when an ID is provided and it does not `startWith()` the configured prefix.
