@@ -1,5 +1,5 @@
 import { CollectionConfiguration } from './';
-import { IDGenerator } from '../exposed';
+import { IDGenerator, Serialization, IsModified, Validation } from '../exposed';
 import { updateMetadata } from '../utils/Metadata';
 import { defaultIDGenerator } from '../defaults';
 import { S3DB } from '../db';
@@ -11,7 +11,21 @@ import { Logger } from '@mu-ts/logger';
  *
  * @param route for this function.
  */
-export function collection(name?: string | CollectionConfiguration): Function {
+export function collection(
+  name?:
+    | string
+    | {
+        name?: string;
+        keyName?: string;
+        checkIsModified?: boolean;
+        serversideEncryption?: boolean;
+        idGenerator?: IDGenerator;
+        serialization?: Serialization;
+        isModified?: IsModified;
+        validator?: Validation;
+        pageSize?: number;
+      }
+): Function {
   const logger: Logger = S3DB.getRootLogger().child(`collection(${name})`);
   return function<TFunction extends Function>(target: TFunction): TFunction | void {
     let metadata = name || target.name.toLowerCase();
@@ -21,6 +35,8 @@ export function collection(name?: string | CollectionConfiguration): Function {
       logger.debug('collection metadata is a string, converting to an object.', { metadata });
       metadata = Object.assign(new CollectionConfiguration(), { name: metadata });
     }
+
+    if (!metadata.name) metadata.name = target.name.toLowerCase();
 
     updateMetadata(original, metadata);
 

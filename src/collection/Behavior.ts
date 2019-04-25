@@ -37,9 +37,11 @@ export abstract class CollectionBehavior<Of> {
    *
    * @param toSave object to find the generator on.
    */
-  protected generateKey(toSave: Of): IDGenerator {
-    let metadata: BasicObject = getMetadata(toSave.constructor);
-    return metadata.generator(toSave);
+  protected generateKey(toSave: Of): string {
+    const metadata: BasicObject = getMetadata(toSave.constructor);
+    let idGenerator: IDGenerator = metadata.generator;
+    if (!idGenerator) idGenerator = this.configuration.idGenerator;
+    return idGenerator(toSave);
   }
 
   /**
