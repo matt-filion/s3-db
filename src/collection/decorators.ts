@@ -4,6 +4,7 @@ import { updateMetadata } from '../utils/Metadata';
 import { defaultIDGenerator } from '../defaults';
 import { S3DB } from '../db';
 import { Logger } from '@mu-ts/logger';
+import { Collection } from './Collection';
 
 /**
  * @collection('name') will map a specific entity to a bucket (for the appropriate
@@ -34,6 +35,8 @@ export function collection(
     if (typeof metadata === 'string') {
       logger.debug('collection metadata is a string, converting to an object.', { metadata });
       metadata = Object.assign(new CollectionConfiguration(), { name: metadata });
+    } else {
+      metadata = Object.assign(new CollectionConfiguration(), metadata);
     }
 
     if (!metadata.name) metadata.name = target.name.toLowerCase();
