@@ -61,6 +61,8 @@ export abstract class CollectionBehavior<Of> {
    */
   protected getKeyName(toSave: Of): string {
     let metadata: BasicObject = getMetadata(toSave.constructor);
-    return metadata.keyName || 'id';
+    let defaultKeyName: string = this.configuration.keyName || 'id';
+    if (!metadata) return defaultKeyName;
+    return metadata ? metadata.keyName || defaultKeyName : defaultKeyName;
   }
 }
