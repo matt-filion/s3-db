@@ -21,7 +21,8 @@ export function updateMetadata(toTarget: any, values: any): void {
  * @param target instance to return the metadata from.
  */
 export function getMetadata(target: any): BasicObject | undefined {
-  let keyName: string = target.name.toLowerCase();
+  let name: string = target.constructor ? target.constructor.name : target.name;
+  let keyName: string = name.toLowerCase();
   let metadata = Reflect.getOwnMetadata(METADATA_KEY, target.constructor ? target.constructor : target);
   return metadata ? metadata[keyName] : undefined;
 }
