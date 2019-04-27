@@ -41,7 +41,7 @@ export class Collection<Of> {
     const name: string = metadata.name;
 
     this.logger = S3DB.getRootLogger().child(`Collection(${name})`);
-    this.logger.info(`init() of ${this.type}`, { prefix: idPrefix });
+    this.logger.trace('init()', { prefix: idPrefix });
     this.logger.trace('init() metadata', metadata);
 
     const configuration: CollectionConfiguration = metadata;
