@@ -35,8 +35,8 @@ export class Collection<Of> {
     this.type = type;
     this.idPrefix = idPrefix;
 
-    let metadata: any = getMetadata(type);
-    if (!metadata) throw TypeError(`The type provided was not properly decorated with @collection('a-name'). Type: ${type}`);
+    let metadata: any = getMetadata(type, this.type.constructor.name.toLowerCase());
+    if (!metadata) throw Error(`The type provided was not properly decorated with @collection('a-name'). Type: ${type}`);
 
     const name: string = metadata.name;
 

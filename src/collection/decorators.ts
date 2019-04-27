@@ -4,7 +4,9 @@ import { updateMetadata } from '../utils/Metadata';
 import { defaultIDGenerator } from '../defaults';
 import { S3DB } from '../db';
 import { Logger } from '@mu-ts/logger';
-import { Collection } from './Collection';
+
+const exportLogger: Logger = S3DB.getRootLogger().child(`collection`);
+const idLogger: Logger = S3DB.getRootLogger().child('id');
 
 /**
  * @collection('name') will map a specific entity to a bucket (for the appropriate
@@ -27,13 +29,11 @@ export function collection(
         pageSize?: number;
       }
 ): Function {
-  const logger: Logger = S3DB.getRootLogger().child(`collection(${name})`);
   return function<TFunction extends Function>(target: TFunction): TFunction | void {
-    let metadata = name || target.name.toLowerCase();
-    const original: TFunction = target;
+    let metadata: string | any = name;
 
     if (typeof metadata === 'string') {
-      logger.debug('collection metadata is a string, converting to an object.', { metadata });
+      exportLogger.debug('collection metadata is a string, converting to an object.', { metadata });
       metadata = Object.assign(new CollectionConfiguration(), { name: metadata });
     } else {
       metadata = Object.assign(new CollectionConfiguration(), metadata);
@@ -41,11 +41,11 @@ export function collection(
 
     if (!metadata.name) metadata.name = target.name.toLowerCase();
 
-    updateMetadata(original, metadata);
+    updateMetadata(target, metadata);
 
-    logger.debug('collection setting metadata to', { metadata });
+    exportLogger.debug('collection setting metadata to', { metadata });
 
-    return original;
+    return target;
   };
 }
 
@@ -57,13 +57,12 @@ export function collection(
  * @param generator for the ID if nothing is provided.
  */
 export function id(generator: IDGenerator = defaultIDGenerator): any {
-  const logger: Logger = S3DB.getRootLogger().child('id');
   return function(target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
     updateMetadata(target.constructor, {
       keyName: propertyKey,
       generator: generator,
     });
-    logger.debug('id decorator', { keyName: propertyKey, generator });
+    idLogger.debug('id decorator', { keyName: propertyKey, generator });
     return descriptor;
   };
 }
