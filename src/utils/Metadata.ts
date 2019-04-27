@@ -20,10 +20,10 @@ export function updateMetadata(toTarget: any, values: any): void {
  *
  * @param target instance to return the metadata from.
  */
-export function getMetadata(target: any, _name?: string): BasicObject | undefined {
-  let name: string = (target.constructor ? target.constructor.name : target.name) || _name;
-  let keyName: string = name.toLowerCase();
-  let metadata = Reflect.getOwnMetadata(METADATA_KEY, target.constructor ? target.constructor : target);
+export function getMetadata(toTarget: any): BasicObject | undefined {
+  let target = toTarget.constructor || toTarget;
+  let keyName: string = target.name.toLowerCase();
+  let metadata = Reflect.getOwnMetadata(METADATA_KEY, target);
   return metadata ? metadata[keyName] : undefined;
 }
 
