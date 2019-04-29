@@ -82,7 +82,8 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
      */
 
     const metadata: S3Metadata = {
-      collection: `${this.name}`,
+      type: `${this.configuration.name}`,
+      collection: `${this.fullBucketName}`,
     };
 
     const s3Object: S3Object = await this.putObject(keyValue, body, metadata);

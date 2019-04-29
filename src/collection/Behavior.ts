@@ -6,28 +6,16 @@ import { BasicObject } from '../db';
 import { Logger } from '@mu-ts/logger';
 
 export abstract class CollectionBehavior<Of> {
-  protected type: Of;
   protected configuration: CollectionConfiguration;
   protected fullBucketName: string;
-  protected name: string;
   protected s3Client: S3Client;
   protected logger: Logger;
   protected idPrefix?: string;
 
-  constructor(
-    type: Of,
-    configuration: CollectionConfiguration,
-    s3Client: S3Client,
-    fullBucketName: string,
-    name: string,
-    parentLogger: Logger,
-    idPrefix?: string
-  ) {
-    this.type = type;
+  constructor(configuration: CollectionConfiguration, s3Client: S3Client, fullBucketName: string, parentLogger: Logger, idPrefix?: string) {
     this.configuration = configuration;
     this.fullBucketName = fullBucketName;
     this.s3Client = s3Client;
-    this.name = name;
     this.idPrefix = idPrefix;
     this.logger = parentLogger.child(this.toString());
   }

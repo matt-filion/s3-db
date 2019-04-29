@@ -1,4 +1,3 @@
-import { getMetadata } from '../utils/Metadata';
 import { S3Client, S3Metadata } from '../s3';
 import { S3DB } from '../db';
 import { SaveBehavior } from './behaviors/SaveBehavior';
@@ -8,8 +7,9 @@ import { LoadBehavior } from './behaviors/LoadBehavior';
 import { DeleteBehavior } from './behaviors/DeleteBehavior';
 import { FindBehavior } from './behaviors/FindBehavior';
 import { ReferenceList } from './ReferenceList';
-import { CollectionConfiguration } from './Configuration';
+import { CollectionConfiguration, CollectionConfigurationOptions } from './Configuration';
 import { LogLevel, Logger } from '@mu-ts/logger';
+import { CollectionRegistry } from './CollectionRegistry';
 
 /**
  * Provides the logical interfaces of a collection and translates it into the
@@ -22,7 +22,7 @@ import { LogLevel, Logger } from '@mu-ts/logger';
  */
 export class Collection<Of> {
   private logger: Logger;
-  private type: Of;
+  private configuration: CollectionConfiguration;
   private idPrefix: string | undefined;
   private saveBheavior: SaveBehavior<Of>;
   private existsBehavior: ExistsBehavior<Of>;
@@ -31,29 +31,32 @@ export class Collection<Of> {
   private findBehavior: FindBehavior<Of>;
   private headBehavior: HeadBehavior<Of>;
 
-  constructor(type: Of, idPrefix?: string) {
-    this.type = type;
-    this.idPrefix = idPrefix;
+  constructor(type: string | CollectionConfiguration | CollectionConfigurationOptions, idPrefix?: string) {
+    if (type instanceof CollectionConfiguration) {
+      this.configuration = type;
+    } else if (type instanceof CollectionConfigurationOptions) {
+      this.configuration = Object.assign(new CollectionConfiguration(), { name: type }, type);
+    } else {
+      const resolvedConfiguration: CollectionConfiguration | undefined = CollectionRegistry.instance().resolve(`${type}`);
+      if (!resolvedConfiguration) throw Error(`The type provided was not properly decorated with @collection('a-name'). Type: ${type}`);
+      this.configuration = resolvedConfiguration;
+    }
 
-    let metadata: any = getMetadata(type);
-    if (!metadata) throw Error(`The type provided was not properly decorated with @collection('a-name'). Type: ${type}`);
-
-    const name: string = metadata.name;
-
-    this.logger = S3DB.getRootLogger().child(`Collection(${name})`);
+    if (!this.configuration.name) throw Error(`The configuration has no name defined, which is used to determine the bucket name.`);
+    this.logger = S3DB.getRootLogger().child(`Collection(${this.configuration.name})`);
     this.logger.trace('init()', { prefix: idPrefix });
-    this.logger.trace('init() metadata', metadata);
+    this.idPrefix = idPrefix;
+    this.logger.trace('init() configuration', this.configuration);
 
-    const configuration: CollectionConfiguration = metadata;
-    const fullBucketName = S3DB.getCollectionFQN(name);
+    const fullBucketName = S3DB.getCollectionFQN(this.configuration.name);
     const s3Client = new S3Client(this.logger);
 
-    this.headBehavior = new HeadBehavior(type, configuration, s3Client, fullBucketName, name, this.logger, this.idPrefix);
-    this.existsBehavior = new ExistsBehavior(type, configuration, s3Client, fullBucketName, name, this.logger, this.idPrefix);
-    this.loadBehavior = new LoadBehavior(type, configuration, s3Client, fullBucketName, name, this.logger, this.idPrefix);
-    this.saveBheavior = new SaveBehavior(type, configuration, s3Client, fullBucketName, name, this.logger, this.idPrefix);
-    this.deleteBehavior = new DeleteBehavior(type, configuration, s3Client, fullBucketName, name, this.logger, this.idPrefix);
-    this.findBehavior = new FindBehavior(type, configuration, s3Client, fullBucketName, name, this.logger, this.idPrefix);
+    this.headBehavior = new HeadBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
+    this.existsBehavior = new ExistsBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
+    this.loadBehavior = new LoadBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
+    this.saveBheavior = new SaveBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
+    this.deleteBehavior = new DeleteBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
+    this.findBehavior = new FindBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
   }
 
   /**

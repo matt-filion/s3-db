@@ -1,6 +1,18 @@
 import { MD5IsModified, JSONSerialization, defaultIDGenerator } from '../defaults';
 import { Validation, Serialization, IsModified, IDGenerator } from '../exposed';
 
+export class CollectionConfigurationOptions {
+  name?: string;
+  keyName?: string;
+  checkIsModified?: boolean;
+  serversideEncryption?: boolean;
+  idGenerator?: IDGenerator;
+  serialization?: Serialization;
+  isModified?: IsModified;
+  validator?: Validation;
+  pageSize?: number;
+}
+
 export class CollectionConfiguration {
   /**
    * The name of the collection.
