@@ -60,7 +60,6 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
         this.logger.debug(`save() adding prefix to key, ${this.idPrefix}`);
         keyValue = this.adjustId(keyValue);
       }
-      //TODO head lookup of metadata, make sure eTag matches.
     }
 
     /*

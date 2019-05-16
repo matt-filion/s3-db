@@ -10,6 +10,8 @@ import { ReferenceList } from './ReferenceList';
 import { CollectionConfiguration, CollectionConfigurationOptions } from './Configuration';
 import { LogLevel, Logger } from '@mu-ts/logger';
 import { CollectionRegistry } from './CollectionRegistry';
+import { AnyARecord } from 'dns';
+import { collection } from './decorators';
 
 /**
  * Provides the logical interfaces of a collection and translates it into the
@@ -31,18 +33,16 @@ export class Collection<Of> {
   private findBehavior: FindBehavior<Of>;
   private headBehavior: HeadBehavior<Of>;
 
-  constructor(type: string | CollectionConfiguration | CollectionConfigurationOptions, idPrefix?: string) {
-    if (type instanceof CollectionConfiguration) {
-      this.configuration = type;
-    } else if (type instanceof CollectionConfigurationOptions) {
-      this.configuration = Object.assign(new CollectionConfiguration(), { name: type }, type);
-    } else {
-      const resolvedConfiguration: CollectionConfiguration | undefined = CollectionRegistry.instance().resolve(`${type}`);
-      if (!resolvedConfiguration) throw Error(`The type provided was not properly decorated with @collection('a-name'). Type: ${type}`);
-      this.configuration = resolvedConfiguration;
-    }
+  constructor(type: string | Of, idPrefix?: string) {
+    const name = typeof type === 'string' ? type : `${(<any>type)['name'].toLowerCase()}`;
+
+    if (!name || name === '') throw Error('No type was provided.');
+
+    const resolvedConfiguration: CollectionConfiguration | undefined = CollectionRegistry.instance().resolve(`${name.toLowerCase()}`);
+    this.configuration = Object.assign(new CollectionConfiguration(), resolvedConfiguration, type);
 
     if (!this.configuration.name) throw Error(`The configuration has no name defined, which is used to determine the bucket name.`);
+
     this.logger = S3DB.getRootLogger().child(`Collection(${this.configuration.name})`);
     this.logger.trace('init()', { prefix: idPrefix });
     this.idPrefix = idPrefix;

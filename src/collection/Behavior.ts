@@ -26,10 +26,7 @@ export abstract class CollectionBehavior<Of> {
    * @param toSave object to find the generator on.
    */
   protected generateKey(toSave: Of): string {
-    const metadata: BasicObject | undefined = getMetadata(toSave.constructor);
-    let idGenerator: IDGenerator = metadata ? metadata.generator : undefined;
-    if (!idGenerator) idGenerator = this.configuration.idGenerator;
-    return idGenerator(toSave);
+    return this.configuration.idGenerator(toSave);
   }
 
   /**
@@ -50,9 +47,6 @@ export abstract class CollectionBehavior<Of> {
    * @param toSave object to generate a key for.
    */
   protected getKeyName(toSave: Of): string {
-    let metadata: BasicObject | undefined = getMetadata(toSave.constructor);
-    let defaultKeyName: string = this.configuration.keyName || 'id';
-    if (!metadata) return defaultKeyName;
-    return metadata ? metadata.keyName || defaultKeyName : defaultKeyName;
+    return this.configuration.keyName || 'id';
   }
 }

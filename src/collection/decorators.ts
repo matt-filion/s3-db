@@ -18,7 +18,9 @@ const idLogger: Logger = S3DB.getRootLogger().child('id');
  */
 export function collection(configuration?: CollectionConfigurationOptions): Function {
   return function<TFunction extends Function>(target: TFunction): TFunction | void {
-    let metadata = Object.assign(new CollectionConfiguration(), configuration || {});
+    const metadata = Object.assign(new CollectionConfiguration(), configuration || {});
+
+    exportLogger.debug('collection configuration', { configuration });
 
     if (!metadata.name) metadata.name = target.name.toLowerCase();
 
@@ -40,7 +42,6 @@ export function collection(configuration?: CollectionConfigurationOptions): Func
 export function id(generator: IDGenerator = defaultIDGenerator): any {
   return function(target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
     const name: string = target.constructor.name.toLowerCase();
-
     const collectionConfiguration: CollectionConfiguration | undefined = collectionRegistry.resolve(name);
 
     if (collectionConfiguration) {

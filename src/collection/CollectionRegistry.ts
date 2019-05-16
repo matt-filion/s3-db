@@ -1,6 +1,5 @@
 import { CollectionConfiguration, CollectionConfigurationOptions } from './Configuration';
 import { Logger, ConsoleLogger } from '@mu-ts/logger';
-import { ConfigurationOptions } from 'aws-sdk/lib/config';
 
 export class CollectionRegistry {
   private static _instance: CollectionRegistry;
