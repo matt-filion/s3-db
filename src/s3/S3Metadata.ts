@@ -1,17 +1,16 @@
-
 /**
  * S3 object metadata to be attached to each object.
  */
 export class S3Metadata {
-  collection?: string;
-  VersionId?: string;
-  StorageClass?: string;
-  ContentMD5?: string;
-  ContentType?: string;
-  ServerSideEncryption?: string;
-  ContentLength?: number;
-  LastModified?: Date;
-  ETag?: string;
-  Key?: string;
-  [key: string]: number | string | Date | undefined;
+  public collection?: string
+  public VersionId?: string
+  public StorageClass?: string
+  public ContentMD5?: string
+  public ContentType?: string
+  public ServerSideEncryption?: string
+  public ContentLength?: number
+  public LastModified?: Date
+  public ETag?: string
+  public Key?: string
+  [key: string]: number | string | Date | undefined
 }

@@ -1,7 +1,7 @@
-import { CollectionBehavior } from '../Behavior';
-import { ReferenceList } from '../';
-import { ListObjectsV2Request, ListObjectsV2Output } from 'aws-sdk/clients/s3';
-import { S3Metadata } from '../../s3';
+import { CollectionBehavior } from '../Behavior'
+import { ListObjectsV2Request, ListObjectsV2Output } from 'aws-sdk/clients/s3'
+import { S3Metadata } from '../../s3'
+import { ReferenceList } from '../ReferenceList'
 
 export class FindBehavior<Of> extends CollectionBehavior<Of> {
   /**
@@ -24,15 +24,13 @@ export class FindBehavior<Of> extends CollectionBehavior<Of> {
         MaxKeys: pageSize || 100,
         FetchOwner: false,
         ContinuationToken: continuationToken,
-      };
+      }
 
-      this.logger.debug(`find() with prefix ${prefix} -->`, parameters);
-      this.logger.startTimer('listObjects');
+      this.logger.debug({ data: { parameters } }, `find() with prefix ${prefix} -->`)
 
-      const response: ListObjectsV2Output = await this.s3Client.s3.listObjectsV2(parameters).promise();
+      const response: ListObjectsV2Output = await this.s3Client.s3.listObjectsV2(parameters).promise()
 
-      this.logger.endTimer('listObjects');
-      this.logger.debug(`find() response from s3`, response);
+      this.logger.debug({ data: { response } }, `find() response from s3`)
 
       const referenceList: ReferenceList = new ReferenceList(
         this,
@@ -41,23 +39,21 @@ export class FindBehavior<Of> extends CollectionBehavior<Of> {
         response.IsTruncated,
         response.MaxKeys,
         response.KeyCount
-      );
+      )
 
       if (response.Contents) {
-        response.Contents.forEach((object: Object) => {
-          const s3Metadata: S3Metadata = <S3Metadata>object;
-          referenceList.addReference(s3Metadata);
-        });
+        response.Contents.forEach((object: object) => {
+          const s3Metadata: S3Metadata = object as S3Metadata
+          referenceList.addReference(s3Metadata)
+        })
       }
 
-      this.logger.debug(`find() referenceList`, referenceList);
-      this.logger.endTimer('listObjects');
-      this.logger.resetTimer('listObjects');
+      this.logger.debug({ data: { referenceList } }, `find() referenceList`)
 
-      return referenceList;
+      return referenceList
     } catch (error) {
-      this.logger.error(`find() error for prefix ${prefix}`, error);
-      throw this.s3Client.handleError(error, this.fullBucketName);
+      this.logger.error(error, `find() error for prefix ${prefix}`)
+      throw this.s3Client.handleError(error, this.fullBucketName)
     }
   }
 }

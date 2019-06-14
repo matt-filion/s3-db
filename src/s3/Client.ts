@@ -1,26 +1,24 @@
-import * as AWS from 'aws-sdk';
-import { Metadata, HeadObjectOutput } from 'aws-sdk/clients/s3';
-import { AWSError } from 'aws-sdk';
-import { Diacritics } from '../utils/Diacritics';
-import { CollectionConfiguration } from '../collection';
-import { S3DB, S3DBError } from '../';
-import { S3Metadata } from './S3Metadata';
-import { Logger } from '@mu-ts/logger';
+import { Metadata, HeadObjectOutput } from 'aws-sdk/clients/s3'
+import { AWSError, S3, config } from 'aws-sdk'
+import { Diacritics } from '../utils/Diacritics'
+import { S3DB, S3DBError } from '../'
+import { S3Metadata } from './S3Metadata'
+import { Logger } from '@mu-ts/logger'
 
 /**
  * Facade to AWS S3 APi's.
  */
 export class S3Client {
-  private logger: Logger;
-  public s3: AWS.S3;
+  public s3: S3
+  private logger: Logger
 
   constructor(parentLogger: Logger) {
-    this.s3 = new AWS.S3({ apiVersion: '2006-03-01' });
-    this.logger = parentLogger.child('S3Client');
+    this.s3 = new S3({ apiVersion: '2006-03-01' })
+    this.logger = parentLogger.child({ child: 'S3Client' })
 
-    AWS.config.update({
+    config.update({
       region: S3DB.getRegion(),
-    });
+    })
   }
 
   /**
@@ -37,14 +35,14 @@ export class S3Client {
       ETag: JSON.parse(source.ETag || ''),
       ServerSideEncryption: source.ServerSideEncryption,
       VersionId: source.VersionId,
-    };
+    }
 
-    const headMetadata: Metadata = source.Metadata || {};
+    const headMetadata: Metadata = source.Metadata || {}
 
-    metadata.ContentMD5 = headMetadata['ContentMD5'];
-    metadata.collection = headMetadata['collection'];
+    metadata.ContentMD5 = headMetadata.ContentMD5
+    metadata.collection = headMetadata.collection
 
-    return metadata;
+    return metadata
   }
 
   /**
@@ -54,13 +52,13 @@ export class S3Client {
    * @param metadata to clean.
    */
   public toAWSMetadata(metadata: S3Metadata): Metadata {
-    if (!metadata) return {};
+    if (!metadata) return {}
     return Object.keys(metadata)
       .filter((key: string) => metadata[key] !== undefined)
       .reduce((newMetadata: Metadata, key: string) => {
-        newMetadata[key] = Diacritics.remove('' + metadata[key]);
-        return newMetadata;
-      }, {});
+        newMetadata[key] = Diacritics.remove('' + metadata[key])
+        return newMetadata
+      }, {})
   }
 
   /**
@@ -70,21 +68,21 @@ export class S3Client {
    * @param key of the object being interacted with when the error was thrown.
    */
   public handleError(error: AWSError, bucket: string, key?: string): S3DBError {
-    this.logger.debug(`handleError() for bucket:${bucket} key:${key}`, error);
+    this.logger.debug(error, `handleError() for bucket:${bucket} key:${key}`)
     switch (error.code) {
       case 'NoSuchBucket':
-        return new S3DBError(`${bucket} is not a valid bucket or is not visible/accssible.`);
+        return new S3DBError(`${bucket} is not a valid bucket or is not visible/accssible.`)
 
       case 'Forbidden':
         return new S3DBError(
           `The user or role does not have permission to access the bucket (${bucket}) or key (${key}) within the bucket.`
-        );
+        )
 
       case 'NoSuchKey':
-        return new S3DBError(`not-found`);
+        return new S3DBError(`not-found`)
 
       default:
-        return new S3DBError(error.message);
+        return new S3DBError(error.message)
     }
   }
 }

@@ -1,13 +1,18 @@
 {
-    "defaultSeverity": "error",
-    "extends": [
-        "tslint:recommended",
-        "tslint-eslint-rules"
-    ],
-    "jsRules": {},
-    "rules": {
-      "quotemark": [true, "single"],
-      "ter-indent": [true, 2]
-    },
-    "rulesDirectory": []
+  "extends": ["tslint:latest", "tslint-config-prettier"],
+  "rules": {
+    "ter-indent": [true, 2],
+    "prefer-for-of": true,
+    "no-empty-interface": true,
+    "ordered-imports": false,
+    "no-submodule-imports": false,
+    "import-spacing": true,
+    "interface-name": [true, "never-prefix"],
+    "no-implicit-dependencies": [true, "dev", ["aws-lambda"]],
+    "curly": [true, "ignore-same-line"],
+    "object-literal-sort-keys": [ false ],
+    "quotemark": [ true, "single" ],
+    "variable-name": [ true, "ban-keywords" ],
+    "one-variable-per-declaration": [ true ]
+  }
 }

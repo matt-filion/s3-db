@@ -1,7 +1,7 @@
-import 'reflect-metadata';
-import { BasicObject } from '../db';
+import 'reflect-metadata'
+import { BasicObject } from '../db'
 
-const METADATA_KEY = Symbol('__s3db');
+const METADATA_KEY = Symbol('__s3db')
 
 /**
  *
@@ -9,11 +9,11 @@ const METADATA_KEY = Symbol('__s3db');
  * @param values to attach or update.
  */
 export function updateMetadata(toTarget: any, values: any): void {
-  let target = toTarget.constructor || toTarget;
-  let keyName: string = target.name.toLowerCase();
-  let metadata = Reflect.getMetadata(METADATA_KEY, target) || {};
-  metadata = Object.assign(metadata, { [keyName]: values });
-  Reflect.defineMetadata(METADATA_KEY, metadata, target);
+  const target = toTarget.constructor || toTarget
+  const keyName: string = target.name.toLowerCase()
+  let metadata = Reflect.getMetadata(METADATA_KEY, target) || {}
+  metadata = { ...metadata, ...{ [keyName]: values } }
+  Reflect.defineMetadata(METADATA_KEY, metadata, target)
 }
 
 /**
@@ -21,17 +21,17 @@ export function updateMetadata(toTarget: any, values: any): void {
  * @param target instance to return the metadata from.
  */
 export function getMetadata(toTarget: any): BasicObject | undefined {
-  let target = toTarget.constructor || toTarget;
-  let keyName: string = target.name.toLowerCase();
-  let metadata = Reflect.getOwnMetadata(METADATA_KEY, target);
-  return metadata ? metadata[keyName] : undefined;
+  const target = toTarget.constructor || toTarget
+  const keyName: string = target.name.toLowerCase()
+  const metadata = Reflect.getOwnMetadata(METADATA_KEY, target)
+  return metadata ? metadata[keyName] : undefined
 }
 
 /**
  * Helper for getting a value on a target object.
  */
 export function getValue(target: any, propertyName: string): any {
-  return (<BasicObject>target)[propertyName];
+  return (target as any)[propertyName]
 }
 
 /**
@@ -41,5 +41,5 @@ export function getValue(target: any, propertyName: string): any {
  * @param value to set.
  */
 export function setValue(target: any, propertyName: string, value: any): void {
-  (<BasicObject>target)[propertyName] = value;
+  ;(target as any)[propertyName] = value
 }

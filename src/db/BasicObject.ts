@@ -1,3 +1,3 @@
 export interface BasicObject {
-  [key: string]: any;
+  [key: string]: any
 }

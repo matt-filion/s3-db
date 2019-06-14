@@ -1,7 +1,7 @@
 {
   "name": "s3-db",
-  "version": "3.3.25",
-  "description": "Document DB wrapper for AWS S3.",
+  "version": "3.4.0",
+  "description": "Document DB syntax wrapper for AWS S3.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "typescript": {
@@ -14,23 +14,37 @@
   "homepage": "https://www.npmjs.com/package/s3-db",
   "author": "Matt Filion <matt.filion@gmail.com>",
   "scripts": {
-    "lint": "tslint 'src/**/*.ts'",
-    "start": "npm run build:live",
-    "build": "tsc -p .",
-    "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
+    "compile": "tsc -p ./",
+    "lint": "tslint -p tsconfig.json",
+    "pretest": "tslint -p tsconfig.json",
+    "test": "nyc ts-mocha ./spec/**/*",
+    "format": "prettier --write \"dist/**/*.ts\" \"dist/**/*.js\" \"src/**/*.ts\"",
+    "build": "npm run compile",
+    "prepare": "npm run compile"
   },
   "dependencies": {
-    "@mu-ts/logger": "^1.1.0",
+    "@mu-ts/logger": "^2.1.1",
     "reflect-metadata": "^0.1.13",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
-    "@types/node": "^11.13.8",
+    "@types/chai": "^4.1.7",
+    "@types/chai-as-promised": "^7.1.0",
+    "@types/mocha": "^5.2.7",
+    "@types/node": "^11.13.14",
+    "@types/sinon": "^7.0.13",
     "@types/uuid": "^3.4.4",
-    "aws-sdk": "^2.444.0",
-    "tslint": "^5.16.0",
-    "typescript": "^3.4.5"
+    "aws-sdk": "^2.475.0",
+    "chai": "^4.2.0",
+    "chai-as-promised": "^7.1.1",
+    "mocha": "^6.1.4",
+    "nyc": "^14.1.1",
+    "prettier": "^1.18.2",
+    "sinon": "^7.3.2",
+    "tslint": "^5.17.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.5.2"
   },
   "maintainers": [
     {

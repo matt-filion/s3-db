@@ -1,5 +1,5 @@
-import { CollectionBehavior } from '../Behavior';
-import { DeleteObjectRequest, DeleteObjectOutput } from 'aws-sdk/clients/s3';
+import { CollectionBehavior } from '../Behavior'
+import { DeleteObjectRequest, DeleteObjectOutput } from 'aws-sdk/clients/s3'
 
 export class DeleteBehavior<Of> extends CollectionBehavior<Of> {
   /**
@@ -15,21 +15,18 @@ export class DeleteBehavior<Of> extends CollectionBehavior<Of> {
       const parameters: DeleteObjectRequest = {
         Bucket: this.fullBucketName,
         Key: this.adjustId(id),
-      };
+      }
 
-      this.logger.debug(`delete() ${id}`, parameters);
-      this.logger.startTimer('deleteObject');
+      this.logger.debug({ data: { parameters } }, `delete() ${id}`)
 
-      const response: DeleteObjectOutput = await this.s3Client.s3.deleteObject(parameters).promise();
+      const response: DeleteObjectOutput = await this.s3Client.s3.deleteObject(parameters).promise()
 
-      this.logger.endTimer('deleteObject');
-      this.logger.resetTimer('deleteObject');
-      this.logger.debug('delete() response from s3', response);
+      this.logger.debug({ data: { response } }, 'delete() response from s3')
 
-      return !!response;
+      return !!response
     } catch (error) {
-      this.logger.error(`delete() error while trying to delete ${id}`, error);
-      throw this.s3Client.handleError(error, this.fullBucketName, id);
+      this.logger.error(error, `delete() error while trying to delete ${id}`)
+      throw this.s3Client.handleError(error, this.fullBucketName, id)
     }
   }
 }

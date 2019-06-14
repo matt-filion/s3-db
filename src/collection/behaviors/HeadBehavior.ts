@@ -1,6 +1,6 @@
-import { HeadObjectRequest, HeadObjectOutput } from 'aws-sdk/clients/s3';
-import { CollectionBehavior } from '../Behavior';
-import { S3Metadata } from '../../s3';
+import { HeadObjectRequest, HeadObjectOutput } from 'aws-sdk/clients/s3'
+import { CollectionBehavior } from '../Behavior'
+import { S3Metadata } from '../../s3'
 
 export class HeadBehavior<Of> extends CollectionBehavior<Of> {
   /**
@@ -17,25 +17,22 @@ export class HeadBehavior<Of> extends CollectionBehavior<Of> {
       const parameters: HeadObjectRequest = {
         Bucket: this.fullBucketName,
         Key: this.adjustId(id),
-      };
+      }
 
-      this.logger.debug(`head() check for ${id}`, parameters);
-      this.logger.startTimer('headObject');
+      this.logger.debug({ data: { parameters } }, `head() check for ${id}`)
 
-      const response: HeadObjectOutput = await this.s3Client.s3.headObject(parameters).promise();
+      const response: HeadObjectOutput = await this.s3Client.s3.headObject(parameters).promise()
 
-      this.logger.endTimer('headObject');
-      this.logger.resetTimer('headObject');
-      this.logger.debug(`head() response`, response);
+      this.logger.debug({ data: { response } }, `head() response`)
 
-      return this.s3Client.buildS3Metadata(response);
+      return this.s3Client.buildS3Metadata(response)
     } catch (error) {
       if (error.code && error.code === 'NotFound') {
-        this.logger.debug('head() response from s3 was NotFound', error);
-        return undefined;
+        this.logger.debug(error, 'head() response from s3 was NotFound')
+        return undefined
       } else {
-        this.logger.error(`head() error response from s3 for ${id}`, error);
-        throw this.s3Client.handleError(error, this.fullBucketName, id);
+        this.logger.error(error, `head() error response from s3 for ${id}`)
+        throw this.s3Client.handleError(error, this.fullBucketName, id)
       }
     }
   }

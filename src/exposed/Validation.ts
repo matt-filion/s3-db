@@ -3,5 +3,5 @@
  * a collection.
  */
 export interface Validation {
-  validate<T>(objectToValidate: T): boolean;
+  validate<T>(objectToValidate: T): boolean
 }

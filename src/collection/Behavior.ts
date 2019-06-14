@@ -1,23 +1,20 @@
-import { getMetadata } from '../utils/Metadata';
-import { IDGenerator } from '../exposed/IDGenerator';
-import { CollectionConfiguration } from './Configuration';
-import { S3Client } from '../s3';
-import { BasicObject } from '../db';
-import { Logger } from '@mu-ts/logger';
+import { CollectionConfiguration } from './CollectionConfiguration'
+import { S3Client } from '../s3'
+import { Logger } from '@mu-ts/logger'
 
 export abstract class CollectionBehavior<Of> {
-  protected configuration: CollectionConfiguration;
-  protected fullBucketName: string;
-  protected s3Client: S3Client;
-  protected logger: Logger;
-  protected idPrefix?: string;
+  protected configuration: CollectionConfiguration
+  protected fullBucketName: string
+  protected s3Client: S3Client
+  protected logger: Logger
+  protected idPrefix?: string
 
   constructor(configuration: CollectionConfiguration, s3Client: S3Client, fullBucketName: string, parentLogger: Logger, idPrefix?: string) {
-    this.configuration = configuration;
-    this.fullBucketName = fullBucketName;
-    this.s3Client = s3Client;
-    this.idPrefix = idPrefix;
-    this.logger = parentLogger.child(this.toString());
+    this.configuration = configuration
+    this.fullBucketName = fullBucketName
+    this.s3Client = s3Client
+    this.idPrefix = idPrefix
+    this.logger = parentLogger.child({ child: this.toString() })
   }
 
   /**
@@ -26,7 +23,7 @@ export abstract class CollectionBehavior<Of> {
    * @param toSave object to find the generator on.
    */
   protected generateKey(toSave: Of): string {
-    return this.configuration.idGenerator(toSave);
+    return this.configuration.idGenerator(toSave)
   }
 
   /**
@@ -36,7 +33,7 @@ export abstract class CollectionBehavior<Of> {
    * @param id to adjust.
    */
   protected adjustId(id: string): string {
-    return `${this.idPrefix || ''}${id}`;
+    return `${this.idPrefix || ''}${id}`
   }
 
   /**
@@ -47,6 +44,6 @@ export abstract class CollectionBehavior<Of> {
    * @param toSave object to generate a key for.
    */
   protected getKeyName(toSave: Of): string {
-    return this.configuration.keyName || 'id';
+    return this.configuration.keyName || 'id'
   }
 }

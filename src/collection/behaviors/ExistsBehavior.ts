@@ -1,5 +1,5 @@
-import { HeadBehavior } from './HeadBehavior';
-import { S3Metadata } from '../../s3';
+import { HeadBehavior } from './HeadBehavior'
+import { S3Metadata } from '../../s3'
 
 export class ExistsBehavior<Of> extends HeadBehavior<Of> {
   /**
@@ -12,8 +12,8 @@ export class ExistsBehavior<Of> extends HeadBehavior<Of> {
    * @param type of document to check existance of.
    */
   public async exists(id: string): Promise<boolean> {
-    const metadata: S3Metadata | undefined = await this.head(id);
-    this.logger.debug(`exists() response for ${id}`, metadata);
-    return metadata ? true : false;
+    const metadata: S3Metadata | undefined = await this.head(id)
+    this.logger.debug({ data: { metadata } }, `exists() response for ${id}`)
+    return metadata ? true : false
   }
 }

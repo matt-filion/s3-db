@@ -16,7 +16,6 @@ This library has been changed drastically from the 1.x.x version as this was wri
 
 - JavaScript Examples
 - eTag verification on save, for collission detection.
-- Logging via @mu-ts/logger
 - Carry over 'copy'
 - Iterator pattern on ResourceList, or instead of.
 - Performance docs on Lambda @ 128mb, 512mb, 1024mb. 2024mb, 3036mb.

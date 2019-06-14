@@ -1,17 +1,15 @@
-import { S3Client, S3Metadata } from '../s3';
-import { S3DB } from '../db';
-import { SaveBehavior } from './behaviors/SaveBehavior';
-import { HeadBehavior } from './behaviors/HeadBehavior';
-import { ExistsBehavior } from './behaviors/ExistsBehavior';
-import { LoadBehavior } from './behaviors/LoadBehavior';
-import { DeleteBehavior } from './behaviors/DeleteBehavior';
-import { FindBehavior } from './behaviors/FindBehavior';
-import { ReferenceList } from './ReferenceList';
-import { CollectionConfiguration, CollectionConfigurationOptions } from './Configuration';
-import { LogLevel, Logger } from '@mu-ts/logger';
-import { CollectionRegistry } from './CollectionRegistry';
-import { AnyARecord } from 'dns';
-import { collection } from './decorators';
+import { S3Client, S3Metadata } from '../s3'
+import { S3DB } from '../db'
+import { SaveBehavior } from './behaviors/SaveBehavior'
+import { HeadBehavior } from './behaviors/HeadBehavior'
+import { ExistsBehavior } from './behaviors/ExistsBehavior'
+import { LoadBehavior } from './behaviors/LoadBehavior'
+import { DeleteBehavior } from './behaviors/DeleteBehavior'
+import { FindBehavior } from './behaviors/FindBehavior'
+import { ReferenceList } from './ReferenceList'
+import { CollectionConfiguration } from './CollectionConfiguration'
+import { Logger, LogLevelString } from '@mu-ts/logger'
+import { CollectionRegistry } from './CollectionRegistry'
 
 /**
  * Provides the logical interfaces of a collection and translates it into the
@@ -23,48 +21,50 @@ import { collection } from './decorators';
  * a TypeScript collission issue when it interprets the 'two types'.
  */
 export class Collection<Of> {
-  private logger: Logger;
-  private configuration: CollectionConfiguration;
-  private idPrefix: string | undefined;
-  private saveBheavior: SaveBehavior<Of>;
-  private existsBehavior: ExistsBehavior<Of>;
-  private loadBehavior: LoadBehavior<Of>;
-  private deleteBehavior: DeleteBehavior<Of>;
-  private findBehavior: FindBehavior<Of>;
-  private headBehavior: HeadBehavior<Of>;
+  private logger: Logger
+  private configuration: CollectionConfiguration
+  private idPrefix: string | undefined
+  private saveBheavior: SaveBehavior<Of>
+  private existsBehavior: ExistsBehavior<Of>
+  private loadBehavior: LoadBehavior<Of>
+  private deleteBehavior: DeleteBehavior<Of>
+  private findBehavior: FindBehavior<Of>
+  private headBehavior: HeadBehavior<Of>
 
   constructor(type: string | Of, idPrefix?: string) {
-    const name = typeof type === 'string' ? type : `${(<any>type)['name'].toLowerCase()}`;
+    const name = typeof type === 'string' ? type : `${(type as any).name}`
+    this.logger = S3DB.getRootLogger().child({ child: 'Collection', of: name })
+    this.logger.info({ data: { ofType: typeof type, type } }, 'Type of argument provided.')
 
-    if (!name || name === '') throw Error('No type was provided.');
+    if (!name || name === '') throw Error('No type was provided.')
 
-    const resolvedConfiguration: CollectionConfiguration | undefined = CollectionRegistry.instance().resolve(`${name.toLowerCase()}`);
-    this.configuration = Object.assign(new CollectionConfiguration(), resolvedConfiguration, type);
+    const resolvedConfiguration: CollectionConfiguration | undefined = CollectionRegistry.instance().resolve(`${name.toLowerCase()}`)
+    this.configuration = Object.assign(new CollectionConfiguration(), resolvedConfiguration, type)
 
-    if (!this.configuration.name) throw Error(`The configuration has no name defined, which is used to determine the bucket name.`);
+    if (!this.configuration.name) throw Error(`The configuration has no name defined, which is used to determine the bucket name.`)
 
-    this.logger = S3DB.getRootLogger().child(`Collection(${this.configuration.name})`);
-    this.logger.trace('init()', { prefix: idPrefix });
-    this.idPrefix = idPrefix;
-    this.logger.trace('init() configuration', this.configuration);
+    this.idPrefix = idPrefix
 
-    const fullBucketName = S3DB.getCollectionFQN(this.configuration.name);
-    const s3Client = new S3Client(this.logger);
+    const fullBucketName = S3DB.getCollectionFQN(this.configuration.name)
+    this.logger.trace({ data: { fullBucketName } }, 'init() fullBucketName')
+    const s3Client = new S3Client(this.logger)
 
-    this.headBehavior = new HeadBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
-    this.existsBehavior = new ExistsBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
-    this.loadBehavior = new LoadBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
-    this.saveBheavior = new SaveBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
-    this.deleteBehavior = new DeleteBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
-    this.findBehavior = new FindBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix);
+    this.headBehavior = new HeadBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
+    this.existsBehavior = new ExistsBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
+    this.loadBehavior = new LoadBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
+    this.saveBheavior = new SaveBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
+    this.deleteBehavior = new DeleteBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
+    this.findBehavior = new FindBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
+
+    this.logger.trace({ data: { configuration: this.configuration } }, 'init() configuration')
   }
 
   /**
    *
    * @param level to set the logging for this collection instance.
    */
-  public setLogLevel(level: LogLevel): void {
-    this.logger.setLevel(level);
+  public setLogLevel(level: LogLevelString): void {
+    this.logger.level(level)
   }
 
   /**
@@ -79,30 +79,30 @@ export class Collection<Of> {
    * @param type to map this collection to.
    */
   public subCollection<OfThis>(prefix: string, newType: OfThis): Collection<OfThis> {
-    return new Collection<OfThis>(newType, `${this.idPrefix}${prefix}`);
+    return new Collection<OfThis>(newType, `${this.idPrefix}${prefix}`)
   }
 
   public async head(id: string): Promise<S3Metadata | undefined> {
-    return await this.headBehavior.head(id);
+    return this.headBehavior.head(id)
   }
 
   public async exists(id: string): Promise<boolean> {
-    return await this.existsBehavior.exists(id);
+    return this.existsBehavior.exists(id)
   }
 
   public async load(id: string): Promise<Of> {
-    return await this.loadBehavior.load(id);
+    return this.loadBehavior.load(id)
   }
 
   public async save(toSave: Of): Promise<Of> {
-    return await this.saveBheavior.save(toSave);
+    return this.saveBheavior.save(toSave)
   }
 
   public async delete(id: string): Promise<boolean> {
-    return await this.deleteBehavior.delete(id);
+    return this.deleteBehavior.delete(id)
   }
 
   public async find(prefix: string, pageSize?: number, continuationToken?: string): Promise<ReferenceList> {
-    return await this.findBehavior.find(prefix, pageSize, continuationToken);
+    return this.findBehavior.find(prefix, pageSize, continuationToken)
   }
 }

@@ -1,8 +1,7 @@
-import { CollectionBehavior } from "../Behavior";
+import { CollectionBehavior } from '../Behavior'
 
 export class CopyBehavior<Of> extends CollectionBehavior<Of> {
-  
-  //TODO Implement COPY
+  // TODO Implement COPY
   // copyDocument: (sourceFQN,sourceId,sourceETag,destinationFQN,destinationId) => {
   //   const params = {
   //     Bucket: bucketName(destinationFQN),

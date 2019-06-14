@@ -1,15 +1,14 @@
-import { Serialization } from "../exposed";
+import { Serialization } from '../exposed'
 
 /**
  * Out of the box JSON Serialization of objects.
  */
-export class JSONSerialization<T> implements Serialization {
-
+export class JSONSerialization implements Serialization {
   public serialize(objectToSerialize: any): string {
     return JSON.stringify(objectToSerialize)
   }
 
-  public deserialize<T>(documentToDeserialize: string): T {
+  public deserialize(documentToDeserialize: string): any {
     return JSON.parse(documentToDeserialize)
   }
 }

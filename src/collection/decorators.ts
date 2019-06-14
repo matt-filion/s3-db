@@ -1,14 +1,14 @@
-import { CollectionConfiguration } from './';
-import { IDGenerator } from '../exposed';
-import { defaultIDGenerator } from '../defaults';
-import { S3DB } from '../db';
-import { Logger } from '@mu-ts/logger';
-import { CollectionRegistry } from './CollectionRegistry';
-import { CollectionConfigurationOptions } from './Configuration';
+import { CollectionConfiguration } from './'
+import { IDGenerator } from '../exposed'
+import { defaultIDGenerator } from '../defaults'
+import { S3DB } from '../db'
+import { Logger } from '@mu-ts/logger'
+import { CollectionRegistry } from './CollectionRegistry'
+import { CollectionConfigurationOptions } from './CollectionConfigurationOptions'
 
-const collectionRegistry: CollectionRegistry = CollectionRegistry.instance();
-const exportLogger: Logger = S3DB.getRootLogger().child(`collection`);
-const idLogger: Logger = S3DB.getRootLogger().child('id');
+const collectionRegistry: CollectionRegistry = CollectionRegistry.instance()
+const exportLogger: Logger = S3DB.getRootLogger().child({ child: 'collection' })
+const idLogger: Logger = S3DB.getRootLogger().child({ child: 'id' })
 
 /**
  * @collection('name') will map a specific entity to a bucket (for the appropriate
@@ -16,20 +16,20 @@ const idLogger: Logger = S3DB.getRootLogger().child('id');
  *
  * @param configuration for the collection.
  */
-export function collection(configuration?: CollectionConfigurationOptions): Function {
-  return function<TFunction extends Function>(target: TFunction): TFunction | void {
-    const metadata = Object.assign(new CollectionConfiguration(), configuration || {});
+export function collection(configuration?: CollectionConfigurationOptions): any {
+  return (target: typeof Function): typeof Function | void => {
+    const metadata = Object.assign(new CollectionConfiguration(), configuration || {})
 
-    exportLogger.debug('collection configuration', { configuration });
+    exportLogger.debug({ data: { configuration } }, 'collection configuration')
 
-    if (!metadata.name) metadata.name = target.name.toLowerCase();
+    if (!metadata.name) metadata.name = target.name.toLowerCase()
 
-    collectionRegistry.register(metadata);
+    collectionRegistry.register(metadata)
 
-    exportLogger.debug('collection setting metadata to', { metadata });
+    exportLogger.debug({ data: { metadata } }, 'collection setting metadata to')
 
-    return target;
-  };
+    return target
+  }
 }
 
 /**
@@ -40,19 +40,19 @@ export function collection(configuration?: CollectionConfigurationOptions): Func
  * @param generator for the ID if nothing is provided.
  */
 export function id(generator: IDGenerator = defaultIDGenerator): any {
-  return function(target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor {
-    const name: string = target.constructor.name.toLowerCase();
-    const collectionConfiguration: CollectionConfiguration | undefined = collectionRegistry.resolve(name);
+  return (target: any, propertyKey: string, descriptor: PropertyDescriptor): PropertyDescriptor => {
+    const name: string = target.constructor.name.toLowerCase()
+    const collectionConfiguration: CollectionConfiguration | undefined = collectionRegistry.resolve(name)
 
     if (collectionConfiguration) {
-      collectionConfiguration.keyName = propertyKey;
-      collectionRegistry.register(collectionConfiguration);
+      collectionConfiguration.keyName = propertyKey
+      collectionRegistry.register(collectionConfiguration)
     } else {
-      collectionRegistry.register({ keyName: propertyKey, name, idGenerator: generator });
+      collectionRegistry.register({ keyName: propertyKey, name, idGenerator: generator })
     }
 
-    idLogger.debug('id decorator', { keyName: propertyKey, generator, name });
+    idLogger.debug({ data: { keyName: propertyKey, generator, name } }, 'id decorator')
 
-    return descriptor;
-  };
+    return descriptor
+  }
 }
