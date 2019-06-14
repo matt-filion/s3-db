@@ -33,13 +33,13 @@ export class Collection<Of> {
 
   constructor(type: string | Of, idPrefix?: string) {
     const name = typeof type === 'string' ? type : `${(type as any).name}`
-    this.logger = LoggerService.named('S3DB.CollectionRegistry', { of: name })
+    this.logger = LoggerService.named('S3DB.Collection', { of: `${name}` })
     this.logger.info({ data: { ofType: typeof type, type } }, 'Type of argument provided.')
 
     if (!name || name === '') throw Error('No type was provided.')
 
     const resolvedConfiguration: CollectionConfiguration | undefined = CollectionRegistry.instance().resolve(`${name.toLowerCase()}`)
-    this.configuration = Object.assign(new CollectionConfiguration(), resolvedConfiguration, type)
+    this.configuration = { ...new CollectionConfiguration(), ...resolvedConfiguration, ...{ type } }
 
     if (!this.configuration.name) throw Error(`The configuration has no name defined, which is used to determine the bucket name.`)
 
@@ -47,14 +47,14 @@ export class Collection<Of> {
 
     const fullBucketName = S3DB.getCollectionFQN(this.configuration.name)
     this.logger.trace({ data: { fullBucketName } }, 'init() fullBucketName')
-    const s3Client = new S3Client(this.logger)
+    const s3Client = new S3Client()
 
-    this.headBehavior = new HeadBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
-    this.existsBehavior = new ExistsBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
-    this.loadBehavior = new LoadBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
-    this.saveBheavior = new SaveBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
-    this.deleteBehavior = new DeleteBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
-    this.findBehavior = new FindBehavior(this.configuration, s3Client, fullBucketName, this.logger, this.idPrefix)
+    this.headBehavior = new HeadBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
+    this.existsBehavior = new ExistsBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
+    this.loadBehavior = new LoadBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
+    this.saveBheavior = new SaveBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
+    this.deleteBehavior = new DeleteBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
+    this.findBehavior = new FindBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
 
     this.logger.trace({ data: { configuration: this.configuration } }, 'init() configuration')
   }

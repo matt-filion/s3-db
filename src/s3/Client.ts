@@ -3,7 +3,7 @@ import { AWSError, S3, config } from 'aws-sdk'
 import { Diacritics } from '../utils/Diacritics'
 import { S3DB, S3DBError } from '../'
 import { S3Metadata } from './S3Metadata'
-import { Logger } from '@mu-ts/logger'
+import { Logger, LoggerService } from '@mu-ts/logger'
 
 /**
  * Facade to AWS S3 APi's.
@@ -12,9 +12,9 @@ export class S3Client {
   public s3: S3
   private logger: Logger
 
-  constructor(parentLogger: Logger) {
+  constructor() {
     this.s3 = new S3({ apiVersion: '2006-03-01' })
-    this.logger = parentLogger.child({ child: 'S3Client' })
+    this.logger = LoggerService.named('S3DB.S3Client', { region: S3DB.getRegion() })
 
     config.update({
       region: S3DB.getRegion(),

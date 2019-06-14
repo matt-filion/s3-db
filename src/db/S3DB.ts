@@ -12,7 +12,7 @@ export class S3DB {
    */
   public static update(configuration: { baseName?: string; stage?: string; bucketPattern?: string; region?: string }): void {
     this.logger.info({ data: { configuration } }, 'update() configuration with -->')
-    Object.assign(this.configuration, configuration)
+    this.configuration = { ...this.configuration, ...configuration }
     this.logger.info({ data: { configuration: this.configuration } }, 'update() updated configuration is <--')
   }
 

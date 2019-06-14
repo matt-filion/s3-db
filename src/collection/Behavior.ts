@@ -1,6 +1,6 @@
 import { CollectionConfiguration } from './CollectionConfiguration'
 import { S3Client } from '../s3'
-import { Logger } from '@mu-ts/logger'
+import { Logger, LoggerService } from '@mu-ts/logger'
 
 export abstract class CollectionBehavior<Of> {
   protected configuration: CollectionConfiguration
@@ -9,12 +9,12 @@ export abstract class CollectionBehavior<Of> {
   protected logger: Logger
   protected idPrefix?: string
 
-  constructor(configuration: CollectionConfiguration, s3Client: S3Client, fullBucketName: string, parentLogger: Logger, idPrefix?: string) {
+  constructor(configuration: CollectionConfiguration, s3Client: S3Client, fullBucketName: string, idPrefix?: string) {
     this.configuration = configuration
     this.fullBucketName = fullBucketName
     this.s3Client = s3Client
     this.idPrefix = idPrefix
-    this.logger = parentLogger.child({ child: this.toString() })
+    this.logger = LoggerService.named(`S3DB.${(this as any).name}`, { of: `${(this as any).name}`, prefix: '' + idPrefix })
   }
 
   /**
