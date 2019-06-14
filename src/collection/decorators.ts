@@ -1,14 +1,13 @@
 import { CollectionConfiguration } from './'
 import { IDGenerator } from '../exposed'
 import { defaultIDGenerator } from '../defaults'
-import { S3DB } from '../db'
-import { Logger } from '@mu-ts/logger'
+import { Logger, LoggerService } from '@mu-ts/logger'
 import { CollectionRegistry } from './CollectionRegistry'
 import { CollectionConfigurationOptions } from './CollectionConfigurationOptions'
 
 const collectionRegistry: CollectionRegistry = CollectionRegistry.instance()
-const exportLogger: Logger = S3DB.getRootLogger().child({ child: 'collection' })
-const idLogger: Logger = S3DB.getRootLogger().child({ child: 'id' })
+const collectionLogger: Logger = LoggerService.named('S3DB.collection')
+const idLogger: Logger = LoggerService.named('S3DB.id')
 
 /**
  * @collection('name') will map a specific entity to a bucket (for the appropriate
@@ -18,15 +17,19 @@ const idLogger: Logger = S3DB.getRootLogger().child({ child: 'id' })
  */
 export function collection(configuration?: CollectionConfigurationOptions): any {
   return (target: typeof Function): typeof Function | void => {
-    const metadata = Object.assign(new CollectionConfiguration(), configuration || {})
+    const metadata = {
+      ...new CollectionConfiguration(),
+      ...(configuration || {}),
+    }
 
-    exportLogger.debug({ data: { configuration } }, 'collection configuration')
+    collectionLogger.info({ data: { configuration, metadata } }, 'collection configuration')
 
     if (!metadata.name) metadata.name = target.name.toLowerCase()
+    if (!metadata.id) metadata.id = target.name.toLowerCase()
 
     collectionRegistry.register(metadata)
 
-    exportLogger.debug({ data: { metadata } }, 'collection setting metadata to')
+    collectionLogger.info({ data: { metadata } }, 'collection setting metadata to')
 
     return target
   }

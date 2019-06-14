@@ -7,7 +7,7 @@ import { CollectionRegistry } from '../../src/collection/CollectionRegistry'
 
 use(require('chai-as-promised'))
 
-describe('Version Endpoint', () => {
+describe('Collection', () => {
   let sandbox: sinon.SinonSandbox
 
   beforeEach(() => {

@@ -8,7 +8,7 @@ import { DeleteBehavior } from './behaviors/DeleteBehavior'
 import { FindBehavior } from './behaviors/FindBehavior'
 import { ReferenceList } from './ReferenceList'
 import { CollectionConfiguration } from './CollectionConfiguration'
-import { Logger, LogLevelString } from '@mu-ts/logger'
+import { Logger, LogLevelString, LoggerService } from '@mu-ts/logger'
 import { CollectionRegistry } from './CollectionRegistry'
 
 /**
@@ -33,7 +33,7 @@ export class Collection<Of> {
 
   constructor(type: string | Of, idPrefix?: string) {
     const name = typeof type === 'string' ? type : `${(type as any).name}`
-    this.logger = S3DB.getRootLogger().child({ child: 'Collection', of: name })
+    this.logger = LoggerService.named('S3DB.CollectionRegistry', { of: name })
     this.logger.info({ data: { ofType: typeof type, type } }, 'Type of argument provided.')
 
     if (!name || name === '') throw Error('No type was provided.')

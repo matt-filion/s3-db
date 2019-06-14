@@ -3,7 +3,12 @@ import { Validation, Serialization, IsModified, IDGenerator } from '../exposed'
 
 export class CollectionConfiguration {
   /**
-   * The name of the collection.
+   * The id of the collection, used to look it up.
+   */
+  public id?: string
+
+  /**
+   * The name of the collection. Used to determine the bucket name.
    */
   public name?: string
 

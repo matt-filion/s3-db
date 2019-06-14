@@ -1,6 +1,7 @@
 import { IDGenerator, Serialization, IsModified, Validation } from '../exposed'
 
 export class CollectionConfigurationOptions {
+  public id?: string
   public name?: string
   public keyName?: string
   public checkIsModified?: boolean

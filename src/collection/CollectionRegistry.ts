@@ -1,5 +1,4 @@
-import { Logger } from '@mu-ts/logger'
-import { S3DB } from '../db'
+import { Logger, LoggerService } from '@mu-ts/logger'
 import { CollectionConfigurationOptions } from './CollectionConfigurationOptions'
 import { CollectionConfiguration } from './CollectionConfiguration'
 
@@ -19,7 +18,7 @@ export class CollectionRegistry {
 
   private constructor() {
     this.registry = new Map()
-    this.logger = S3DB.getRootLogger().child({ child: 'CollectionRegistry' })
+    this.logger = LoggerService.named('S3DB.CollectionRegistry')
     this.logger.debug('init()')
   }
 
@@ -29,9 +28,13 @@ export class CollectionRegistry {
    * @param configuraiton to register.
    */
   public register(configuraiton: CollectionConfigurationOptions): void {
-    this.logger.debug({ data: { configuraiton } }, `register(${configuraiton.name}) -->`)
+    this.logger.debug({ data: { configuraiton } }, `register(${configuraiton.id}) -->`)
 
-    let existingConfiguration: CollectionConfiguration | undefined = this.registry.get(`${configuraiton.name}`)
+    if (!configuraiton.id) configuraiton.id = configuraiton.name
+
+    let existingConfiguration: CollectionConfiguration | undefined = this.registry.get(`${configuraiton.id}`)
+    this.logger.debug({ data: { existingConfiguration } }, `register(${configuraiton.id}) -- existingConfiguration`)
+
     if (!existingConfiguration) {
       existingConfiguration = new CollectionConfiguration()
     }
@@ -41,9 +44,9 @@ export class CollectionRegistry {
       ...configuraiton,
     }
 
-    this.registry.set(`${configuraiton.name}`, configurationToUse)
+    this.registry.set(`${configuraiton.id}`, configurationToUse)
 
-    this.logger.debug({ data: { configurationToUse } }, `register(${configuraiton.name}) <-- `)
+    this.logger.debug({ data: { configurationToUse } }, `register(${configuraiton.id}) <-- `)
   }
 
   /**
