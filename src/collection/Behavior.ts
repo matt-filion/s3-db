@@ -14,7 +14,9 @@ export abstract class CollectionBehavior<Of> {
     this.fullBucketName = fullBucketName
     this.s3Client = s3Client
     this.idPrefix = idPrefix
-    this.logger = LoggerService.named(`S3DB.${(this as any).name}`, { of: `${(this as any).name}`, prefix: '' + idPrefix })
+    this.logger = LoggerService.named(`S3DB.${(this as any).constructor.name}`, {
+      prefix: '' + idPrefix,
+    })
   }
 
   /**

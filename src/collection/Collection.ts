@@ -33,6 +33,7 @@ export class Collection<Of> {
 
   constructor(type: string | Of, idPrefix?: string) {
     const name = typeof type === 'string' ? type : `${(type as any).name}`
+
     this.logger = LoggerService.named('S3DB.Collection', { of: `${name}` })
     this.logger.info({ data: { ofType: typeof type, type } }, 'Type of argument provided.')
 
