@@ -8,7 +8,7 @@ import { DeleteBehavior } from './behaviors/DeleteBehavior'
 import { FindBehavior } from './behaviors/FindBehavior'
 import { ReferenceList } from './ReferenceList'
 import { CollectionConfiguration } from './CollectionConfiguration'
-import { Logger, LogLevelString, LoggerService } from '@mu-ts/logger'
+import { Logger, LogLevelString } from '@mu-ts/logger'
 import { CollectionRegistry } from './CollectionRegistry'
 
 /**
@@ -34,8 +34,8 @@ export class Collection<Of> {
   constructor(type: string | Of, idPrefix?: string) {
     const name = typeof type === 'string' ? type : `${(type as any).name}`
 
-    this.logger = LoggerService.named('S3DB.Collection', { of: `${name}` })
-    this.logger.info({ data: { ofType: typeof type, type } }, 'Type of argument provided.')
+    this.logger = S3DB.getRootLogger().child(`Collection[${name}]`)
+    this.logger.info({ ofType: typeof type, type }, 'Type of argument provided.')
 
     if (!name || name === '') throw Error('No type was provided.')
 
@@ -47,7 +47,7 @@ export class Collection<Of> {
     this.idPrefix = idPrefix
 
     const fullBucketName = S3DB.getCollectionFQN(this.configuration.name)
-    this.logger.trace({ data: { fullBucketName } }, 'init() fullBucketName')
+    this.logger.trace({ fullBucketName }, 'init()', 'fullBucketName')
     const s3Client = new S3Client()
 
     this.headBehavior = new HeadBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
@@ -57,15 +57,16 @@ export class Collection<Of> {
     this.deleteBehavior = new DeleteBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
     this.findBehavior = new FindBehavior(this.configuration, s3Client, fullBucketName, this.idPrefix)
 
-    this.logger.trace({ data: { configuration: this.configuration } }, 'init() configuration')
+    this.logger.trace({ configuration: this.configuration }, 'init()', 'configuration')
   }
 
   /**
    *
    * @param level to set the logging for this collection instance.
+   * @deprecated use the logging facilities in @mu-ts/logger to change the level of a specific logger
    */
   public setLogLevel(level: LogLevelString): void {
-    this.logger.level(level)
+    this.logger.setLevel(level)
   }
 
   /**

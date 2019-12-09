@@ -1,6 +1,7 @@
-import { Logger, LoggerService } from '@mu-ts/logger'
+import { Logger } from '@mu-ts/logger'
 import { CollectionConfigurationOptions } from './CollectionConfigurationOptions'
 import { CollectionConfiguration } from './CollectionConfiguration'
+import { S3DB } from '../db'
 
 export class CollectionRegistry {
   /**
@@ -18,7 +19,7 @@ export class CollectionRegistry {
 
   private constructor() {
     this.registry = new Map()
-    this.logger = LoggerService.named('S3DB.CollectionRegistry')
+    this.logger = S3DB.getRootLogger().child('CollectionRegistry')
     this.logger.debug('init()')
   }
 
@@ -28,12 +29,12 @@ export class CollectionRegistry {
    * @param configuraiton to register.
    */
   public register(configuraiton: CollectionConfigurationOptions): void {
-    this.logger.debug({ data: { configuraiton } }, `register(${configuraiton.id}) -->`)
+    this.logger.debug({ configuraiton }, `register(${configuraiton.id}) -->`)
 
     if (!configuraiton.id) configuraiton.id = configuraiton.name
 
     let existingConfiguration: CollectionConfiguration | undefined = this.registry.get(`${configuraiton.id}`)
-    this.logger.debug({ data: { existingConfiguration } }, `register(${configuraiton.id}) -- existingConfiguration`)
+    this.logger.debug({ existingConfiguration }, `register(${configuraiton.id}) -- existingConfiguration`)
 
     if (!existingConfiguration) {
       existingConfiguration = new CollectionConfiguration()
@@ -46,7 +47,7 @@ export class CollectionRegistry {
 
     this.registry.set(`${configuraiton.id}`, configurationToUse)
 
-    this.logger.debug({ data: { configurationToUse } }, `register(${configuraiton.id}) <-- `)
+    this.logger.debug({ configurationToUse }, `register(${configuraiton.id}) <-- `)
   }
 
   /**
@@ -56,7 +57,7 @@ export class CollectionRegistry {
   public resolve(type: string): CollectionConfiguration | undefined {
     this.logger.info(`resolve(${type}) -->`)
     const configuration: CollectionConfiguration | undefined = this.registry.get(`${type}`)
-    this.logger.info({ data: { configuration } }, `resolve(${type}) <--`)
+    this.logger.info({ configuration }, `resolve(${type}) <--`)
     return configuration
   }
 }

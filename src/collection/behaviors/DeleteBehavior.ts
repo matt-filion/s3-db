@@ -17,15 +17,15 @@ export class DeleteBehavior<Of> extends CollectionBehavior<Of> {
         Key: this.adjustId(id),
       }
 
-      this.logger.debug({ data: { parameters } }, `delete() ${id}`)
+      this.logger.debug({ parameters }, 'delete()', `${id}`)
 
       const response: DeleteObjectOutput = await this.s3Client.s3.deleteObject(parameters).promise()
 
-      this.logger.debug({ data: { response } }, 'delete() response from s3')
+      this.logger.debug({ response }, 'delete()', 'response from s3')
 
       return !!response
     } catch (error) {
-      this.logger.error(error, `delete() error while trying to delete ${id}`)
+      this.logger.error(error, 'delete()', `error while trying to delete ${id}`)
       throw this.s3Client.handleError(error, this.fullBucketName, id)
     }
   }

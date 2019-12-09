@@ -1,17 +1,21 @@
 {
   "compilerOptions": {
     "rootDir": "./src",
-    "outDir": "dist",
+    "outDir": "lib",
+    "lib": ["ES2016"],
+    "target": "ES2016",
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "es2017",
+    "experimentalDecorators": true,
+    "declaration": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "allowJs": false,
     "strict": true,
     "alwaysStrict": true,
-    "declaration": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "noImplicitAny": true,
     "removeComments": true,
     "preserveConstEnums": true,
     "types": [
@@ -19,9 +23,10 @@
       "aws-sdk"
     ]
   },
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "spec",
-    "dist"
+    "lib"
   ]
 }

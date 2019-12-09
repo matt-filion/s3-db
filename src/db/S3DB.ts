@@ -11,9 +11,9 @@ export class S3DB {
    * @param configuration to update he default values with.
    */
   public static update(configuration: { baseName?: string; stage?: string; bucketPattern?: string; region?: string }): void {
-    this.logger.info({ data: { configuration } }, 'update() configuration with -->')
+    this.logger.info(configuration, 'update()', 'configuration with -->')
     this.configuration = { ...this.configuration, ...configuration }
-    this.logger.info({ data: { configuration: this.configuration } }, 'update() updated configuration is <--')
+    this.logger.info(this.configuration, 'update()', 'updated configuration is <--')
   }
 
   /**
@@ -28,7 +28,7 @@ export class S3DB {
    * @param level to set the default log level for all logging instances.
    */
   public static setLogLevel(level: LogLevelString): void {
-    this.logger.level(level)
+    this.logger.setLevel(level)
   }
 
   /**
@@ -51,7 +51,7 @@ export class S3DB {
   }
 
   private static configuration: S3DBConfiguration = new S3DBConfiguration()
-  private static logger: Logger = LoggerService.named('S3DB')
+  private static logger: Logger = LoggerService.named({ name: 'S3DB', level: 'warn' })
 
   private constructor() {}
 }
