@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "3.5.0",
+  "version": "3.5.1",
   "description": "Document DB syntax wrapper for AWS S3.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -23,28 +23,28 @@
     "clean": "rm -rf coverage lib .nyc_output .vscode"
   },
   "dependencies": {
-    "@mu-ts/logger": "^3.0.2",
+    "@mu-ts/logger": "^3.0.5",
     "reflect-metadata": "^0.1.13",
-    "uuid": "^3.3.2"
+    "uuid": "^3.4.0"
   },
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
-    "@types/chai": "^4.2.6",
+    "@types/chai": "^4.2.8",
     "@types/chai-as-promised": "^7.1.2",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^11.15.3",
+    "@types/node": "^11.15.5",
     "@types/sinon": "^7.5.1",
-    "@types/uuid": "^3.4.6",
-    "aws-sdk": "^2.585.0",
-    "chai-as-promised": "^7.1.1",
+    "@types/uuid": "^3.4.7",
+    "aws-sdk": "^2.615.0",
     "chai": "^4.2.0",
-    "codecov": "^3.2.0",
+    "chai-as-promised": "^7.1.1",
+    "codecov": "^3.6.5",
     "mocha": "^6.2.2",
     "nyc": "^14.1.1",
-    "ts-mocha": "^6.0.0",
     "prettier": "^1.19.1",
     "sinon": "^7.5.0",
-    "typescript": "^3.7.3"
+    "ts-mocha": "^6.0.0",
+    "typescript": "^3.7.5"
   },
   "maintainers": [
     {
@@ -83,5 +83,32 @@
     "db",
     "s3 database",
     "s3 db"
-  ]
+  ],
+  "nyc": {
+    "include": [
+      "src/*.ts",
+      "src/**/*.ts"
+    ],
+    "exclude": [
+      "src/authorizer-jwt/**",
+      "src/rest-healthcheck/**",
+      "src/**/validations/index.ts",
+      "src/**/handler.ts",
+      "src/nlp-trainer/typings-custom/**"
+    ],
+    "extension": [
+      ".ts"
+    ],
+    "require": [
+      "ts-node/register",
+      "source-map-support/register"
+    ],
+    "reporter": [
+      "text-summary",
+      "html"
+    ],
+    "sourceMap": true,
+    "instrument": true,
+    "all": true
+  }
 }
