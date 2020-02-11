@@ -3,7 +3,7 @@ import { AWSError, S3, config } from 'aws-sdk'
 import { Diacritics } from '../utils/Diacritics'
 import { S3DB, S3DBError } from '../'
 import { S3Metadata } from './S3Metadata'
-import { Logger, LoggerService } from '@mu-ts/logger'
+import { Logger } from '@mu-ts/logger'
 
 /**
  * Facade to AWS S3 APi's.
@@ -14,11 +14,12 @@ export class S3Client {
 
   constructor() {
     this.s3 = new S3({ apiVersion: '2006-03-01' })
-    this.logger = LoggerService.named('S3DB.S3Client', { region: S3DB.getRegion() })
+    this.logger = S3DB.getRootLogger().child('Client')
 
     config.update({
       region: S3DB.getRegion(),
     })
+    this.logger.info('init()', { region: S3DB.getRegion() })
   }
 
   /**
@@ -68,7 +69,7 @@ export class S3Client {
    * @param key of the object being interacted with when the error was thrown.
    */
   public handleError(error: AWSError, bucket: string, key?: string): S3DBError {
-    this.logger.debug(error, `handleError() for bucket:${bucket} key:${key}`)
+    this.logger.debug(error, 'handleError()', `for bucket:${bucket} key:${key}`)
     switch (error.code) {
       case 'NoSuchBucket':
         return new S3DBError(`${bucket} is not a valid bucket or is not visible/accssible.`)

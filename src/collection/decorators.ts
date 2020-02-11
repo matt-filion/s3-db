@@ -1,13 +1,14 @@
 import { CollectionConfiguration } from './'
 import { IDGenerator } from '../exposed'
 import { defaultIDGenerator } from '../defaults'
-import { Logger, LoggerService } from '@mu-ts/logger'
+import { Logger } from '@mu-ts/logger'
 import { CollectionRegistry } from './CollectionRegistry'
 import { CollectionConfigurationOptions } from './CollectionConfigurationOptions'
+import { S3DB } from '../db'
 
 const collectionRegistry: CollectionRegistry = CollectionRegistry.instance()
-const collectionLogger: Logger = LoggerService.named('S3DB.collection')
-const idLogger: Logger = LoggerService.named('S3DB.id')
+const collectionLogger: Logger = S3DB.getRootLogger().child('@collection')
+const idLogger: Logger = S3DB.getRootLogger().child('@id')
 
 /**
  * @collection('name') will map a specific entity to a bucket (for the appropriate
@@ -22,14 +23,14 @@ export function collection(configuration?: CollectionConfigurationOptions): any 
       ...(configuration || {}),
     }
 
-    collectionLogger.info({ data: { configuration, metadata } }, 'collection configuration')
+    collectionLogger.info({ configuration, metadata }, 'collection configuration')
 
     if (!metadata.name) metadata.name = target.name.toLowerCase()
     if (!metadata.id) metadata.id = target.name.toLowerCase()
 
     collectionRegistry.register(metadata)
 
-    collectionLogger.info({ data: { metadata } }, 'collection setting metadata to')
+    collectionLogger.info({ metadata }, 'collection setting metadata to')
 
     return target
   }
@@ -54,7 +55,7 @@ export function id(generator: IDGenerator = defaultIDGenerator): any {
       collectionRegistry.register({ keyName: propertyKey, name, idGenerator: generator })
     }
 
-    idLogger.debug({ data: { keyName: propertyKey, generator, name } }, 'id decorator')
+    idLogger.debug({ keyName: propertyKey, generator, name }, 'id decorator')
 
     return descriptor
   }

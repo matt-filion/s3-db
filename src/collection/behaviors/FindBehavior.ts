@@ -26,11 +26,11 @@ export class FindBehavior<Of> extends CollectionBehavior<Of> {
         ContinuationToken: continuationToken,
       }
 
-      this.logger.debug({ data: { parameters } }, `find() with prefix ${prefix} -->`)
+      this.logger.debug({ parameters }, 'find()', `with prefix ${prefix} -->`)
 
       const response: ListObjectsV2Output = await this.s3Client.s3.listObjectsV2(parameters).promise()
 
-      this.logger.debug({ data: { response } }, `find() response from s3`)
+      this.logger.debug({ response }, 'find()', 'response from s3')
 
       const referenceList: ReferenceList = new ReferenceList(
         this,
@@ -48,11 +48,11 @@ export class FindBehavior<Of> extends CollectionBehavior<Of> {
         })
       }
 
-      this.logger.debug({ data: { referenceList } }, `find() referenceList`)
+      this.logger.debug({ referenceList }, 'find()', 'referenceList')
 
       return referenceList
     } catch (error) {
-      this.logger.error(error, `find() error for prefix ${prefix}`)
+      this.logger.error(error, 'find()', `error for prefix ${prefix}`)
       throw this.s3Client.handleError(error, this.fullBucketName)
     }
   }

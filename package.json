@@ -1,50 +1,50 @@
 {
   "name": "s3-db",
-  "version": "3.4.3",
+  "version": "3.5.0",
   "description": "Document DB syntax wrapper for AWS S3.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "typescript": {
-    "definition": "dist/index.d.ts"
+    "definition": "lib/index.d.ts"
   },
   "files": [
-    "dist/**/*",
+    "lib/**/*",
     "README.md"
   ],
   "homepage": "https://www.npmjs.com/package/s3-db",
   "author": "Matt Filion <matt.filion@gmail.com>",
   "scripts": {
-    "compile": "tsc -p ./",
-    "lint": "tslint -p tsconfig.json",
-    "pretest": "tslint -p tsconfig.json",
-    "test": "nyc ts-mocha ./spec/**/*",
-    "format": "prettier --write \"dist/**/*.ts\" \"dist/**/*.js\" \"src/**/*.ts\"",
+    "compile": "npm run clean && tsc -p .",
+    "test": "nyc mocha --require ts-node/register \"spec/**/*.spec.ts\"",
+    "coverage": "nyc report --reporter text-summary",
+    "coverage-export": "nyc report --reporter=text-lcov > coverage.lcov",
+    "format": "prettier --write \"lib/**/*.ts\" \"lib/**/*.js\" \"src/**/*.ts\"",
     "build": "npm run compile",
-    "prepare": "npm run compile"
+    "clean": "rm -rf coverage lib .nyc_output .vscode"
   },
   "dependencies": {
-    "@mu-ts/logger": "^2.1.1",
+    "@mu-ts/logger": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "uuid": "^3.3.2"
   },
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
-    "@types/chai": "^4.1.7",
-    "@types/chai-as-promised": "^7.1.0",
+    "@types/chai": "^4.2.6",
+    "@types/chai-as-promised": "^7.1.2",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^11.13.14",
-    "@types/sinon": "^7.0.13",
-    "@types/uuid": "^3.4.4",
-    "aws-sdk": "^2.475.0",
-    "chai": "^4.2.0",
+    "@types/node": "^11.15.3",
+    "@types/sinon": "^7.5.1",
+    "@types/uuid": "^3.4.6",
+    "aws-sdk": "^2.585.0",
     "chai-as-promised": "^7.1.1",
-    "mocha": "^6.1.4",
+    "chai": "^4.2.0",
+    "codecov": "^3.2.0",
+    "mocha": "^6.2.2",
     "nyc": "^14.1.1",
-    "prettier": "^1.18.2",
-    "sinon": "^7.3.2",
-    "tslint": "^5.17.0",
-    "tslint-config-prettier": "^1.18.0",
-    "typescript": "^3.5.2"
+    "ts-mocha": "^6.0.0",
+    "prettier": "^1.19.1",
+    "sinon": "^7.5.0",
+    "typescript": "^3.7.3"
   },
   "maintainers": [
     {
@@ -58,7 +58,7 @@
       "email": "matt.filion@gmail.com"
     }
   ],
-  "typings": "dist/index.d.ts",
+  "typings": "lib/index.d.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/matt-filion/s3-db.git"

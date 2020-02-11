@@ -19,11 +19,11 @@ export class LoadBehavior<Of> extends CollectionBehavior<Of> {
         Key: this.adjustId(id),
       }
 
-      this.logger.debug({ data: { parameters } }, `load() for ${id} -->`)
+      this.logger.debug({ parameters }, 'load()', `for ${id} -->`)
 
       const response: GetObjectOutput = await this.s3Client.s3.getObject(parameters).promise()
 
-      this.logger.debug({ data: { response } }, `load() response from s3 for ${id} -->`)
+      this.logger.debug({ response }, 'load()', `response from s3 for ${id} -->`)
 
       if (!response.Body) throw new S3DBError('not-found')
 
@@ -31,7 +31,7 @@ export class LoadBehavior<Of> extends CollectionBehavior<Of> {
 
       return this.configuration.serialization.deserialize<Of>(s3Object.getBody())
     } catch (error) {
-      this.logger.error(error, `load() error loading ${id}`)
+      this.logger.error(error, 'load()', `error loading ${id}`)
       throw this.s3Client.handleError(error, this.fullBucketName, id)
     }
   }

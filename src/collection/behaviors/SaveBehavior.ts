@@ -31,7 +31,7 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
      * If validation is configured, run it against the object.
      */
     const isValid = this.configuration.validator ? this.configuration.validator.validate(toSave) : true
-    this.logger.debug({ data: { isValid } }, 'save()')
+    this.logger.debug({ isValid }, 'save()')
     if (!isValid) return Promise.reject(new S3DBError('Object did not pass validation.'))
 
     /*
@@ -41,10 +41,10 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
      * Must be done before serialization so that we do not persist the body
      * of a newly created object without the ID that is attached to it.
      */
-    const keyName = this.getKeyName(toSave)
+    const keyName = this.getKeyName()
     let keyValue = getValue(toSave, keyName)
 
-    this.logger.debug({ data: { keyName, keyValue } }, 'save() key (id)')
+    this.logger.debug({ keyName, keyValue }, 'save() key (id)')
 
     if (!keyValue) {
       this.logger.debug('save() generating key (id)')
@@ -57,7 +57,7 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
        * with the prefix, add it.
        */
       if (this.idPrefix && !keyValue.startsWith(this, this.idPrefix)) {
-        this.logger.debug({ data: { idPrefix: this.idPrefix } }, 'save() adding prefix to key')
+        this.logger.debug({ idPrefix: this.idPrefix }, 'save() adding prefix to key')
         keyValue = this.adjustId(keyValue)
       }
     }
@@ -68,7 +68,7 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
      */
     const body: string = this.configuration.serialization.serialize(toSave)
 
-    this.logger.debug({ data: { body } }, 'save() serializing body to')
+    this.logger.debug({ body }, 'save() serializing body to')
 
     const isModified = this.configuration.checkIsModified ? this.configuration.isModified.isModified(toSave, body) : true
     if (!isModified) {
@@ -89,7 +89,7 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
 
     updateMetadata(toSave, s3Object.getMetadata())
 
-    this.logger.debug({ data: { s3Object } }, `save() attach, or update, metadata on object.`)
+    this.logger.debug({ s3Object }, 'save()', 'attach, or update, metadata on object.')
 
     return toSave
   }
@@ -111,11 +111,11 @@ export class SaveBehavior<Of> extends CollectionBehavior<Of> {
 
       if (this.configuration.serversideEncryption) params.ServerSideEncryption = 'AES256'
 
-      this.logger.debug({ data: { params } }, 'save() request to send to S3')
+      this.logger.debug({ params }, 'save()', 'request to send to S3')
 
       const response: PutObjectOutput = await this.s3Client.s3.putObject(params).promise()
 
-      this.logger.debug({ data: { response } }, 'save() response from s3')
+      this.logger.debug({ response }, 'save()', 'response from s3')
 
       if (!response) throw this.s3Client.handleError(response, this.fullBucketName, id)
 

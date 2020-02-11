@@ -1,6 +1,7 @@
 import { CollectionConfiguration } from './CollectionConfiguration'
 import { S3Client } from '../s3'
-import { Logger, LoggerService } from '@mu-ts/logger'
+import { Logger } from '@mu-ts/logger'
+import { S3DB } from '../db'
 
 export abstract class CollectionBehavior<Of> {
   protected configuration: CollectionConfiguration
@@ -14,9 +15,8 @@ export abstract class CollectionBehavior<Of> {
     this.fullBucketName = fullBucketName
     this.s3Client = s3Client
     this.idPrefix = idPrefix
-    this.logger = LoggerService.named(`S3DB.${(this as any).constructor.name}`, {
-      prefix: '' + idPrefix,
-    })
+    this.logger = S3DB.getRootLogger().child(`${(this as any).constructor.name}`)
+    this.logger.info('init()', { idPrefix })
   }
 
   /**
@@ -45,7 +45,7 @@ export abstract class CollectionBehavior<Of> {
    *
    * @param toSave object to generate a key for.
    */
-  protected getKeyName(toSave: Of): string {
+  protected getKeyName(): string {
     return this.configuration.keyName || 'id'
   }
 }
