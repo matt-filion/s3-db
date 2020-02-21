@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "3.5.1",
+  "version": "3.6.0",
   "description": "Document DB syntax wrapper for AWS S3.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -23,19 +23,19 @@
     "clean": "rm -rf coverage lib .nyc_output .vscode"
   },
   "dependencies": {
-    "@mu-ts/logger": "^3.0.5",
+    "@mu-ts/logger": "^3.0.6",
     "reflect-metadata": "^0.1.13",
     "uuid": "^3.4.0"
   },
   "devDependencies": {
     "@types/aws-sdk": "^2.7.0",
-    "@types/chai": "^4.2.8",
+    "@types/chai": "^4.2.9",
     "@types/chai-as-promised": "^7.1.2",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^11.15.5",
+    "@types/node": "^11.15.7",
     "@types/sinon": "^7.5.1",
     "@types/uuid": "^3.4.7",
-    "aws-sdk": "^2.615.0",
+    "aws-sdk": "^2.623.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
     "codecov": "^3.6.5",
@@ -44,7 +44,7 @@
     "prettier": "^1.19.1",
     "sinon": "^7.5.0",
     "ts-mocha": "^6.0.0",
-    "typescript": "^3.7.5"
+    "typescript": "^3.8.2"
   },
   "maintainers": [
     {

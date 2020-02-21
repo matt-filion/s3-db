@@ -110,15 +110,16 @@ Configurations that are applied across all collections.
 
 Configurations specific to a collection.
 
-| Name                 | Default              | Description                                                                                                                                                                |
-| -------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| pageSize             | `100`                | Maximum of 1000. How many documents to return when doing a `.find()` operation.                                                                                            |
-| serversideEncryption | `true`               | If S3 server side encryption is enabled (encryption at rest.)                                                                                                              |
-| checkIsMOdified      | `true`               | If enabled, `save()` operations will check if the object provided has been modified before being saved. If it is not modified it returns without attempting to save to S3. |
-| isModified           | `MD5IsModified`      | A function that is used to check if an object is modified. If you override it, implement the `IsModified` interface.                                                       |
-| serialization        | `JSONSerialization`  | How objects are serialized to a string before they are perstisted to S3.                                                                                                   |
-| defaultIdGenerator   | `defaultIDGenerator` | Default generation is UUID v4. This is called when no generator is provided on the `@id()` annotation.                                                                     |
-| validator            | `undefined`          | A function that can be used to check if the object being saved is valid.                                                                                                   |
+| Name | Default | Description |
+| -------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| pageSize              | `100`                | Maximum of 1000. How many documents to return when doing a `.find()` operation.  |
+| serversideEncryption  | `true`               | If S3 server side encryption is enabled (encryption at rest.)   |
+| checkIsMOdified       | `true`               | If enabled, `save()` operations will check if the object provided has been modified before being saved. If it is not modified it returns without attempting to save to S3. |
+| isModified            | `MD5IsModified`      | A function that is used to check if an object is modified. If you override it, implement the `IsModified` interface.|
+| serialization         | `JSONSerialization`  | How objects are serialized to a string before they are perstisted to S3.  |
+| defaultIdGenerator    | `defaultIDGenerator` | Default generation is UUID v4. This is called when no generator is provided on the `@id()` annotation. |
+| validator             | `undefined`          | A function that can be used to check if the object being saved is valid. |
+| noExceptionOnNotFound | `false`              | Changes the behavior to return undefined rather than throw an excpetion, when no document is found. |
 
 # API's
 

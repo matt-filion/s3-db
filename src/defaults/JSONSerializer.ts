@@ -9,6 +9,7 @@ export class JSONSerialization implements Serialization {
   }
 
   public deserialize(documentToDeserialize: string): any {
+    console.log('documentToDeserialize', documentToDeserialize)
     return JSON.parse(documentToDeserialize)
   }
 }

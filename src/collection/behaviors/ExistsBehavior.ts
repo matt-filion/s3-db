@@ -13,7 +13,7 @@ export class ExistsBehavior<Of> extends HeadBehavior<Of> {
    */
   public async exists(id: string): Promise<boolean> {
     const metadata: S3Metadata | undefined = await this.head(id)
-    this.logger.debug({ metadata }, 'exists()', `response for ${id}`)
+    this.logger.debug(`response for ${id}`, { metadata }, 'exists()')
     return metadata ? true : false
   }
 }
