@@ -1,6 +1,6 @@
 {
   "name": "s3-db",
-  "version": "3.5.1",
+  "version": "3.6.0",
   "description": "Document DB syntax wrapper for AWS S3.",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
