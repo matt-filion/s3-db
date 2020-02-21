@@ -67,4 +67,11 @@ export class CollectionConfiguration {
    * The default attribute to use as the keyName for objects passed into this collection.
    */
   public keyName: string = 'id'
+
+  /**
+   * The default behavior from aws-sdk, and a carry over into s3-db, is to throw an error
+   * when a document is not found. This setting changes that behavior to return undefined
+   * rather than throw an excpetion.
+   */
+  public noExceptionOnNotFound: boolean = false
 }

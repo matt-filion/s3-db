@@ -11,9 +11,9 @@ export class S3DB {
    * @param configuration to update he default values with.
    */
   public static update(configuration: { baseName?: string; stage?: string; bucketPattern?: string; region?: string }): void {
-    this.logger.info(configuration, 'update()', 'configuration with -->')
+    this.logger.info('configuration with -->', configuration, 'update()')
     this.configuration = { ...this.configuration, ...configuration }
-    this.logger.info(this.configuration, 'update()', 'updated configuration is <--')
+    this.logger.info('updated configuration is <--', this.configuration, 'update()')
   }
 
   /**
@@ -51,7 +51,7 @@ export class S3DB {
   }
 
   private static configuration: S3DBConfiguration = new S3DBConfiguration()
-  private static logger: Logger = LoggerService.named({ name: 'S3DB', level: 'warn' })
+  private static logger: Logger = LoggerService.named({ name: 'S3DB', level: 'warn', adornments: { lib: 's3-db' } })
 
   private constructor() {}
 }

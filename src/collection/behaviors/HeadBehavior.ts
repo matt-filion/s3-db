@@ -28,10 +28,10 @@ export class HeadBehavior<Of> extends CollectionBehavior<Of> {
       return this.s3Client.buildS3Metadata(response)
     } catch (error) {
       if (error.code && error.code === 'NotFound') {
-        this.logger.debug(error, 'head()', 'response from s3 was NotFound')
+        this.logger.debug('head()', 'response from s3 was NotFound', error)
         return undefined
       } else {
-        this.logger.error(error, 'head()', `error response from s3 for ${id}`)
+        this.logger.error('head()', `error response from s3 for ${id}`, error)
         throw this.s3Client.handleError(error, this.fullBucketName, id)
       }
     }
