@@ -1,22 +1,46 @@
+import { v4 } from 'uuid'
 import { CollectionConfiguration } from './CollectionConfiguration'
 import { S3Client } from '../s3'
 import { Logger } from '@mu-ts/logger'
 import { S3DB } from '../db'
 
 export abstract class CollectionBehavior<Of> {
-  protected configuration: CollectionConfiguration
-  protected fullBucketName: string
-  protected s3Client: S3Client
-  protected logger: Logger
-  protected idPrefix?: string
+  private readonly _logger: Logger
+  private readonly _configuration: CollectionConfiguration
+  private readonly _fullBucketName: string
+  private readonly _s3Client: S3Client
+  private readonly _idPrefix?: string
 
   constructor(configuration: CollectionConfiguration, s3Client: S3Client, fullBucketName: string, idPrefix?: string) {
-    this.configuration = configuration
-    this.fullBucketName = fullBucketName
-    this.s3Client = s3Client
-    this.idPrefix = idPrefix
-    this.logger = S3DB.getRootLogger().child(`${(this as any).constructor.name}`)
-    this.logger.info('init()', { idPrefix })
+    this._logger = S3DB.getRootLogger().child(this.constructor.name)
+    this._configuration = configuration
+    this._fullBucketName = fullBucketName
+    this._s3Client = s3Client
+    this._idPrefix = idPrefix
+    this._logger.info('init()', { idPrefix })
+  }
+
+  protected get logger() {
+    return this._logger
+  }
+
+  protected get configuration() {
+    return this._configuration
+  }
+
+  protected get fullBucketName() {
+    return this._fullBucketName
+  }
+
+  protected get s3Client() {
+    return this._s3Client
+  }
+  protected get s3() {
+    return this._s3Client.s3
+  }
+
+  protected get idPrefix() {
+    return this._idPrefix
   }
 
   /**
@@ -25,7 +49,7 @@ export abstract class CollectionBehavior<Of> {
    * @param toSave object to find the generator on.
    */
   protected generateKey(toSave: Of): string {
-    return this.configuration.idGenerator(toSave)
+    return this.configuration.idGenerator(toSave, v4())
   }
 
   /**

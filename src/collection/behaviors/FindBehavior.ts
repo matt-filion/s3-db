@@ -52,7 +52,7 @@ export class FindBehavior<Of> extends CollectionBehavior<Of> {
 
       return referenceList
     } catch (error) {
-      this.logger.error(error, 'find()', `error for prefix ${prefix}`)
+      this.logger.error(`error for prefix ${prefix}`, error, 'find()')
       throw this.s3Client.handleError(error, this.fullBucketName)
     }
   }

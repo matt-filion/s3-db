@@ -7,6 +7,7 @@ export class S3Object {
   private metadata: S3Metadata
   private body: string
   constructor(body: string, metadata: S3Metadata) {
+    console.log('S3OBject', { body, metadata })
     this.metadata = metadata
     this.body = body
   }

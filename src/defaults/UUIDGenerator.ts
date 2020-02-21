@@ -1,8 +1,7 @@
-import * as uuid4 from 'uuid/v4'
-
 /**
  * UUID v4.
  */
-export function defaultIDGenerator(): string {
-  return uuid4()
+// @ts-ignore
+export function defaultIDGenerator(document: any, uuid: string): string {
+  return uuid
 }

@@ -92,7 +92,7 @@ export class Collection<Of> {
     return this.existsBehavior.exists(id)
   }
 
-  public async load(id: string): Promise<Of> {
+  public async load(id: string): Promise<Of | undefined> {
     return this.loadBehavior.load(id)
   }
 

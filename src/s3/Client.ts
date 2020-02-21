@@ -9,17 +9,25 @@ import { Logger } from '@mu-ts/logger'
  * Facade to AWS S3 APi's.
  */
 export class S3Client {
-  public s3: S3
-  private logger: Logger
+  private readonly _s3: S3
+  private readonly logger: Logger
 
-  constructor() {
-    this.s3 = new S3({ apiVersion: '2006-03-01' })
+  constructor(s3?: S3) {
     this.logger = S3DB.getRootLogger().child('Client')
+    this._s3 = s3 || new S3({ apiVersion: '2006-03-01' })
 
     config.update({
       region: S3DB.getRegion(),
     })
+
     this.logger.info('init()', { region: S3DB.getRegion() })
+  }
+
+  /**
+   * Accessor to the AWS S3 instance.
+   */
+  public get s3() {
+    return this._s3
   }
 
   /**
@@ -33,9 +41,17 @@ export class S3Client {
       StorageClass: source.StorageClass,
       ContentLength: source.ContentLength,
       LastModified: source.LastModified,
-      ETag: JSON.parse(source.ETag || ''),
+      ETag: source.ETag,
       ServerSideEncryption: source.ServerSideEncryption,
       VersionId: source.VersionId,
+    }
+
+    if (metadata.ETag) {
+      try {
+        metadata.ETag = JSON.parse(metadata.ETag)
+      } catch (error) {
+        /* Swallow */
+      }
     }
 
     const headMetadata: Metadata = source.Metadata || {}
@@ -69,7 +85,7 @@ export class S3Client {
    * @param key of the object being interacted with when the error was thrown.
    */
   public handleError(error: AWSError, bucket: string, key?: string): S3DBError {
-    this.logger.debug(error, 'handleError()', `for bucket:${bucket} key:${key}`)
+    this.logger.debug(`for bucket:${bucket} key:${key}`, error, 'handleError()')
     switch (error.code) {
       case 'NoSuchBucket':
         return new S3DBError(`${bucket} is not a valid bucket or is not visible/accssible.`)
