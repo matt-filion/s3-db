@@ -1,0 +1,20 @@
+name: CI/CD Lite
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - name: npm install, build and test
+        run: |
+          npm install
+          npm run build --if-present
+          npm test
+      - name: publish
+        run: npm publish
+        if: github.event == 'push'
