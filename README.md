@@ -173,7 +173,7 @@ Removes an object from an S3 bucket for the corresponding id.
 
 ### collection.find(prefix, pageSize, continuationToken): Promise<ReferenceList>
 
-Returns a list of `S3Metadata` objects for all objects in the corresponding S3 bucket htat start with the prefix value provided. If continuationToken is passed in then the list will be a 'continuation' of a previous find operation.
+Returns a list of `S3Metadata` objects for all objects in the corresponding S3 bucket that start with the prefix value provided. If continuationToken is passed in then the list will be a 'continuation' of a previous find operation.
 
 ### collection.subCollection(prefix: string, typeOf: SomeClass): Collection<SomeClass>
 
